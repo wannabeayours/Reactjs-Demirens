@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-import Header from './components/layout/Header';
+
 import AdminRoomsList from './pages/admin/AdminRoomsList';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -18,6 +18,11 @@ import AdminChargeMaster from './pages/admin/AdminChargeMaster';
 import AdminDiscountMaster from './pages/admin/AdminDiscountMaster';
 import AdminRoomtype from './pages/admin/AdminRoomtype';
 import AdminNewBook from './pages/admin/AdminNewBook';
+import Landingpage from './pages/Landingpage';
+import AdminHeader from './components/layout/AdminHeader';
+import CustomerHeader from './components/layout/CustomerHeader';
+import FrontHeader from './components/layout/FrontHeader';
+import LandingHeader from './components/layout/LandingHeader';
 
 
 
@@ -29,26 +34,33 @@ function App() {
 
     <Router>
     <div>
-      <Header />
+      {localStorage.getItem("role") === "admin" ? <AdminHeader />
+       : localStorage.getItem("role") === "front" ? <FrontHeader /> 
+       : localStorage.getItem("role") === "customer" ? <CustomerHeader /> 
+       : <LandingHeader />
+      }
+
         <div style={{ flex: 1, padding: '20px' }}>
           <Routes>
-            <Route path="/admin/admindashboard" element={<AdminDashboard />} />
-            <Route path="/admin/adminprofile" element={<AdminProfile />} />
-            <Route path="/admin/adminroomslist" element={<AdminRoomsList />} />
-            <Route path="/admin/adminbookinglist" element={<AdminBookingList />} />
-            <Route path="/admin/adminnewbook" element={<AdminNewBook />} />
-            <Route path="/admin/admincalendar" element={<AdminCalendar />} />
-            <Route path="/admin/adminguestprofile" element={<AdminGuestProfile />} />
-            <Route path="/admin/adminpayments" element={<AdminPayments />} />
-            <Route path="/admin/adminrequestedamenities" element={<AdminRequestedAmenities />} />
-            <Route path="/admin/adminreviews" element={<AdminReviews />} />
-            <Route path="/admin/admintransactionhistory" element={<AdminTransactionHis />} />
-            <Route path="/admin/adminvisitorslog" element={<AdminVisitorsLog />} />
-            <Route path="/admin/adminamenitymaster" element={<AdminAmenityMaster />} />
-            <Route path="/admin/adminchargescategory" element={<AdminChargesCategory />} />
-            <Route path="/admin/adminchargemaster" element={<AdminChargeMaster />} />
-            <Route path="/admin/admindiscountmaster" element={<AdminDiscountMaster />} />
-            <Route path="/admin/adminroomtypemaster" element={<AdminRoomtype />} />
+            <Route path="/" element={<Landingpage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/profile" element={<AdminProfile />} />
+            <Route path="/admin/roomslist" element={<AdminRoomsList />} />
+            <Route path="/admin/bookinglist" element={<AdminBookingList />} />
+            <Route path="/admin/newbook" element={<AdminNewBook />} />
+            <Route path="/admin/calendar" element={<AdminCalendar />} />
+            <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
+            <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
+            <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
+            <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
+            <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
+            <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
+            <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
+            <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+            
           </Routes>
         </div>
       </div>

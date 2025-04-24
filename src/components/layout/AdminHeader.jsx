@@ -2,7 +2,7 @@ import React from 'react'
 import ThemeToggle from './ThemeToggle'
 import Sidebar from './Sidebar'
 
-function Header() {
+function AdminHeader() {
   return (
     <div className="flex justify-between items-center p-4 ">
       {/* Sidebar on the left */}
@@ -26,4 +26,4 @@ function Header() {
   )
 }
 
-export default Header
+export default AdminHeader

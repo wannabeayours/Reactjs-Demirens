@@ -28,7 +28,7 @@ function Sidebar() {
           <ScrollArea className="h-[calc(100vh-130px)] mt-2 pr-2">
             <div className="mt-2 space-y-5 pb-36">
               {/* Dashboard */}
-              <Link to="/admin/admindashboard" className="block w-full">
+              <Link to="/admin/dashboard" className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <Home className="w-4 h-4" />
                 Dashboard
@@ -36,7 +36,7 @@ function Sidebar() {
               </Link>
 
               {/* Profile */}
-              <Link to="/admin/adminprofile"  className="block w-full">
+              <Link to="/admin/profile"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <User className="w-4 h-4" />
                 Profile
@@ -44,7 +44,7 @@ function Sidebar() {
               </Link>
 
               {/* Rooms List */}
-              <Link to="/admin/adminroomslist"  className="block w-full">
+              <Link to="/admin/roomslist"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <BedIcon className="w-4 h-4" />
                 Rooms List
@@ -72,7 +72,7 @@ function Sidebar() {
 
                   <li>
                    
-                   <Link to="/admin/adminbookinglist" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                   <Link to="/admin/bookinglist" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                      <span className="flex items-center gap-2">
                      <BookCheckIcon className="w-4 h-4" />
                      Booking List
@@ -82,7 +82,7 @@ function Sidebar() {
 
                     <li>
                    
-                      <Link to="/admin/adminnewbook" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                      <Link to="/admin/newbook" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                         <BookCheckIcon className="w-4 h-4" />
                         New Bookings
@@ -100,7 +100,7 @@ function Sidebar() {
 
 
               {/* Calendar */}
-              <Link to="/admin/admincalendar"  className="block w-full">
+              <Link to="/admin/calendar"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <Calendar1Icon className="w-4 h-4" />
                 Calendar
@@ -108,7 +108,7 @@ function Sidebar() {
               </Link>
 
               {/* Guest Profile */}
-              <Link to="/admin/adminguestprofile"  className="block w-full">
+              <Link to="/admin/guestprofile"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <User className="w-4 h-4" />
                 Guest Profile
@@ -116,7 +116,7 @@ function Sidebar() {
               </Link>
 
               {/* Payments */}
-              <Link to="/admin/adminpayments"  className="block w-full">
+              <Link to="/admin/payments"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <BedIcon className="w-4 h-4" />
                 Payments
@@ -124,7 +124,7 @@ function Sidebar() {
               </Link>
 
               {/* Requested Amenities */}
-              <Link to="/admin/adminrequestedamenities"  className="block w-full">
+              <Link to="/admin/requestedamenities"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <PillBottleIcon className="w-4 h-4" />
                 Requested Amenities
@@ -133,7 +133,7 @@ function Sidebar() {
 
 
               {/* Reviews */}
-              <Link to="/admin/adminrequestedamenities"  className="block w-full">
+              <Link to="/admin/requestedamenities"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <StarIcon className="w-4 h-4" />
                 Reviews
@@ -141,7 +141,7 @@ function Sidebar() {
               </Link>
 
               {/* Transaction History */}
-              <Link to="/admin/admintransactionhistory"  className="block w-full">
+              <Link to="/admin/transactionhistory"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <HistoryIcon className="w-4 h-4" />
                 Transaction History
@@ -149,7 +149,7 @@ function Sidebar() {
               </Link>
 
               {/* Visitors Log*/}
-              <Link to="/admin/adminvisitorslog"  className="block w-full">
+              <Link to="/admin/visitorslog"  className="block w-full">
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <User2Icon className="w-4 h-4" />
                 Visitors Log
@@ -174,7 +174,7 @@ function Sidebar() {
                   <ul className="flex flex-col gap-2 mt-2">
 
                     <li>
-                    <Link to="/admin/adminamenitymaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                    <Link to="/admin/amenitymaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                         <PillBottleIcon className="w-4 h-4" />
                         Amenities Masters
@@ -184,7 +184,7 @@ function Sidebar() {
 
 
                     <li>
-                    <Link to="/admin/adminchargescategory" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                    <Link to="/admin/chargescategory" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                         <PlusSquareIcon className="w-4 h-4" />
                         Charges Category
@@ -193,7 +193,7 @@ function Sidebar() {
                     </li>
 
                     <li>
-                    <Link to="/admin/adminchargemaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                    <Link to="/admin/chargemaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                         <MinusCircleIcon className="w-4 h-4" />
                         Charges Masters
@@ -203,7 +203,7 @@ function Sidebar() {
 
 
                     <li>
-                    <Link to="/admin/admindiscountmaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                    <Link to="/admin/discountmaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                           <MinusCircleIcon className="w-4 h-4" />
                           Discount Masters
@@ -213,7 +213,7 @@ function Sidebar() {
 
 
                     <li>
-                    <Link to="/admin/adminroomtypemaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
+                    <Link to="/admin/roomtypemaster" className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded block w-full">
                         <span className="flex items-center gap-2">
                         <Bed className="w-4 h-4" />
                         Room Type Masters
