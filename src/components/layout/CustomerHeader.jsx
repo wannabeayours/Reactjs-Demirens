@@ -2,7 +2,9 @@ import React from 'react'
 
 function CustomerHeader() {
   return (
-    <div>CustomerHeader</div>
+    <div>
+      
+    </div>
   )
 }
 

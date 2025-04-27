@@ -19,10 +19,17 @@ import AdminDiscountMaster from './pages/admin/AdminDiscountMaster';
 import AdminRoomtype from './pages/admin/AdminRoomtype';
 import AdminNewBook from './pages/admin/AdminNewBook';
 import Landingpage from './pages/Landingpage';
-import AdminHeader from './components/layout/AdminHeader';
-import CustomerHeader from './components/layout/CustomerHeader';
-import FrontHeader from './components/layout/FrontHeader';
+// import AdminHeader from './components/layout/AdminHeader';
+// import CustomerHeader from './components/layout/CustomerHeader';
+// import FrontHeader from './components/layout/FrontHeader';
 import LandingHeader from './components/layout/LandingHeader';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import CustomerAbout from './pages/customer/CustomerAbout';
+import CustomerBooking from './pages/customer/CustomerBooking';
+import CustomerRooms from './pages/customer/CustomerRooms';
+import CustomerGallery from './pages/customer/CustomerGallery';
+import CustomerRestaurant from './pages/customer/CustomerRestaurant';
 
 
 
@@ -33,15 +40,18 @@ function App() {
   return (
 
     <Router>
-    <div>
-      {localStorage.getItem("role") === "admin" ? <AdminHeader />
-       : localStorage.getItem("role") === "front" ? <FrontHeader /> 
-       : localStorage.getItem("role") === "customer" ? <CustomerHeader /> 
-       : <LandingHeader />
-      }
+      {/* <div>
+        {localStorage.getItem("role") === "admin" ? <AdminHeader />
+          : localStorage.getItem("role") === "front" ? <FrontHeader />
+            : localStorage.getItem("role") === "customer" ? <CustomerHeader />
+              : <LandingHeader />
+        } */}
+        <LandingHeader />
 
         <div style={{ flex: 1, padding: '20px' }}>
           <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/" element={<Landingpage />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/profile" element={<AdminProfile />} />
@@ -60,11 +70,17 @@ function App() {
             <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
             <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
             <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+            <Route path="/customer/about" element={<CustomerAbout />} />
+            <Route path="/customer/bookings" element={<CustomerBooking />} />
+            <Route path="/customer/rooms" element={<CustomerRooms />} />
+            <Route path="/customer/gallery" element={<CustomerGallery />} />
+            <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
             
+
           </Routes>
         </div>
-      </div>
-  </Router>
+   
+    </Router>
   );
 }
 
