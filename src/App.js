@@ -23,6 +23,7 @@ import Landingpage from './pages/Landingpage';
 // import CustomerHeader from './components/layout/CustomerHeader';
 // import FrontHeader from './components/layout/FrontHeader';
 import LandingHeader from './components/layout/LandingHeader';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CustomerAbout from './pages/customer/CustomerAbout';
@@ -30,6 +31,7 @@ import CustomerBooking from './pages/customer/CustomerBooking';
 import CustomerRooms from './pages/customer/CustomerRooms';
 import CustomerGallery from './pages/customer/CustomerGallery';
 import CustomerRestaurant from './pages/customer/CustomerRestaurant';
+import Footer from './components/layout/Footer';
 
 
 
@@ -46,40 +48,42 @@ function App() {
             : localStorage.getItem("role") === "customer" ? <CustomerHeader />
               : <LandingHeader />
         } */}
-        <LandingHeader />
+      <LandingHeader />
 
-        <div style={{ flex: 1, padding: '20px' }}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<Landingpage />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
-            <Route path="/admin/roomslist" element={<AdminRoomsList />} />
-            <Route path="/admin/bookinglist" element={<AdminBookingList />} />
-            <Route path="/admin/newbook" element={<AdminNewBook />} />
-            <Route path="/admin/calendar" element={<AdminCalendar />} />
-            <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
-            <Route path="/admin/reviews" element={<AdminReviews />} />
-            <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
-            <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
-            <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
-            <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
-            <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
-            <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
-            <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
-            <Route path="/customer/about" element={<CustomerAbout />} />
-            <Route path="/customer/bookings" element={<CustomerBooking />} />
-            <Route path="/customer/rooms" element={<CustomerRooms />} />
-            <Route path="/customer/gallery" element={<CustomerGallery />} />
-            <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
-            
+      <div style={{ flex: 1, padding: '20px' }}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Landingpage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
+          <Route path="/admin/roomslist" element={<AdminRoomsList />} />
+          <Route path="/admin/bookinglist" element={<AdminBookingList />} />
+          <Route path="/admin/newbook" element={<AdminNewBook />} />
+          <Route path="/admin/calendar" element={<AdminCalendar />} />
+          <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
+          <Route path="/admin/payments" element={<AdminPayments />} />
+          <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
+          <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
+          <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
+          <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
+          <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
+          <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
+          <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+          <Route path="/customer/about" element={<CustomerAbout />} />
+          <Route path="/customer/bookings" element={<CustomerBooking />} />
+          <Route path="/customer/rooms" element={<CustomerRooms />} />
+          <Route path="/customer/gallery" element={<CustomerGallery />} />
+          <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
+          
 
-          </Routes>
-        </div>
-   
+
+        </Routes>
+      </div>
+      <Footer />
+
     </Router>
   );
 }

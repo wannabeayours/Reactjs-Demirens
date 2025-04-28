@@ -38,63 +38,63 @@ function Login() {
 
     return (
         <div className="flex h-screen">
-        {/* Left Side - Image */}
-        <div className="w-1/2 bg-cover bg-center ">
-        
-        
+            {/* Left Side - Image */}
+            <div className="w-1/2 bg-cover bg-center ">
+
+
+            </div>
+
+            {/* Right Side - Form */}
+            <div className="w-1/2 flex justify-start items-center p-8">
+                <Card className="w-full max-w-sm p-6">
+                    <CardTitle className="text-2xl font-bold mb-4">Login to Continue</CardTitle>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email or Username</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="you@example.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="Enter Password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button type="submit" className="w-full">
+                                Login
+                            </Button>
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground">
+                                    Don't have an account?{" "}
+                                    <Link to="/register" className="text-primary underline">
+                                        Sign Up
+                                    </Link>
+                                </p>
+                            </div>
+
+                        </form>
+                    </Form>
+                </Card>
+            </div>
         </div>
-
-        {/* Right Side - Form */}  
-        <div className="w-1/2 flex justify-start items-center p-8">
-        <Card className="w-full max-w-sm p-6">
-            <CardTitle className="text-2xl font-bold mb-4">Login to Continue</CardTitle>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="you@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" placeholder="Enter Password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <Button type="submit" className="w-full">
-                        Login
-                    </Button>
-                    <div className="text-center">
-                        <p className="text-sm text-muted-foreground">
-                            Don't have an account?{" "}
-                            <Link href="/register" className="text-primary underline">
-                                Sign Up
-                            </Link>
-                        </p>
-                    </div>
-
-                </form>
-            </Form>
-        </Card>
-        </div>
-    </div>
     )
 }
 //ipa explain sa ni chatgpt or unsa ba kani na kuan

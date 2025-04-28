@@ -21,9 +21,7 @@ function Landingpage() {
 
       {/* Section 3  */}
       <section className="flex items-center justify-center h-screen bg-white">
-        <h1 className="text-5xl font-bold text-gray-600 mb-8">
-          Rooms
-        </h1>
+     
 
         <div className="w-full max-w-4xl">
           <Carousel>

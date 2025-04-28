@@ -1,5 +1,5 @@
-import React from 'react'
-import { Card, CardTitle } from '../components/ui/card';
+import React, { useState } from 'react'
+import { Card, CardTitle } from '../components/ui/card'
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,87 +13,369 @@ import {
     FormControl,
     FormMessage
 } from "@/components/ui/form"
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover'
+import { Calendar } from '../components/ui/calendar'
+import { format } from "date-fns"
+import { cn } from '@/lib/utils' // important for shadcn utilities
 
+
+const nationalities = [
+    { label: "American", value: "american" },
+    { label: "Canadian", value: "canadian" },
+    { label: "British", value: "british" },
+    { label: "Australian", value: "australian" },
+    { label: "German", value: "german" },
+    { label: "French", value: "french" },
+    { label: "Indian", value: "indian" },
+    { label: "Chinese", value: "chinese" },
+    { label: "Japanese", value: "japanese" },
+]
 
 const schema = z.object({
+    firstName: z.string().min(1, { message: "First name is required" }),
+    lastName: z.string().min(1, { message: "Last name is required" }),
     email: z.string().email({ message: "Please enter a valid email" }),
-    password: z.string().min(1, { message: "Password is required" })
+    password: z.string().min(1, { message: "Password is required" }),
+    nationality: z.string({ required_error: "Please select a nationality" }),
+    dob: z.date({ required_error: "A date of birth is required" }),
+    username: z.string().min(1, { message: "Username is required" }),
 })
+
+const validIds = [
+    { label: "Passport", value: "passport" },
+    { label: "Driver’s License", value: "drivers_license" },
+    { label: "SSS ID", value: "sss_id" },
+    { label: "PhilHealth ID", value: "philhealth_id" },
+    { label: "Voter’s ID", value: "voters_id" },
+    { label: "PRC ID", value: "prc_id" },
+]
 
 
 function Register() {
-     const form = useForm({
-          resolver: zodResolver(schema),
-          defaultValues: {
-              email: "",
-              password: ""
-          }
-      })
-  
-      const onSubmit = (values) => {
-          console.log("Login values:", values)
-      }
-  return (
-    <div className="flex h-screen">
-        {/* Left Side - Image */}
-        <div className="w-1/2 bg-cover bg-center ">
-        
-        
+    const [selectedId, setSelectedId] = useState(null)
+
+    const form = useForm({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            nationality: "",
+            dob: undefined,
+        },
+    })
+
+    const onSubmit = (values) => {
+        console.log("Register values:", values);
+    }
+    return (
+        <div className="flex h-screen">
+            {/* Left Side */}
+            <div className="w-1/2 bg-cover bg-center"></div>
+
+            {/* Right Side */}
+            <div className="w-1/2 flex justify-start items-center p-8">
+                <Card className="w-full max-w-lg p-6 space-y-6">
+                    <CardTitle className="text-2xl font-bold mb-4">Sign Up</CardTitle>
+
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+                            <div className="flex space-x-4">
+                                {/* First Name */}
+                                <FormField
+                                    control={form.control}
+                                    name="firstName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>First Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter your first name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Last Name */}
+                                <FormField
+                                    control={form.control}
+                                    name="lastName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Last Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Enter your last name" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex space-x-4">
+                                {/* Email */}
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="you@example.com" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+
+                                {/* Nationality */}
+                                <FormField
+                                    control={form.control}
+                                    name="nationality"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Select Nationality</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            role="combobox"
+                                                            className={cn(
+                                                                "justify-between",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value
+                                                                ? nationalities.find((n) => n.value === field.value)?.label
+                                                                : "Select nationality"}
+                                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[200px] p-0">
+                                                    <Command>
+                                                        <CommandInput placeholder="Search nationality..." className="h-9" />
+                                                        <CommandList>
+                                                            <CommandEmpty>No nationality found.</CommandEmpty>
+                                                            <CommandGroup>
+                                                                {nationalities.map((n) => (
+                                                                    <CommandItem
+                                                                        key={n.value}
+                                                                        value={n.label}
+                                                                        onSelect={() => field.onChange(n.value)}
+                                                                    >
+                                                                        {n.label}
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "ml-auto",
+                                                                                field.value === n.value ? "opacity-100" : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            
+                            {/* Date of Birth */}
+                            <FormField
+                                control={form.control}
+                                name="dob"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Date of Birth</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) =>
+                                                        date > new Date() || date < new Date("1900-01-01")
+                                                    }
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="space-y-4">
+                                {/* Identification Dropdown */}
+                                <div>
+                                    <FormLabel>Identification</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                className={`w-full justify-between ${!selectedId ? "text-muted-foreground" : ""}`}
+                                            >
+                                                {selectedId
+                                                    ? validIds.find((id) => id.value === selectedId)?.label
+                                                    : "Select valid ID"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search ID..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No ID found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {validIds.map((id) => (
+                                                            <CommandItem
+                                                                key={id.value}
+                                                                value={id.label}
+                                                                onSelect={() => setSelectedId(id.value)}
+                                                            >
+                                                                {id.label}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                              
+
+                                {/* Show ID Number input if selected */}
+                                {selectedId && (
+                                    <>
+                                        <FormField
+                                            control={form.control}
+                                            name="idNumber"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{validIds.find((id) => id.value === selectedId)?.label} Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter your ID number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {/* Attach Photo */}
+                                        <FormField
+                                            control={form.control}
+                                            name="idPhoto"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Attach Photo</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => field.onChange(e.target.files[0])}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </>
+                                )}
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Username:</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter Username" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {/* Password */}
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="Enter your password" {...field} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            * Must be at least 6 characters
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            * Must include special characters
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm Password:</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="Confirm Password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+
+
+                            {/* Submit */}
+                            <Button type="submit" className="w-full">
+                                Register
+                            </Button>
+
+                            {/* Link to Login */}
+                            <p className="text-sm text-muted-foreground text-center">
+                                Already have an account?{" "}
+                                <Link to="/login" className="underline underline-offset-4">
+                                    Login
+                                </Link>
+                            </p>
+
+                        </form>
+                    </Form>
+
+                </Card>
+            </div>
         </div>
-
-        {/* Right Side - Form */}  
-        <div className="w-1/2 flex justify-start items-center p-8">
-        <Card className="w-full max-w-sm p-6">
-            <CardTitle className="text-2xl font-bold mb-4">Sign Up</CardTitle>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="you@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" placeholder="Enter Password" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <Button type="submit" className="w-full">
-                        Login
-                    </Button>
-                    <div className="text-center">
-                        <p className="text-sm text-muted-foreground">
-                            Don't have an account?{" "}
-                            <Link href="/register" className="text-primary underline">
-                                Sign Up
-                            </Link>
-                        </p>
-                    </div>
-
-                </form>
-            </Form>
-        </Card>
-        </div>
-    </div>
-  )
+    )
 }
 
 export default Register
