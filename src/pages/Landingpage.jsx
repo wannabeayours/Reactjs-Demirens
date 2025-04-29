@@ -6,15 +6,15 @@ function Landingpage() {
     <div className="scroll-smooth">
 
       {/* Section 1 - Welcome */}
-      <section className="flex items-center justify-center  w-full  h-screen bg-white">
-        <h1 className="text-5xl font-bold text-gray-800">
+      <section className="flex items-center justify-center  w-full  h-screen ">
+        <h1 className="text-5xl font-bold ">
           WELCOME TO DEMIREN
         </h1>
       </section>
 
       {/* Section 2  */}
       <section id="about" className="flex items-center justify-center h-screen w-full bg-[#769FCD]">
-        <h1 className="text-5xl font-bold text-gray-700">
+        <h1 className="text-5xl font-bold ">
           EXPLORE BEST ROOMS IN DEMIREN "vid ang bg ani"
         </h1>
       </section>

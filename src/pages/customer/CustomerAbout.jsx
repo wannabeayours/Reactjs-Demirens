@@ -6,11 +6,11 @@ import React from 'react'
 function CustomerAbout() {
   return (
 
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div >
+      <div>
 
       
-        <section className="h-screen flex flex-col justify-center items-center text-center mb-16">
+        <section className="flex items-center justify-center h-screen bg-gray-100">
           <h1 className="text-3xl font-bold sm:text-4xl lg:text-5xl">
             About Demiren Hotel
           </h1>
@@ -55,7 +55,7 @@ function CustomerAbout() {
             <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <BookOpen />
               <h2 className="text-2xl font-bold mb-4">Our History</h2>
-              <p className="text-gray-600">
+              <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
                 Our commitment to exceptional service and attention to detail has earned us numerous awards and
                 a loyal clientele from around the world.
@@ -65,7 +65,7 @@ function CustomerAbout() {
             <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <Building2 />
               <h2 className="text-2xl font-bold mb-4">Our Facilities</h2>
-              <p className="text-gray-600">
+              <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
                 Our commitment to exceptional service and attention to detail has earned us numerous awards and
                 a loyal clientele from around the world.
@@ -75,7 +75,7 @@ function CustomerAbout() {
             <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <HandshakeIcon />
               <h2 className="text-2xl font-bold mb-4">Our Promise</h2>
-              <p className="text-gray-600">
+              <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
                 Our commitment to exceptional service and attention to detail has earned us numerous awards and
                 a loyal clientele from around the world.

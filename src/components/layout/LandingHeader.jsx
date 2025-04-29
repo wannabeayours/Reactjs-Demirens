@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import {
   NavigationMenu,
@@ -42,17 +42,36 @@ const components = [
 ];
 
 function LandingHeader() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 50;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    return () => document.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
+
+
   return (
-    <div className="fixed top-0 left-0 w-full  flex items-center justify-between px-8 py-8 z-50 shadow">
+    <div className={`sticky  top-0 left-0 w-full  flex items-center justify-between px-8 py-8 z-50 shadow transition-all duration-500 ease-in-out ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
       <div className="flex items-center gap-x-6">
-        <div className="flex-shrink-0 font-bold uppercase text-sm">
+        <div className="flex-shrink-0 font-bold uppercase text-sm ">
           LOGO
         </div>
 
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Menu</NavigationMenuTrigger>
+              <NavigationMenuTrigger>
+                <Button variant={"ghost"}>
+                  Menu
+                </Button>
+              </NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr] text-lg">
                   {components.map((item) => (
@@ -73,11 +92,11 @@ function LandingHeader() {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <Link to="/customer/bookings">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              {/* <Link to="/customer/bookings">
+                <Button >
                   Book Now
-                </NavigationMenuLink>
-              </Link>
+                </Button>
+              </Link> */}
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
@@ -91,9 +110,14 @@ function LandingHeader() {
 
 
 
-      <Link to="/login">
-        <Button variant={"outline"} className={"mr-4"}>
+      {/* <Link to="/login">
+        <Button className={"mr-4"}>
           Sign In
+        </Button>
+      </Link> */}
+      <Link to="/customer/bookings">
+        <Button  className={"mr-4"}>
+          Book Now
         </Button>
       </Link>
       <ThemeToggle />
