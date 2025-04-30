@@ -32,6 +32,10 @@ import CustomerRooms from './pages/customer/CustomerRooms';
 import CustomerGallery from './pages/customer/CustomerGallery';
 import CustomerRestaurant from './pages/customer/CustomerRestaurant';
 import Footer from './components/layout/Footer';
+import { useEffect } from 'react';
+import CustomerHeader from './components/layout/CustomerHeader';
+import CustomerMain from './pages/customer/CustomerMain';
+import { Toaster } from 'sonner';
 
 
 
@@ -39,8 +43,22 @@ import Footer from './components/layout/Footer';
 
 
 function App() {
-  return (
 
+  useEffect(() => {
+    if (localStorage.getItem("url") !== "http://localhost/demiren/api/") {
+      localStorage.setItem("url", "http://localhost/demiren/api/");
+    }
+
+    localStorage.setItem("userId", 2
+
+    )
+  }, []);
+
+
+
+  return (
+    <>
+    <Toaster />
     <Router>
       {/* <div>
         {localStorage.getItem("role") === "admin" ? <AdminHeader />
@@ -48,7 +66,8 @@ function App() {
             : localStorage.getItem("role") === "customer" ? <CustomerHeader />
               : <LandingHeader />
         } */}
-      <LandingHeader />
+      {/* <LandingHeader /> */}
+      
 
       <div style={{ flex: 1, padding: '20px' }}>
         <Routes>
@@ -77,15 +96,20 @@ function App() {
           <Route path="/customer/rooms" element={<CustomerRooms />} />
           <Route path="/customer/gallery" element={<CustomerGallery />} />
           <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
+          <Route path="/customer" element={<CustomerMain />} />
           
 
 
         </Routes>
       </div>
-      <Footer />
+      {/* <Footer /> */}
 
     </Router>
+    </>
   );
+  
+
+    
 }
 
 export default App;
