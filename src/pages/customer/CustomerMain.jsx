@@ -5,6 +5,7 @@ import CustomerHeader from '@/components/layout/CustomerHeader';
 import CustomerBookingHis from './CustomerBookingHis';
 import CustomerReqAmenities from './CustomerReqAmenities';
 import CustomerInvoices from './CustomerInvoices';
+import CustomerSettings from './CustomerSettings';
 
 function CustomerMain() {
     const [viewIndex, setViewIndex] = useState(0);
@@ -14,6 +15,7 @@ function CustomerMain() {
         <CustomerBookingHis/>,
         <CustomerReqAmenities/>,
         <CustomerInvoices/>,
+        <CustomerSettings/>,
         
     ]
     const handleViewChange = (index) => {

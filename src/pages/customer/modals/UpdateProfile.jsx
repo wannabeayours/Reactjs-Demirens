@@ -43,67 +43,70 @@ function UpdateProfile() {
         console.log("Register values:", values);
     }
     return (
-    
-            <Dialog>
-                <DialogTrigger>
-                    <Button className="mr-2">
-                        <LucideEdit className="w-4 h-4 mr-2" />
-                        Edit Profile
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
 
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Dialog>
+            <DialogTrigger>
+                <Button className="mr-2">
+                    <LucideEdit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
 
-                          
-                                {/* First Name */}
-                                <FormField
-                                    control={form.control}
-                                    name="firstName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>First Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter your first name" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <div className='text-lg font-bold flex justify-center'>
+                            Update Profile
+                        </div>
 
-                                {/* Last Name */}
-                                <FormField
-                                    control={form.control}
-                                    name="lastName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Last Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter your last name" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                 
-                                {/* Email */}
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="you@example.com" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                      
 
-                            {/* Nationality
+                        {/* First Name */}
+                        <FormField
+                            control={form.control}
+                            name="firstName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>First Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter your first name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Last Name */}
+                        <FormField
+                            control={form.control}
+                            name="lastName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Last Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter your last name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Email */}
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="you@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+
+                        {/* Nationality
                                 <FormField
                                     control={form.control}
                                     name="nationality"
@@ -160,7 +163,7 @@ function UpdateProfile() {
                                 />
                           
                              */}
-                            {/* Date of Birth
+                        {/* Date of Birth
                             <FormField
                                 control={form.control}
                                 name="dob"
@@ -199,43 +202,47 @@ function UpdateProfile() {
                                 )}
                             /> */}
 
-                            <FormField
-                                control={form.control}
-                                name="username"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Username:</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter Username" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="phone"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Phone Number:</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter Phone Number" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <FormField
+                            control={form.control}
+                            name="username"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Username:</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter Username" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Phone Number:</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter Phone Number" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
 
+                        <div className='flex justify-end'>
+                            <Button type="submit" >
+                                Update
+                            </Button>
+                        </div>
 
-                            <Button type="submit">Update</Button>
 
-                        </form>
-                    </Form>
+                    </form>
+                </Form>
 
-                </DialogContent>
-            </Dialog>
-        
+            </DialogContent>
+        </Dialog>
+
 
     )
 }

@@ -1,15 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import React, { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Settings } from 'lucide-react'
 import UpdateProfile from './modals/UpdateProfile'
-
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import axios from 'axios'
 import { toast } from 'sonner'
 import Spinner from '@/components/ui/spinner'
+
 
 function CustomerProfile() {
   const [userData, setUserData] = useState({});
@@ -61,10 +59,7 @@ function CustomerProfile() {
               </div>
               <div className='mt-6'>
                 <UpdateProfile />
-                <Button variant={"outline"}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings and Privacy
-                </Button>
+             
               </div>
 
 
@@ -75,7 +70,7 @@ function CustomerProfile() {
             <CardContent>
               <CardHeader>
 
-                <CardTitle className="text-2xl font-semibold">Personal Information</CardTitle>
+                <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
               </CardHeader>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div >

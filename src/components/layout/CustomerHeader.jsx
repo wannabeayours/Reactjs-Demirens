@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, User } from 'lucide-react';
+import { History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, Shield, User } from 'lucide-react';
 import React, { useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 const CustomerHeader = ({ handleViewChange }) => {
   const [open, setOpen] = useState(false);
@@ -25,6 +26,7 @@ const CustomerHeader = ({ handleViewChange }) => {
     { label: "Booking History", icon: <History className="w-4 h-4" /> },
     { label: "Requested Amenities", icon: <Send className="w-4 h-4" /> },
     { label: "Invoice", icon: <ReceiptText className="w-4 h-4" /> },
+    { label: "Password and Security", icon: <Shield className="w-4 h-4" /> },
   ];
 
 
@@ -68,6 +70,7 @@ const CustomerHeader = ({ handleViewChange }) => {
       <h1 className="text-lg font-semibold text-end px-8   flex-grow">
         Demiren Hotel and Restaurant
       </h1>
+      <ThemeToggle />
     </div>
   );
 };
