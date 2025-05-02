@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/src/components/ui/badge'
-import { Table, TableBody, TableCell, TableCaption, TableHead, TableHeader, TableRow } from '@/src/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableCaption, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Send } from 'lucide-react'
 import React from 'react'
 

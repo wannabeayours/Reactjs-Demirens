@@ -8,10 +8,10 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import Spinner from '@/components/ui/spinner'
 
-
 function CustomerProfile() {
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(false);
+
   const getProfile = async () => {
     setLoading(true)
     try {
@@ -23,10 +23,7 @@ function CustomerProfile() {
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
-
       setUserData(res.data);
-      
-
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -38,7 +35,6 @@ function CustomerProfile() {
 
   useEffect(() => {
     getProfile();
-
   }, []);
 
 
@@ -48,9 +44,9 @@ function CustomerProfile() {
         <Spinner />
       ) : (
         <div className="flex items-center justify-center flex-col">
-          <Card className={" px-10 mt-10 w-1/2"}>
+          <Card className={"px-10 mt-10 w-full md:w-1/2"}>
             <div className="flex flex-col items-center justify-center">
-              <Avatar className="w-40 h-40 ">
+              <Avatar className="w-40 h-40">
                 <AvatarImage src="https://github.com/shadcn.png" alt="profile" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
@@ -58,20 +54,13 @@ function CustomerProfile() {
                 <h2 className="text-lg font-semibold mt-3">{userData.customers_email}</h2>
               </div>
               <div className='mt-6'>
-                <UpdateProfile />
-             
+                <UpdateProfile data={userData} getProfile={getProfile} />
               </div>
-
-
             </div>
           </Card>
-
-          <Card className={" px-10 mt-10 w-1/2"}>
+          <Card className={"px-10 mt-10 w-full md:w-1/2"}>
             <CardContent>
-              <CardHeader>
-
-                <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
-              </CardHeader>
+              <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div >
                   <Label className="mb-2">
@@ -127,12 +116,6 @@ function CustomerProfile() {
                     value={userData.customers_date_of_birth}
                   />
                 </div>
-
-
-
-
-
-
               </div>
             </CardContent>
           </Card>

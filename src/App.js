@@ -36,10 +36,7 @@ import { useEffect } from 'react';
 import CustomerHeader from './components/layout/CustomerHeader';
 import CustomerMain from './pages/customer/CustomerMain';
 import { Toaster } from 'sonner';
-
-
-
-
+import { Check, CheckCircle2Icon, XCircleIcon } from 'lucide-react';
 
 
 function App() {
@@ -49,16 +46,23 @@ function App() {
       localStorage.setItem("url", "http://localhost/demiren/api/");
     }
 
-    localStorage.setItem("userId", 2
-
-    )
+    localStorage.setItem("userId", 2);
+    localStorage.setItem("customerOnlineId", 1);
   }, []);
 
 
 
   return (
     <>
-    <Toaster />
+    <Toaster 
+    richColors 
+    duration={2000}
+    icons={{
+      success: <CheckCircle2Icon />,
+      error: <XCircleIcon />,
+    }}
+    
+    />
     <Router>
       {/* <div>
         {localStorage.getItem("role") === "admin" ? <AdminHeader />

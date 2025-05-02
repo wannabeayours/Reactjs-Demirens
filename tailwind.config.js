@@ -2,7 +2,7 @@
 module.exports = {
   darkMode: 'class',
   content: [
-    "./src/**/*.{js,jsx}", 
+    "./src/**/*.{js,jsx}",
   ],
   theme: {
     extend: {
@@ -29,6 +29,20 @@ module.exports = {
       },
       borderRadius: {
         lg: "var(--radius)",
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+      },
+      animation: {
+        'fade-in': 'fadeIn 100ms ease-out forwards',
+        'fade-out': 'fadeOut 100ms ease-in forwards',
       },
     },
   },

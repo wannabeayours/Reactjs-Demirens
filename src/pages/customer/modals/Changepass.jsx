@@ -14,14 +14,14 @@ import {
     FormMessage
 } from "@/components/ui/form"
 import { cn } from '@/lib/utils'
+import axios from 'axios'
+import { toast } from 'sonner'
 
 const schema = z.object({
-    firstName: z.string().min(1, { message: "First name is required" }),
-    lastName: z.string().min(1, { message: "Last name is required" }),
-    email: z.string().email({ message: "Please enter a valid email" }),
-    username: z.string().min(1, { message: "Username is required" }),
-    phone: z.string().min(1, { message: "Contact number is required" }),
-}).refine((val) => !isNaN(val), { message: "This field must be a number" })
+    oldpass: z.string().min(1, { message: "Old password is required" }),
+    newpass: z.string().min(1, { message: "New password is required" }),
+    confirmpass: z.string().min(1, { message: "Confirm password is required" }),
+})
 
 
 function Changepass() {
@@ -32,12 +32,36 @@ function Changepass() {
             oldpass: "",
             newpass: "",
             confirmpass: "",
-
         },
     })
 
-    const onSubmit = (values) => {
-        console.log("Register values:", values);
+    const onSubmit = async (values) => {
+        if (values.newpass !== values.confirmpass) {
+            toast.error("New password and confirm password does not match");
+            return
+        }
+        try {
+            const url = localStorage.getItem('url') + "customer.php";
+            const customerOnlineId = localStorage.getItem("customerOnlineId");
+            const formData = new FormData();
+            const jsonData = {
+                "customers_online_id": customerOnlineId,
+                "current_password": values.oldpass,
+                "new_password": values.newpass,
+            }
+            formData.append("operation", "customerChangePassword");
+            formData.append("json", JSON.stringify(jsonData));
+            const res = await axios.post(url, formData);
+            console.log("res ni onSubmit", res);
+            if (res.data === -1) {
+                toast.error("Current password is incorrect");
+            }else if(res.data === 1){
+                toast.success("Password changed successfully");
+            }
+        } catch (error) {
+            toast.error("Something went wrong");
+            console.error(error);
+        }
     }
     return (
         <Dialog>
@@ -56,13 +80,14 @@ function Changepass() {
 
 
                         <FormField
+                           
                             control={form.control}
                             name="oldpass"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Old Password:</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Enter old password" {...field} />
+                                        <Input type="password" placeholder="Enter old password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -77,7 +102,7 @@ function Changepass() {
                                 <FormItem>
                                     <FormLabel>New Password:</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Enter new password" {...field} />
+                                        <Input  type="password" placeholder="Enter new password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -91,7 +116,7 @@ function Changepass() {
                                 <FormItem>
                                     <FormLabel>Confirm new Password:</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Confirm new password" {...field} />
+                                        <Input  type="password" placeholder="Confirm new password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -99,20 +124,18 @@ function Changepass() {
                         />
                         <div>
                             <div>
-                            <Button variant="link">
-                            Forgot Password
-                        </Button>
+                                <Button variant="link">
+                                    Forgot Password
+                                </Button>
                             </div>
-                            <div  className="flex justify-end">
+                            <div className="flex justify-end">
 
-                            <Button>
-                            Change Password
-                        </Button>
+                                <Button type="submit">
+                                    Change Password
+                                </Button>
                             </div>
-                      
+
                         </div>
-                       
-
 
                     </form>
                 </Form>
