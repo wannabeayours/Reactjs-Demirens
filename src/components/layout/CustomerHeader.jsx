@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, Shield, User } from 'lucide-react';
+import { Book, History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, Shield, User } from 'lucide-react';
 import React, { useState } from 'react';
 import ThemeToggle from './ThemeToggle';
 
@@ -23,6 +23,7 @@ const CustomerHeader = ({ handleViewChange }) => {
   const sidebarList = [
     { label: "Dashboard", icon: <Home className="w-4 h-4" /> },
     { label: "Profile", icon: <User className="w-4 h-4" /> },
+    { label: "Booking Summary", icon: <Book className="w-4 h-4" /> },
     { label: "Booking History", icon: <History className="w-4 h-4" /> },
     { label: "Requested Amenities", icon: <Send className="w-4 h-4" /> },
     { label: "Invoice", icon: <ReceiptText className="w-4 h-4" /> },

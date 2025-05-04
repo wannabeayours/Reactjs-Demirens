@@ -1,0 +1,148 @@
+show alert how to use---------------------------------------------------------------------------
+
+
+  const [alertMessage, setAlertMessage] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleShowAlert = () => {
+  // "This action cannot be undone. It will permanently delete the item and remove it from your list"
+  setAlertMessage("Kunwari alert message diri");
+   setShowAlert(true);
+   };
+   const handleCloseAlert = (status) => {
+    if (status === 1) {
+     // if gi click ang confirm, execute tanan diri 
+   }
+    setShowAlert(false);
+  };
+
+
+  <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
+
+
+show alert how to use---------------------------------------------------------------------------
+
+
+
+
+data table how to use---------------------------------------------------------------------------
+
+  // Sample data
+  const data = [
+    { user_id: 1, user_name: 'John Doe', user_age: 30, user_email: 'john@example.com' },
+    { user_id: 2, user_name: 'Jane Smith', user_age: 25, user_email: 'jane@example.com' },
+    { user_id: 3, user_name: 'Bob Johnson', user_age: 35, user_email: 'bob@example.com' },
+  ];
+
+  // Define columns
+  const columns = [
+    { header: 'ID', accessor: 'user_id', sortable: true },
+    { header: 'Name', accessor: 'user_name', className: (row) => row.user_name === "Kobid" ? "bg-red-500" : "" },
+    { header: 'Age', accessor: 'user_age'},
+    { header: 'Email', accessor: 'user_email', hiddenOnMobile: true},
+    { 
+      header: 'Actions', 
+      cell: (row) => (
+        <button onClick={() => alert(`Edit user ${row.name}`)}>
+          Edit
+        </button>
+      )
+    },
+  ];
+
+
+  <DataTable columns={columns} data={data} itemsPerPage={5} />
+
+// mga parameters kung kailangan nimo eh add (optionals)
+const DataTable = ({
+  columns,
+  data,
+  itemsPerPage = 10,
+  autoIndex = false,
+  title,
+  add,
+  hideSearch = false,
+  onRowClick,
+  idAccessor,
+  headerAction,
+  tableCaption,
+  isSelectable = false,
+  selectedData,
+}) => 
+
+export default ExamplePage;
+
+data table how to use---------------------------------------------------------------------------
+
+
+
+
+combo-box how to use---------------------------------------------------------------------------
+
+
+if (res.data !== 0) {
+    const formattedData = res.data.map((item) => ({
+      value: item.user_id,
+      label: item.user_fullname,
+    }));
+}
+
+
+   <FormField
+    name="nationality"
+    control={form.control}
+    render={({ field }) => (
+        <FormItem>
+            <FormLabel>Nationality</FormLabel>
+            <div>
+                <ComboBox
+                    list={nationality}
+                    subject="nationality"
+                    value={field.value}
+                    onChange={field.onChange}
+                />
+            </div>
+            <FormMessage />
+        </FormItem>
+    )}
+  />
+
+combo-box how to use---------------------------------------------------------------------------
+
+
+date form---------------------------------------------------------------------------
+
+  <FormField
+    control={form.control}
+    name="dob"
+    render={({ field }) => (
+      <FormItem>
+        <DatePicker
+          form={form}
+          name={field.name}
+          label="Date of birth"
+          pastAllowed={true}
+          futureAllowed={false}
+        />
+      </FormItem>
+    )}
+  />
+
+date form---------------------------------------------------------------------------
+
+
+number only form---------------------------------------------------------------------------
+
+//sa form schema ni
+
+points: z
+  .string()
+  .min(1, {
+    message: "This field is required",
+  })
+  .refine((value) => !isNaN(Number(value)), {
+    message: "Points must be a number",
+  }),
+
+
+number only form---------------------------------------------------------------------------

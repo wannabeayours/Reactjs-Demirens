@@ -24,7 +24,7 @@ function CustomerProfile() {
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
       setUserData(res.data);
-      localStorage.setItem("customers_fname", res.data.customers_fname);
+      localStorage.setItem("fname", res.data.customers_fname);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);

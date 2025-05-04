@@ -6,12 +6,14 @@ import CustomerBookingHis from './CustomerBookingHis';
 import CustomerReqAmenities from './CustomerReqAmenities';
 import CustomerInvoices from './CustomerInvoices';
 import CustomerSettings from './CustomerSettings';
+import CustomerBookingSummary from './CustomerBookingSummary';
 
 function CustomerMain() {
-    const [viewIndex, setViewIndex] = useState(0);
+    const [viewIndex, setViewIndex] = useState(localStorage.getItem("viewIndex") || 0);
     const customerpages = [
         <CustomerDashboard/>,
         <CustomerProfile/>,
+        <CustomerBookingSummary/>,
         <CustomerBookingHis/>,
         <CustomerReqAmenities/>,
         <CustomerInvoices/>,
@@ -19,6 +21,7 @@ function CustomerMain() {
         
     ]
     const handleViewChange = (index) => {
+        localStorage.setItem("viewIndex", index);
         setViewIndex(index);
       };
 

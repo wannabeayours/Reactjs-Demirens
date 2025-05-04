@@ -1,22 +1,36 @@
-import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useRef } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
 
 const ComboBox = ({ list, subject, value, onChange, styles, others }) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [filteredItems, setFilteredItems] = useState(list.slice(0, 200));
-  const scrollRef = useRef(null);
+  const comboBoxRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (inputValue === '') {
       setFilteredItems(list.slice(0, 200));
+    } else {
+      const newFilteredItems = list
+        .filter(item => item?.label?.toLowerCase().includes(inputValue.toLowerCase()))
+        .slice(0, 200);
+      setFilteredItems(newFilteredItems);
     }
   }, [inputValue, list]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (comboBoxRef.current && !comboBoxRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -26,111 +40,97 @@ const ComboBox = ({ list, subject, value, onChange, styles, others }) => {
     }
   }, [open]);
 
-  const handleInputChange = (newInputValue) => {
-    setInputValue(newInputValue);
-    if (newInputValue === '') {
-      setFilteredItems(list.slice(0, 200));
-    } else {
-      const newFilteredItems = list
-        .filter(item => item?.label?.toLowerCase().includes(newInputValue.toLowerCase()))
-        .slice(0, 200);
-      setFilteredItems(newFilteredItems);
-    }
-  };
-
-  const handleWheel = (event) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop += event.deltaY;
-    }
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between", 
-            !styles ? "bg-[#0e4028] border-2 border-[#0b864a] hover:bg-[#0e5a35]" : styles
-          )}
-        >
-          <span className="truncate">
-            {value ? list.find((item) => item.value === value)?.label : `Select ${subject}...`}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-75" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-full p-0"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onInteractOutside={(e) => {
-          const isCombobox = e.target.closest('[role="combobox"]');
-          if (isCombobox) {
-            e.preventDefault();
-          }
-        }}
+    <div className="relative w-full" ref={comboBoxRef}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        className={cn(
+          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent dark:bg-input/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          styles,
+          open ? "ring-2 ring-ring ring-offset-2" : ""
+        )}
+        onClick={() => setOpen(!open)}
       >
-        <Command shouldFilter={false}>
-          <CommandInput
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={handleInputChange}
-            placeholder={`Search ${subject}...`}
-            className="focus-visible:ring-0 focus-visible:ring-offset-0 border-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-          />
-          <CommandList
-            ref={scrollRef}
-            onWheel={handleWheel}
-          >
-            <CommandEmpty>No {subject} found.</CommandEmpty>
-            <CommandGroup>
-              {filteredItems.length > 0 ? (
-                <>
-                  {others && (
-                    <CommandItem
-                      onSelect={() => {
-                        others();
-                        setOpen(false);
-                      }}
-                    >
-                      <Check className="mr-2 h-4 w-4 opacity-0" />
-                      Others
-                    </CommandItem>
-                  )}
-                  {filteredItems.map((item) => (
-                    <CommandItem
-                      key={item.value}
-                      value={item.value}
-                      onSelect={() => {
-                        onChange(item.value);
-                        setOpen(false);
-                      }}
-                    >
+        <span className="truncate">
+          {value ? list.find((item) => item.value === value)?.label : `Select ${subject}...`}
+        </span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </button>
+
+      {/* Dropdown Content */}
+      {open && (
+        <div className="absolute z-50 mt-1 w-full min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80">
+          {/* Search Input */}
+          <div className="sticky top-0 border-b bg-background p-2">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={`Search ${subject}...`}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              value={inputValue}
+              onChange={handleInputChange}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          {/* Items List */}
+          <div className="max-h-[300px] overflow-y-auto p-1">
+            {filteredItems.length > 0 ? (
+              <>
+                {others && (
+                  <div
+                    className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => {
+                      others();
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
+                      <Check className="h-4 w-4 opacity-0" />
+                    </span>
+                    Others
+                  </div>
+                )}
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.value}
+                    className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => {
+                      onChange(item.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "h-4 w-4",
                           value === item.value ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {item.label}
-                    </CommandItem>
-                  ))}
-                </>
-              ) : (
-                <CommandEmpty>No items found.</CommandEmpty>
-              )}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                    </span>
+                    {item.label}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="py-2 text-center text-sm text-muted-foreground">
+                No {subject} found.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default ComboBox;
