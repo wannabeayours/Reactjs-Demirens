@@ -9,7 +9,7 @@ function CustomerBookingSummary() {
     
       useEffect(() => {
         const name = localStorage.getItem("fname");
-        setFname(name);
+        setFname(name || "WOW");
       }, []);
     
 
