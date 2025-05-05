@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 
 const schema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -33,15 +34,7 @@ const schema = z.object({
 function CustomerDashboard() {
   const [rooms, setRooms] = useState([]);
 
-  const form = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      contactNumber: "",
-    },
-  })
+
 
   const getRooms = async () => {
     try {
@@ -241,9 +234,18 @@ function CustomerDashboard() {
                 <div>
                   <h5>Room Price : ₱ {room.roomtype_price}</h5>
                 </div>
-                <div className="flex justify-end">
-                  <Button>Book</Button>
+                <div className="flex justify-between mt-4">
+                  <div>
+                  <Badge variant= {room.status_id === 3 ? "default" : "secondary"} >{room.status_name}</Badge>
+                  </div>
+               
+                  <div className="flex justify-end">
+                    <Button disabled={room.status_id !== 3}>Book</Button>
+
+
+                  </div>
                 </div>
+
               </CardContent>
             </Card>
           ))}
