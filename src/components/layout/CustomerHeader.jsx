@@ -32,7 +32,7 @@ const CustomerHeader = ({ handleViewChange }) => {
 
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between grid-cols-2">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="outline">

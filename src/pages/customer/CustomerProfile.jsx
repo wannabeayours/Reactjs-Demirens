@@ -52,7 +52,7 @@ function CustomerProfile() {
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-lg font-semibold mt-3">{userData.customers_email}</h2>
+                <h2 className="text-lg font-semibold mt-3">{userData.customers_online_username}</h2>
               </div>
               <div className='mt-6'>
                 <UpdateProfile data={userData} getProfile={getProfile} />
@@ -83,11 +83,11 @@ function CustomerProfile() {
                 </div>
                 <div>
                   <Label className="mb-2">
-                    Username:
+                    Email:
                   </Label>
                   <Input
                     readOnly
-                    value={userData.customers_online_username}
+                    value={userData.customers_email}
                   />
                 </div>
                 <div>

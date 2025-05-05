@@ -15,9 +15,10 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form"
-import { useForm } from "react-hook-form"
+
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from 'react-hook-form'
 
 const schema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
