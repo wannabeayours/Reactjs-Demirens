@@ -1,11 +1,11 @@
-import React, {  useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Button } from '@/components/ui/button'
 import { ArrowBigRight, PlusIcon } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet'
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormField,
@@ -31,19 +31,19 @@ const schema = z.object({
 
 
 function CustomerDashboard() {
-  const [rooms , setRooms] = useState({});
+  const [rooms, setRooms] = useState([]);
 
-   const form = useForm({
-      resolver: zodResolver(schema),
-      defaultValues: {
-        firstName: "",
-        lastName: "",
-        email: "",
-        contactNumber: "",
-      },
-    })
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      contactNumber: "",
+    },
+  })
 
-  const getRooms = async () =>{
+  const getRooms = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
       const formData = new FormData();
@@ -54,7 +54,7 @@ function CustomerDashboard() {
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-      
+
     }
   }
   useEffect(() => {
@@ -64,15 +64,15 @@ function CustomerDashboard() {
 
   return (
 
-       <div>
-          
-          <section className="flex items-center justify-center h-[50vh] bg-gray-100">
-            <h1 className="text-2xl font-bold text-center">DIRI TONG CHECK IN CHECK OUT</h1>
-          </section>
+    <div>
+
+      <div className="flex items-center justify-center h-[50vh] bg-gray-100">
+        <h1 className="text-2xl font-bold text-center">DIRI TONG CHECK IN CHECK OUT</h1>
+      </div>
+
+      <div className="flex flex-col items-center justify-center py-10 px-4">
+        {/* <Card className="flex flex-col md:flex-row w-full max-w-5xl p-6 gap-6">
     
-          <section className="flex flex-col items-center justify-center py-10 px-4">
-            <Card className="flex flex-col md:flex-row w-full max-w-5xl p-6 gap-6">
-              {/* Carousel */}
               <div className="w-full md:w-2/5">
                 <Carousel className="w-full">
                   <CarouselContent>
@@ -229,10 +229,27 @@ function CustomerDashboard() {
                   </div>
                 </div>
               </div>
+            </Card> */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {rooms.length === 0 ? <p>No rooms available</p> : rooms.map((room, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>{room.roomtype_name}</CardTitle>
+                <CardDescription>{room.roomtype_description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <h5>Room Price : ₱ {room.roomtype_price}</h5>
+                </div>
+                <div className="flex justify-end">
+                  <Button>Book</Button>
+                </div>
+              </CardContent>
             </Card>
-          </section>
+          ))}
         </div>
+      </div>
+    </div>
   )
 }
-
 export default CustomerDashboard

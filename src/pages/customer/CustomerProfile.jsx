@@ -44,7 +44,7 @@ function CustomerProfile() {
       {loading ? (
         <Spinner />
       ) : (
-        <div className="flex items-center justify-center flex-col">
+        <div className="flex items-center justify-center flex-col ">
           <Card className={"px-10 mt-10 w-full md:w-1/2"}>
             <div className="flex flex-col items-center justify-center">
               <Avatar className="w-40 h-40">
@@ -62,7 +62,7 @@ function CustomerProfile() {
           <Card className={"px-10 mt-10 w-full md:w-1/2"}>
             <CardContent>
               <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                 <div >
                   <Label className="mb-2">
                     First Name:
