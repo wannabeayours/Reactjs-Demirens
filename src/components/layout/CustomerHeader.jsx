@@ -26,6 +26,7 @@ const CustomerHeader = ({ handleViewChange }) => {
     { label: "Booking Summary", icon: <Book className="w-4 h-4" /> },
     { label: "Booking History", icon: <History className="w-4 h-4" /> },
     { label: "Requested Amenities", icon: <Send className="w-4 h-4" /> },
+    { label: "View Booking", icon: <Book className="w-4 h-4" /> },
     { label: "Invoice", icon: <ReceiptText className="w-4 h-4" /> },
     { label: "Password and Security", icon: <Shield className="w-4 h-4" /> },
   ];

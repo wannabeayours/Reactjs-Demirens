@@ -7,6 +7,7 @@ import CustomerReqAmenities from './CustomerReqAmenities';
 import CustomerInvoices from './CustomerInvoices';
 import CustomerSettings from './CustomerSettings';
 import CustomerBookingSummary from './CustomerBookingSummary';
+import CustomerViewBookings from './CustomerViewBookings';
 
 function CustomerMain() {
     const [viewIndex, setViewIndex] = useState(localStorage.getItem("viewIndex") || 0);
@@ -16,6 +17,7 @@ function CustomerMain() {
         <CustomerBookingSummary/>,
         <CustomerBookingHis/>,
         <CustomerReqAmenities/>,
+        <CustomerViewBookings/>,
         <CustomerInvoices/>,
         <CustomerSettings/>,
         
