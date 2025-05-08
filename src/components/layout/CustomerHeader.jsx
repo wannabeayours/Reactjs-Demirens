@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Book, History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, Shield, User } from 'lucide-react';
+import { Book, History, Home, LogOutIcon, MenuSquareIcon, ReceiptText, Send, Shield, Star, User } from 'lucide-react';
 import React, { useState } from 'react';
 import ThemeToggle from './ThemeToggle';
 
@@ -28,6 +28,7 @@ const CustomerHeader = ({ handleViewChange }) => {
     { label: "Requested Amenities", icon: <Send className="w-4 h-4" /> },
     { label: "View Booking", icon: <Book className="w-4 h-4" /> },
     { label: "Invoice", icon: <ReceiptText className="w-4 h-4" /> },
+    { label: "Feedback", icon: <Star className="w-4 h-4" /> },
     { label: "Password and Security", icon: <Shield className="w-4 h-4" /> },
   ];
 
