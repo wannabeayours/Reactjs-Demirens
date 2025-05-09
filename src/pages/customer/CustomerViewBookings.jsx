@@ -10,6 +10,7 @@ function CustomerViewBookings() {
   const [errorMessage, setErrorMessage] = useState('');
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
+  const [currentbookings, setCurrentbookings] = useState([]);
 
 
   const customerViewBookings = async () => {
@@ -37,92 +38,116 @@ function CustomerViewBookings() {
     }
   };
 
-  const customerCancelBooking = async ()=> {
+  const customerCurrentBookings = async () => {
     try {
-        const url = localStorage.getItem('url') + "customer.php";
-        const bookingId = localStorage.getItem("bookingId");
-        const jsonData = { "booking_id": bookingId};
-        const formData = new FormData();
-        formData.append("json", JSON.stringify(jsonData));
-        formData.append("operation", "customerCancelBooking")
-        const res = await axios.post(url, formData)
-        console.log("Submit", res);
-        customerViewBookings();
-    
-        
+      const url = localStorage.getItem('url') + "customer.php";
+      const CustomerId = localStorage.getItem("userId");
+      const jsonData = { "booking_customer_id": CustomerId };
+      const formData = new FormData();
+      formData.append("operation", "customerCurrentBookings");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      setCurrentbookings(res.data !== 0 ? res.data : []);
+      console.log("woaaah res ni vack to vack:", res);
     } catch (error) {
-        toast.error("Something went wrong");
-        console.error(error);
-        
+      toast.error("Something went wrong");
+      console.error(error);
+
+    }
+  }
+
+  const customerCancelBooking = async () => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const bookingId = localStorage.getItem("bookingId");
+      const jsonData = { "booking_id": bookingId };
+      const formData = new FormData();
+      formData.append("json", JSON.stringify(jsonData));
+      formData.append("operation", "customerCancelBooking")
+      const res = await axios.post(url, formData)
+      console.log("Submit", res);
+      customerViewBookings();
+
+
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+
     }
   }
 
   const handleShowAlert = () => {
     // "This action cannot be undone. It will permanently delete the item and remove it from your list"
     setAlertMessage("Are you sure you want to cancel your booking?");
-     setShowAlert(true);
-     };
-     const handleCloseAlert = (status) => {
-      if (status === 1 ) {
-       // if gi click ang confirm, execute tanan diri 
-       customerCancelBooking();
-     }
-      setShowAlert(false);
-    };
-  
+    setShowAlert(true);
+  };
+  const handleCloseAlert = (status) => {
+    if (status === 1) {
+      // if gi click ang confirm, execute tanan diri 
+      customerCancelBooking();
+    }
+    setShowAlert(false);
+  };
+
 
   useEffect(() => {
     customerViewBookings();
     customerCancelBooking();
+    customerCurrentBookings();
   }, []);
 
   return (
-    <div className="flex items-center justify-center flex-col">
-      <Card className="px-10 mt-10 w-1/2">
-        <h2 className="text-lg font-bold">View Bookings Details</h2>
+    <div className = "grid grid-cols-1 md:grid-cols-2 gap-3 ">
+      {currentbookings.map((item, index) => (
+        <div key={index}>
+          <Card className="px-10 mt-10">
+            <h2 className="text-lg font-bold">View Bookings Details</h2>
 
-        <div className=" shadow-lg rounded-lg p-6">
-          {errorMessage ? (
-            <div className=" text-red-500">
-              <strong>{errorMessage}</strong>
+            <div className=" shadow-lg rounded-lg p-6">
+              {errorMessage ? (
+                <div className=" text-red-500">
+                  <strong>{errorMessage}</strong>
+                </div>
+              ) : (
+                viewBook.length > 0 ? (
+                  <div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Room Type: {item.roomtype_name}</h2>
+                      <h2 className="font-semibold">Booking Status: </h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Room Number: {item.roomnumber_id}</h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Room Sizes: {item.room_sizes} </h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Room Price:</h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Room Beds: {item.room_beds} Beds</h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Down Payment: ₱ {item.booking_downpayment} </h2>
+                    </div>
+                    <div className="mb-4">
+                      <h2 className="font-semibold">Check-in Date: {item.booking_checkin_dateandtime} </h2>
+                      <h2 className="font-semibold">Check-out Date: {item.booking_checkout_dateandtime}</h2>
+                    </div>
+                    <div className="mt-6">
+                      <Button variant="outline" onClick={handleShowAlert}>Cancel Booking</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-600">No booking details available</div>
+                )
+              )}
             </div>
-          ) : (
-            viewBook.length > 0 ? (
-              <div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Type:</h2>
-                  <h2 className="font-semibold">Booking Status: </h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Number: </h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Sizes: </h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Price:</h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Beds: </h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Down Payment: </h2>
-                </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Check-in Date: </h2>
-                  <h2 className="font-semibold">Check-out Date: </h2>
-                </div>
-                <div className="mt-6">
-                  <Button variant="outline" onClick={handleShowAlert}>Cancel Booking</Button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-600">No booking details available</div>
-            )
-          )}
+          </Card>
         </div>
-      </Card>
-      <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={3}/>
+      ))}
+
+      <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={3} />
     </div>
   );
 }
