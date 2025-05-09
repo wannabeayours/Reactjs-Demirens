@@ -106,6 +106,9 @@ function CustomerViewBookings() {
                   <h2 className="font-semibold">Room Beds: </h2>
                 </div>
                 <div className="mb-4">
+                  <h2 className="font-semibold">Down Payment: </h2>
+                </div>
+                <div className="mb-4">
                   <h2 className="font-semibold">Check-in Date: </h2>
                   <h2 className="font-semibold">Check-out Date: </h2>
                 </div>
