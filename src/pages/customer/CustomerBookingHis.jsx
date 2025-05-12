@@ -16,9 +16,7 @@ function CustomerBookingHis() {
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
       setHistory(res.data);
-     
-
-      
+    
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);

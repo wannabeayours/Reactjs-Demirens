@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
 import ShowAlert from '@/components/ui/show-alert';
+import { Badge } from '@/components/ui/badge';
 
 function CustomerViewBookings() {
   const [viewBook, setViewBook] = useState([]);
@@ -97,13 +98,13 @@ function CustomerViewBookings() {
   }, []);
 
   return (
-    <div className = "grid grid-cols-1 md:grid-cols-2 gap-3 ">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
       {currentbookings.map((item, index) => (
         <div key={index}>
-          <Card className="px-10 mt-10">
-            <h2 className="text-lg font-bold">View Bookings Details</h2>
+          <Card className="px-10 mt-10 ">
 
-            <div className=" shadow-lg rounded-lg p-6">
+
+            <div className=" shadow-lg rounded-lg p-6 ">
               {errorMessage ? (
                 <div className=" text-red-500">
                   <strong>{errorMessage}</strong>
@@ -111,10 +112,15 @@ function CustomerViewBookings() {
               ) : (
                 viewBook.length > 0 ? (
                   <div>
-                    <div className="mb-4">
-                      <h2 className="font-semibold">Room Type: {item.roomtype_name}</h2>
-                      <h2 className="font-semibold">Booking Status: </h2>
+                    <div>
+                      <Card className="mb-4 bg-[#769FCD] p-5">
+                        <div className="flex justify-between items-center w-full">
+                          <h2 className="text-lg font-semibold">{item.roomtype_name}</h2>
+                          <h2 className="font-semibold"><Badge variant="secondary">Pending</Badge></h2>
+                        </div>
+                      </Card>
                     </div>
+
                     <div className="mb-4">
                       <h2 className="font-semibold">Room Number: {item.roomnumber_id}</h2>
                     </div>
