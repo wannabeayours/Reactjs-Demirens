@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react';
 import { Card, CardTitle } from '../components/ui/card';
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -16,18 +16,75 @@ import {
 import { Link } from 'react-router-dom';
 
 
-const schema = z.object({
-    email: z.string().email({ message: "Please enter a valid email" }),
-    password: z.string().min(1, { message: "Password is required" })
-})
+
 
 
 function Login() {
+    const { useEffect, useState } = React;
+    const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+    const [captchaCharacters, setCaptchaCharacters] = useState([]);
+    const [userInput, setUserInput] = useState("");
+
+    useEffect(() => {
+        generateCaptchaCharacters();
+    }, []);
+
+    const generateCaptchaCharacters = () => {
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*";
+        const newCaptcha = [];
+        for (let i = 0; i < 5; i++) {
+            newCaptcha.push({
+                char: characters[Math.floor(Math.random() * characters.length)],
+                color: getRandomColor(),
+            });
+        }
+        setCaptchaCharacters(newCaptcha);
+        setUserInput(""); // Reset input field
+        setIsCaptchaValid(false);
+    };
+
+    const getRandomColor = () => {
+        const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+        return colors[Math.floor(Math.random() * colors.length)];
+    };
+
+    const handleInputChange = (e) => {
+        setUserInput(e.target.value);
+        if (e.target.value === captchaCharacters.map((c) => c.char).join("")) {
+            setIsCaptchaValid(true);
+        } else {
+            setIsCaptchaValid(false);
+        }
+    };
+
+
+    //     const [firstnum , setfirstnum] = useState(Math.floor(Math.random() * 90) + 1);
+    //     const [secondnum , setsecondnum] = useState(Math.floor(Math.random() * 10) + 1);
+    //     const [sum, setsum] = useState(firstnum + secondnum);
+    //     const [isCorrect, setIsCorrect] = useState(false);
+
+
+    //    const handleSetCorrect = () => {
+    //        if (firstnum + secondnum === sum) {
+    //            setIsCorrect(true);
+    //        }
+    //     };
+
+
+
+    const schema = z.object({
+        email: z.string().email({ message: "Please enter a valid email" }),
+        password: z.string().min(1, { message: "Password is required" }),
+        // captcha: z.string().min(1, { message: "Captcha is required" })
+        //     .refine((val) => parseInt(val) === sum, { message: "Incorrect Captcha" })
+    })
+
     const form = useForm({
         resolver: zodResolver(schema),
         defaultValues: {
             email: "",
-            password: ""
+            password: "",
+            // captcha: ""
         }
     })
 
@@ -37,15 +94,17 @@ function Login() {
 
 
     return (
-        <div className="flex h-screen">
+        <div className=" h-screen grid grid-cols-1 md:grid-cols-2 ">
             {/* Left Side - Image */}
-            <div className="w-1/2 bg-cover bg-center ">
-
+            <div className=" bg-cover bg-center flex justify-center items-center ">
+                <div className=" lg:block hidden ml-32 ">
+                    <img src="/logo512.png" alt="logo ko to"  ></img>
+                </div>
 
             </div>
 
             {/* Right Side - Form */}
-            <div className="w-1/2 flex justify-start items-center p-8">
+            <div className="flex justify-start items-center p-8 ">
                 <Card className="w-full max-w-sm p-6">
                     <CardTitle className="text-2xl font-bold mb-4">Login to Continue</CardTitle>
                     <Form {...form}>
@@ -77,10 +136,68 @@ function Login() {
                                     </FormItem>
                                 )}
                             />
+                            <div className="text-center">
+                                <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
+                                <div className="flex justify-center items-center gap-3">
+                                    {captchaCharacters.map((c, index) => (
+                                        <span key={index} style={{ color: c.color, fontSize: "24px", fontWeight: "bold" }}>
+                                            {c.char}
+                                        </span>
+                                    ))}
+                                </div>
 
+                                <input
+                                    type="text"
+                                    value={userInput}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter CAPTCHA characters"
+                                    className="border p-2 w-full rounded text-black mt-3 text-center"
+                                />
+
+                                <div className="flex justify-center mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={generateCaptchaCharacters}
+                                        className="text-blue-500 text-sm underline"
+                                    >
+                                        Refresh CAPTCHA
+                                    </button>
+                                </div>
+
+                                {!isCaptchaValid && userInput.length > 0 && (
+                                    <p className="text-red-500 text-sm mt-1">Incorrect CAPTCHA, try again.</p>
+                                )}
+                            </div>
+
+                            {/* Show login button only if CAPTCHA is solved */}
+                            {isCaptchaValid && (
+                                <Button className="w-full mt-4 ">
+                                    Login
+                                </Button>
+                            )}
+
+
+                            {/* <div className="text-center">
+                                <h3>{`${firstnum} + ${secondnum} = ?`}</h3>
+                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="captcha"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input type="text" placeholder="Enter CAPTCHA" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            /> */}
+
+                            {/* 
                             <Button type="submit" className="w-full">
                                 Login
-                            </Button>
+                            </Button> */}
                             <div className="text-center">
                                 <p className="text-sm text-muted-foreground">
                                     Don't have an account?{" "}
@@ -101,6 +218,7 @@ function Login() {
 // then registeration na dayn ka
 //after ana font
 //og ipa hawa sa ang header dayun sa ani na page
+//wowowowowowwow
 
 
 export default Login
