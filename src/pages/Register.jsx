@@ -292,7 +292,7 @@ function Register() {
                                             name="idPhoto"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Attach Photo</FormLabel>
+                                                    <FormLabel>Attach Photo of ID</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="file"

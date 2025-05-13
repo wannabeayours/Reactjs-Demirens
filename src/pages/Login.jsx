@@ -14,6 +14,7 @@ import {
     FormMessage
 } from "@/components/ui/form"
 import { Link } from 'react-router-dom';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 
 
@@ -94,7 +95,11 @@ function Login() {
 
 
     return (
-        <div className=" h-screen grid grid-cols-1 md:grid-cols-2 ">
+        <>
+        <div className="flex items-end justify-end">
+        <ThemeToggle />
+        </div>
+        <div className=" h-screen grid grid-cols-1 md:grid-cols-2  ">
             {/* Left Side - Image */}
             <div className=" bg-cover bg-center flex justify-center items-center ">
                 <div className=" lg:block hidden ml-32 ">
@@ -105,6 +110,7 @@ function Login() {
 
             {/* Right Side - Form */}
             <div className="flex justify-start items-center p-8 ">
+            
                 <Card className="w-full max-w-sm p-6">
                     <CardTitle className="text-2xl font-bold mb-4">Login to Continue</CardTitle>
                     <Form {...form}>
@@ -146,22 +152,23 @@ function Login() {
                                     ))}
                                 </div>
 
-                                <input
+                                <Input
                                     type="text"
                                     value={userInput}
                                     onChange={handleInputChange}
                                     placeholder="Enter CAPTCHA characters"
-                                    className="border p-2 w-full rounded text-black mt-3 text-center"
+                                    className="border p-2 w-full rounded mt-3 text-center"
                                 />
 
                                 <div className="flex justify-center mt-2">
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant= "link"
                                         onClick={generateCaptchaCharacters}
                                         className="text-blue-500 text-sm underline"
                                     >
                                         Refresh CAPTCHA
-                                    </button>
+                                    </Button>
                                 </div>
 
                                 {!isCaptchaValid && userInput.length > 0 && (
@@ -212,6 +219,7 @@ function Login() {
                 </Card>
             </div>
         </div>
+        </>
     )
 }
 //ipa explain sa ni chatgpt or unsa ba kani na kuan
