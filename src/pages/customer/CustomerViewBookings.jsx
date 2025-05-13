@@ -45,11 +45,11 @@ function CustomerViewBookings() {
       const CustomerId = localStorage.getItem("userId");
       const jsonData = { "booking_customer_id": CustomerId };
       const formData = new FormData();
-      formData.append("operation", "customerCurrentBookings");
+      formData.append("operation", "customerCurrentBookingsWithAccount");
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       setCurrentbookings(res.data !== 0 ? res.data : []);
-      console.log("woaaah res ni vack to vack:", res);
+      console.log("view bookings:", res);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
