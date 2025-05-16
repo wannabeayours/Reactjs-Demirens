@@ -38,8 +38,8 @@ const schema = z.object({
     lastName: z.string().min(1, { message: "Last name is required" }),
     email: z.string().email({ message: "Please enter a valid email" }),
     password: z.string().min(1, { message: "Password is required" }),
-    nationality: z.string({ required_error: "Please select a nationality" }),
-    dob: z.date({ required_error: "A date of birth is required" }),
+    nationality: z.number({ required_error: "Please select a nationality" }),
+    dob: z.string({ required_error: "A date of birth is required" }),
     username: z.string().min(1, { message: "Username is required" }),
 })
 
@@ -53,9 +53,14 @@ const validIds = [
 ]
 
 
+
+
 function Register() {
     const [selectedId, setSelectedId] = useState(null)
     const [nationalities, setNationalities] = useState([]);
+
+
+
 
 
     const getNationality = async () => {
@@ -96,10 +101,34 @@ function Register() {
             password: "",
             nationality: "",
             dob: undefined,
+            username: "",
         },
     })
 
-    const onSubmit = (values) => {
+    const onSubmit = async (values) => {
+        try {
+            const url = localStorage.getItem("url") + "customer.php";
+            const jsonData = {
+                customers_online_username : values.username,
+                customers_fname : values.firstName,
+                customers_lname : values.lastName,
+                customers_email : values.email,
+                customers_password : values.password,
+                nationality_id : values.nationality,
+                customers_date_of_birth : values.dob
+            }
+            const formData = new FormData();
+            formData.append("operation", "customerRegistration");
+            formData.append("json", JSON.stringify(jsonData));
+            const res = await axios.post(url, formData);
+            console.log("res", res);
+            toast.success("Registration successful");
+            
+        } catch (error) {
+            toast.error("Something went wrong");
+            console.error(error);
+            
+        }
         console.log("Register values:", values);
     }
     return (
