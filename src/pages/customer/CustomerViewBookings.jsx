@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -93,7 +93,6 @@ function CustomerViewBookings() {
 
   useEffect(() => {
     customerViewBookings();
-    customerCancelBooking();
     customerCurrentBookings();
   }, []);
 

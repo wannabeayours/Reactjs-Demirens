@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardTitle } from '../components/ui/card'
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -20,27 +20,26 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { Calendar } from '../components/ui/calendar'
 import { format } from "date-fns"
 import { cn } from '@/lib/utils' // important for shadcn utilities
+import { toast } from 'sonner'
+import axios from 'axios'
+import ComboBox from '@/components/ui/combo-box'
+import DatePicker from '@/components/ui/date-picker'
 
 
-const nationalities = [
-    { label: "American", value: "american" },
-    { label: "Canadian", value: "canadian" },
-    { label: "British", value: "british" },
-    { label: "Australian", value: "australian" },
-    { label: "German", value: "german" },
-    { label: "French", value: "french" },
-    { label: "Indian", value: "indian" },
-    { label: "Chinese", value: "chinese" },
-    { label: "Japanese", value: "japanese" },
-]
+
+
+
+
+
+
 
 const schema = z.object({
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().min(1, { message: "Last name is required" }),
     email: z.string().email({ message: "Please enter a valid email" }),
     password: z.string().min(1, { message: "Password is required" }),
-    nationality: z.string({ required_error: "Please select a nationality" }),
-    dob: z.date({ required_error: "A date of birth is required" }),
+    nationality: z.number({ required_error: "Please select a nationality" }),
+    dob: z.string({ required_error: "A date of birth is required" }),
     username: z.string().min(1, { message: "Username is required" }),
 })
 
@@ -54,8 +53,44 @@ const validIds = [
 ]
 
 
+
+
 function Register() {
     const [selectedId, setSelectedId] = useState(null)
+    const [nationalities, setNationalities] = useState([]);
+
+
+
+
+
+    const getNationality = async () => {
+        try {
+            const url = localStorage.getItem("url") + "customer.php";
+            const formData = new FormData();
+            formData.append("operation", "getNationality");
+            const res = await axios.post(url, formData);
+            if (res.data !== 0) {
+                const formattedData = res.data.map((item) => ({
+                    value: item.nationality_id,
+                    label: item.nationality_name,
+                }));
+                setNationalities(formattedData);
+            }
+            else {
+                setNationalities([]);
+            }
+
+            console.log("national", res.data);
+        } catch (error) {
+            toast.error("Something went wrong");
+            console.error(error);
+
+        }
+    }
+
+    useEffect(() => {
+        getNationality();
+    }, []);
 
     const form = useForm({
         resolver: zodResolver(schema),
@@ -66,10 +101,34 @@ function Register() {
             password: "",
             nationality: "",
             dob: undefined,
+            username: "",
         },
     })
 
-    const onSubmit = (values) => {
+    const onSubmit = async (values) => {
+        try {
+            const url = localStorage.getItem("url") + "customer.php";
+            const jsonData = {
+                customers_online_username : values.username,
+                customers_fname : values.firstName,
+                customers_lname : values.lastName,
+                customers_email : values.email,
+                customers_password : values.password,
+                nationality_id : values.nationality,
+                customers_date_of_birth : values.dob
+            }
+            const formData = new FormData();
+            formData.append("operation", "customerRegistration");
+            formData.append("json", JSON.stringify(jsonData));
+            const res = await axios.post(url, formData);
+            console.log("res", res);
+            toast.success("Registration successful");
+            
+        } catch (error) {
+            toast.error("Something went wrong");
+            console.error(error);
+            
+        }
         console.log("Register values:", values);
     }
     return (
@@ -136,99 +195,42 @@ function Register() {
 
                                 {/* Nationality */}
                                 <FormField
-                                    control={form.control}
                                     name="nationality"
+                                    control={form.control}
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Select Nationality</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                            variant="outline"
-                                                            role="combobox"
-                                                            className={cn(
-                                                                "justify-between",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {field.value
-                                                                ? nationalities.find((n) => n.value === field.value)?.label
-                                                                : "Select nationality"}
-                                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[200px] p-0">
-                                                    <Command>
-                                                        <CommandInput placeholder="Search nationality..." className="h-9" />
-                                                        <CommandList>
-                                                            <CommandEmpty>No nationality found.</CommandEmpty>
-                                                            <CommandGroup>
-                                                                {nationalities.map((n) => (
-                                                                    <CommandItem
-                                                                        key={n.value}
-                                                                        value={n.label}
-                                                                        onSelect={() => field.onChange(n.value)}
-                                                                    >
-                                                                        {n.label}
-                                                                        <Check
-                                                                            className={cn(
-                                                                                "ml-auto",
-                                                                                field.value === n.value ? "opacity-100" : "opacity-0"
-                                                                            )}
-                                                                        />
-                                                                    </CommandItem>
-                                                                ))}
-                                                            </CommandGroup>
-                                                        </CommandList>
-                                                    </Command>
-                                                </PopoverContent>
-                                            </Popover>
+                                        <FormItem>
+                                            <FormLabel>Nationality</FormLabel>
+                                            <div>
+                                                <ComboBox
+                                                    list={nationalities}
+                                                    subject="nationality"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                />
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
-                            
+
                             {/* Date of Birth */}
                             <FormField
                                 control={form.control}
                                 name="dob"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Date of Birth</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? format(field.value, "PPP") : "Pick a date"}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={(date) =>
-                                                        date > new Date() || date < new Date("1900-01-01")
-                                                    }
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
+                                    <FormItem>
+                                        <DatePicker
+                                            form={form}
+                                            name={field.name}
+                                            label="Date of birth"
+                                            pastAllowed={true}
+                                            futureAllowed={false}
+                                        />
                                     </FormItem>
                                 )}
                             />
+
                             <div className="space-y-4">
                                 {/* Identification Dropdown */}
                                 <div>
@@ -267,7 +269,7 @@ function Register() {
                                         </PopoverContent>
                                     </Popover>
                                 </div>
-                              
+
 
                                 {/* Show ID Number input if selected */}
                                 {selectedId && (
