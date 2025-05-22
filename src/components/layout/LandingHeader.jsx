@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Button } from '../ui/button';
 import ThemeToggle from './ThemeToggle';
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarShortcut, MenubarTrigger } from '../ui/menubar';
 
 
 const components = [
@@ -58,69 +59,37 @@ function LandingHeader() {
 
 
   return (
-    <div className={`sticky  top-0 left-0 w-full  flex items-center justify-between px-8 py-8 z-50 shadow transition-all duration-500 ease-in-out ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="flex items-center gap-x-6">
-        <div className="flex-shrink-0 font-bold uppercase text-sm ">
-          LOGO
-        </div>
-
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>
-                <Button variant={"ghost"}>
-                  Menu
-                </Button>
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr] text-lg">
-                  {components.map((item) => (
-                    <div key={item.title}>
-                      <Link
-                        to={item.href}
-                        className="block px-4 py-2 text-md hover:underline"
-                      >
-                        {item.title}
-                      </Link>
-                      <p className="px-4 py-1 text-xs">
-                        {item.description}
-                      </p>
-                    </div>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
-            <NavigationMenuItem>
-              {/* <Link to="/customer/bookings">
-                <Button >
-                  Book Now
-                </Button>
-              </Link> */}
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+    <div className={`sticky  top-0 left-0 w-full  flex items-center justify-between px-8 py-8 z-50 transition-all duration-500 ease-in-out ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
+      <div className="flex items-center gap-10">
+        <div className="font-bold text-lg uppercase">LOGO</div>
+        <nav className="hidden md:flex gap-6 text-sm font-medium">
+          <Link to="/customer/about" className="hover:text-blue-600 transition">About</Link>
+          <Link to="/customer/rooms" className="hover:text-blue-600 transition">Rooms</Link>
+          <Link to="/customer/gallery" className="hover:text-blue-600 transition">Gallery</Link>
+          <Link to="/contact" className="hover:text-blue-600 transition">Contact</Link>
+        </nav>
       </div>
 
 
-      <h1 className="text-lg font-semibold text-end px-8   flex-grow">
+      <div className="hidden lg:block text-sm font-bold ">
         Demiren Hotel and Restaurant
-      </h1>
+      </div>
 
 
+      <div className="flex items-center gap-3">
+        <Link to="/customer/bookings">
+          <Button className={"mr-4"}>
+            Book Now
+          </Button>
+        </Link>
+        <Link to="/login">
+          <Button variant={"outline"} className={"mr-4"}>
+            Sign In
+          </Button>
+        </Link>
 
-
-      {/* <Link to="/login">
-        <Button className={"mr-4"}>
-          Sign In
-        </Button>
-      </Link> */}
-      <Link to="/customer/bookings">
-        <Button  className={"mr-4"}>
-          Book Now
-        </Button>
-      </Link>
-      <ThemeToggle />
+        <ThemeToggle />
+      </div>
 
 
     </div>

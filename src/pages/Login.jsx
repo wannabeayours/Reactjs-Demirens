@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardTitle } from '../components/ui/card';
+import { Card, CardDescription, CardTitle } from '../components/ui/card';
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,7 +11,8 @@ import {
     FormItem,
     FormLabel,
     FormControl,
-    FormMessage
+    FormMessage,
+    FormDescription
 } from "@/components/ui/form"
 import { Link } from 'react-router-dom';
 import ThemeToggle from '@/components/layout/ThemeToggle';
@@ -96,95 +97,107 @@ function Login() {
 
     return (
         <>
-        <div className="flex items-end justify-end">
-        <ThemeToggle />
-        </div>
-        <div className=" h-screen grid grid-cols-1 md:grid-cols-2  ">
-            {/* Left Side - Image */}
-            <div className=" bg-cover bg-center flex justify-center items-center ">
-                <div className=" lg:block hidden ml-32 ">
-                    <img src="/logo512.png" alt="logo ko to"  ></img>
-                </div>
-
+            <div className="flex items-end justify-end">
+                <ThemeToggle />
             </div>
-
-            {/* Right Side - Form */}
-            <div className="flex justify-start items-center p-8 ">
-            
-                <Card className="w-full max-w-sm p-6">
-                    <CardTitle className="text-2xl font-bold mb-4">Login to Continue</CardTitle>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email or Username</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="you@example.com" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="Enter Password" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <div className="text-center">
-                                <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
-                                <div className="flex justify-center items-center gap-3">
-                                    {captchaCharacters.map((c, index) => (
-                                        <span key={index} style={{ color: c.color, fontSize: "24px", fontWeight: "bold" }}>
-                                            {c.char}
-                                        </span>
-                                    ))}
-                                </div>
-
-                                <Input
-                                    type="text"
-                                    value={userInput}
-                                    onChange={handleInputChange}
-                                    placeholder="Enter CAPTCHA characters"
-                                    className="border p-2 w-full rounded mt-3 text-center"
-                                />
-
-                                <div className="flex justify-center mt-2">
-                                    <Button
-                                        type="button"
-                                        variant= "link"
-                                        onClick={generateCaptchaCharacters}
-                                        className="text-blue-500 text-sm underline"
-                                    >
-                                        Refresh CAPTCHA
-                                    </Button>
-                                </div>
-
-                                {!isCaptchaValid && userInput.length > 0 && (
-                                    <p className="text-red-500 text-sm mt-1">Incorrect CAPTCHA, try again.</p>
-                                )}
+            <div className=" h-screen grid grid-cols-1 md:grid-cols-2  ">
+                {/* Left Side - Image */}
+                <div className="bg-cover bg-center flex justify-center items-center w-full h-full ">
+                    <div className="lg:block hidden ml-32">
+                        <img
+                            src="./assets/images/demsdems.png"
+                            alt="logo ko to"
+                            className="w-full max-w-[600px] h-auto object-contain"
+                        />
+                    </div>
+                </div>
+                {/* Right Side - Form */}
+                <div className="flex justify-start items-center p-8   ">
+                    <Card className="w-full max-w-md p-2 bg-[#769FCD]">
+                        <Card className="w-full max-w-md p-6 ">
+                            <div className="flex flex-col justify-center items-center">
+                            <CardTitle className="text-2xl font-bold text-[#769FCD]">DEMIREN HOTEL</CardTitle>
+                            <CardDescription className=" text-muted-foreground">
+                                Login to your account
+                            </CardDescription>
                             </div>
+                       
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email or Username</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="you@example.com" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                            {/* Show login button only if CAPTCHA is solved */}
-                            {isCaptchaValid && (
-                                <Button className="w-full mt-4 ">
-                                    Login
-                                </Button>
-                            )}
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem >
+                                                <div className="flex justify-between items-center">
+                                                    <FormLabel>Password</FormLabel>
+                                                    <Button variant="link">Forgot Password?</Button>
+                                                </div>
+
+                                                <FormControl>
+                                                    <Input type="password" placeholder="Enter Password" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="text-center">
+                                        <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
+                                        <div className="flex justify-center items-center gap-3">
+                                            {captchaCharacters.map((c, index) => (
+                                                <span key={index} style={{ color: c.color, fontSize: "24px", fontWeight: "bold" }}>
+                                                    {c.char}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        <Input
+                                            type="text"
+                                            value={userInput}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter CAPTCHA characters"
+                                            className="border p-2 w-full rounded mt-3 text-center"
+                                        />
+
+                                        <div className="flex justify-center mt-2">
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                onClick={generateCaptchaCharacters}
+                                                className="text-blue-500 text-sm underline"
+                                            >
+                                                Refresh CAPTCHA
+                                            </Button>
+                                        </div>
+
+                                        {!isCaptchaValid && userInput.length > 0 && (
+                                            <p className="text-red-500 text-sm mt-1">Incorrect CAPTCHA, try again.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Show login button only if CAPTCHA is solved */}
+                                    {isCaptchaValid && (
+                                        <Button className="w-full mt-4 ">
+                                            Login
+                                        </Button>
+                                    )}
 
 
-                            {/* <div className="text-center">
+                                    {/* <div className="text-center">
                                 <h3>{`${firstnum} + ${secondnum} = ?`}</h3>
                             </div>
 
@@ -201,24 +214,26 @@ function Login() {
                                 )}
                             /> */}
 
-                            {/* 
+                                    {/* 
                             <Button type="submit" className="w-full">
                                 Login
                             </Button> */}
-                            <div className="text-center">
-                                <p className="text-sm text-muted-foreground">
-                                    Don't have an account?{" "}
-                                    <Link to="/register" className="text-primary underline">
-                                        Sign Up
-                                    </Link>
-                                </p>
-                            </div>
+                                    <div className="text-center">
+                                        <p className="text-sm text-muted-foreground">
+                                            Don't have an account?{" "}
+                                            <Link to="/register" className="text-primary underline">
+                                                Sign Up
+                                            </Link>
+                                        </p>
+                                    </div>
 
-                        </form>
-                    </Form>
-                </Card>
+                                </form>
+                            </Form>
+                        </Card>
+                    </Card>
+
+                </div>
             </div>
-        </div>
         </>
     )
 }

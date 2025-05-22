@@ -1,6 +1,8 @@
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table';
 import axios from 'axios';
+import { Eye } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 
@@ -30,6 +32,12 @@ function CustomerBookingHis() {
     { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true },
     { header: 'Room Type', accessor: 'roomtype_name', sortable: true },
     { header: 'Room Number', accessor: 'roomnumber_id', sortable: true },
+    { 
+      header: 'Actions', 
+      cell: (row) => (
+       <Eye />
+      )
+    },
 
 
 
@@ -48,9 +56,9 @@ function CustomerBookingHis() {
           <h1 className="text-lg font-bold">Booking History</h1>
         </div>
         <div>
-          <Card className="bg-[#3b82f6] dark:bg-[#1e3a8a]">
+         
             <DataTable columns={col} data={history} itemsPerPage={10} />
-          </Card>
+         
         </div>
       </Card>
     </div>

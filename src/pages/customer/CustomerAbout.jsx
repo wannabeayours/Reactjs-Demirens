@@ -1,3 +1,4 @@
+import Footer from '@/components/layout/Footer'
 import { Card } from '@/components/ui/card'
 import { BookOpen, Building2, HandshakeIcon } from 'lucide-react'
 import React from 'react'
@@ -33,9 +34,9 @@ function CustomerAbout() {
               </p>
             </div>
 
-            <div className="rounded-xl shadow-lg p-6">
+            <div className="rounded-xl  p-6">
               <img
-                src=""
+                src="/assets/images/demsdems.png"
                 alt="Hotel"
                 className="rounded-lg mb-4"
               />
@@ -46,14 +47,15 @@ function CustomerAbout() {
             </div>
 
           </div>
+          
         </section>
 
         
         <section className="h-screen flex items-center">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3 md:gap-8 w-full">
 
-            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <BookOpen />
+            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 bg-[#D6E6F2]">
+              <BookOpen className="text-blue-500" />
               <h2 className="text-2xl font-bold mb-4">Our History</h2>
               <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
@@ -62,8 +64,8 @@ function CustomerAbout() {
               </p>
             </Card>
 
-            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <Building2 />
+            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300  bg-[#D6E6F2]">
+              <Building2  className="text-blue-500"  />
               <h2 className="text-2xl font-bold mb-4">Our Facilities</h2>
               <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
@@ -72,8 +74,8 @@ function CustomerAbout() {
               </p>
             </Card>
 
-            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <HandshakeIcon />
+            <Card className="p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300  bg-[#D6E6F2]  ">
+              <HandshakeIcon  className="text-blue-500"  />
               <h2 className="text-2xl font-bold mb-4">Our Promise</h2>
               <p >
                 Founded in 2010, Demiren Hotel has grown from a small boutique hotel to a premier luxury destination.
@@ -86,7 +88,9 @@ function CustomerAbout() {
         </section>
 
       </div>
+      <Footer />
     </div>
+    
 
   )
 }
