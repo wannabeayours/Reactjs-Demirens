@@ -21,6 +21,7 @@ import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
+import BookingWaccount from './modals/sheets/BookingWaccount'
 
 const schema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -263,8 +264,11 @@ function CustomerDashboard() {
                 </div>
 
                 <div className="mt-auto">
-
-                  <Button className="w-full text-lg py-2" disabled={room.status_id !== 3}>Book Now</Button>
+                  {
+                    room.status_id === 3 ?
+                      <BookingWaccount rooms={rooms} selectedRoom={room} /> :
+                      <Button disabled>Book Now</Button>
+                  }
 
                 </div>
 
