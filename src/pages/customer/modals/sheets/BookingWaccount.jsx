@@ -1,12 +1,13 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Separator } from '@/components/ui/separator'
+import { Trash2 } from 'lucide-react'
 
 function BookingWaccount({ rooms, selectedRoom }) {
  const [allRooms, setAllRooms] = useState([])
@@ -37,7 +38,7 @@ function BookingWaccount({ rooms, selectedRoom }) {
 
      <SheetTitle>Book Now</SheetTitle>
      <div>
-      <RoomsList />
+      <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
      </div>
      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card>
@@ -48,9 +49,14 @@ function BookingWaccount({ rooms, selectedRoom }) {
            <>
             {selectedRooms.map((room, index) => (
              <div key={index}>
+              <div className="flex justify-end">
+               <Trash2 className="cursor-pointer text-red-500" />
+
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div>
-                <h1>{room.roomtype_name}</h1>
+                <h1 className="font-semibold text-2xl">{room.roomtype_name}</h1>
+                <h1>{room.roomtype_description}</h1>
                 <h1 className="font-semibold text-blue-500">₱ {room.roomtype_price}</h1>
                </div>
 

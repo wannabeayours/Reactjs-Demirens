@@ -234,7 +234,7 @@ function CustomerDashboard() {
                 <div className="flex justify-between items-center mb-2">
                   <h5 className="text-lg font-semibold">{room.roomtype_name}</h5>
                   <div className="flex justify-between items-center mb-2">
-                    <Badge variant={room.status_id === 3 ? "default" : "destructive"} >{room.status_name}</Badge>
+                    <Badge className= {room.status_id === 3 ? "bg-green-500" : "bg-red-500"}>{room.status_name}</Badge>
                   </div>
                 </div>
                 <div>
