@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Button } from '@/components/ui/button'
-import { ArrowBigRight, Bed, PlusIcon, Square, User } from 'lucide-react'
+import { ArrowBigRight, Bed, MinusCircle, MinusIcon, Plus, PlusIcon, Square, User } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet'
 import { Input } from "@/components/ui/input";
@@ -22,18 +22,53 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import BookingWaccount from './modals/sheets/BookingWaccount'
+import DatePicker from '@/components/ui/date-picker'
+import { Label } from '@/components/ui/label'
+
+
 
 const schema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  email: z.string().email({ message: "Please enter a valid email" }),
-  contactNumber: z.string().min(1, { message: "Contact number is required" }),
-})
+  checkIn: z.string().min(1, { message: "Check in is required" }),
+  checkOut: z.string().min(1, { message: "Check out is required" }),
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const checkOut = new Date(data.checkOut);
 
+  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+    return false;
+  }
+
+
+  const normalize = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
+
+  return normalize(checkOut).getTime() > normalize(checkIn).getTime();
+}, {
+  message: "Check out must be later than check in",
+  path: ["checkOut"],
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const now = new Date();
+  return checkIn.getTime() > now.getTime();
+}, {
+  message: "Check in must be in the future",
+  path: ["checkIn"],
+});
 
 
 function CustomerDashboard() {
   const [rooms, setRooms] = useState([]);
+  const [guestNumber, setGuestNumber] = useState(0);
+
+
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      checkIn: "",
+      checkOut: "",
+
+    },
+  })
 
 
 
@@ -51,6 +86,10 @@ function CustomerDashboard() {
 
     }
   }
+
+  const onSubmit = async (data) => {
+    //wow filter
+  }
   useEffect(() => {
     getRooms();
   }, []);
@@ -60,8 +99,74 @@ function CustomerDashboard() {
 
     <div >
 
-      <div className="flex items-center justify-center h-[50vh] bg-gray-100">
-        <h1 className="text-2xl font-bold text-center">DIRI TONG CHECK IN CHECK OUT</h1>
+      <div className="flex items-center justify-center h-[50vh] bg-secondary">
+        <Card >
+          <CardContent>
+            <Form {...form}>
+
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField
+                  control={form.control}
+                  name="checkIn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <DatePicker
+                        form={form}
+                        name={field.name}
+                        label="Check-in"
+                        pastAllowed={false}
+                        futureAllowed={true}
+                        withTime={true}
+                      />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="checkOut"
+                  render={({ field }) => (
+                    <FormItem>
+                      <DatePicker
+                        form={form}
+                        name={field.name}
+                        label="Check-out"
+                        pastAllowed={false}
+                        futureAllowed={true}
+                        withTime={true}
+                      />
+                    </FormItem>
+                  )}
+                />
+                <div>
+                <Label className={"mb-2"}>Number of Guests</Label>
+                <div className="flex items-center justify-start space-x-2">
+                  
+                  <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)}><MinusIcon /></Button>
+                  <Input
+                   className="w-1/4"
+                    type="number"
+                    readOnly
+                    value={guestNumber}
+                   
+                    
+                  />
+                  <Button  type="button" variant="outline" onClick={() => setGuestNumber(guestNumber + 1)}><Plus /></Button>
+                  
+                </div>
+                
+                </div>
+                <div className="flex items-center justify-start mt-5 ">
+                <Button className="w-full">Search</Button>
+                </div>
+               
+              
+              </form>
+
+            </Form>
+          </CardContent>
+
+        </Card>
+
       </div>
 
       <div className="flex flex-col items-center justify-center py-10 px-4 ">
@@ -234,7 +339,7 @@ function CustomerDashboard() {
                 <div className="flex justify-between items-center mb-2">
                   <h5 className="text-lg font-semibold">{room.roomtype_name}</h5>
                   <div className="flex justify-between items-center mb-2">
-                    <Badge className= {room.status_id === 3 ? "bg-green-500" : "bg-red-500"}>{room.status_name}</Badge>
+                    <Badge className={room.status_id === 3 ? "bg-green-500" : "bg-red-500"}>{room.status_name}</Badge>
                   </div>
                 </div>
                 <div>

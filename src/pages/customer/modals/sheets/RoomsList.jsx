@@ -12,8 +12,13 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
  const [availableRooms, setAvailableRooms] = useState([])
 
 
+ const handleBookedRoom = (room) => {
+  setSelectedRooms([...selectedRooms, room]);
+  setOpen(false);
+ }
+
  useEffect(() => {
-  const filteredRooms = rooms.filter((room) => room.status_id === 3 && !selectedRooms.some((booked) => booked.room_type === room.room_type));
+  const filteredRooms = rooms.filter((room) => room.status_id === 3 );
   setAvailableRooms(filteredRooms || []);
   console.log("filtered rooms", filteredRooms);
  }, [rooms, selectedRooms, setSelectedRooms])
@@ -21,7 +26,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
 
  return (
   <>
-   <Sheet>
+   <Sheet open={open} onOpenChange={setOpen}>
     <SheetTrigger asChild>
      <Button>Add Room</Button>
     </SheetTrigger>
@@ -56,7 +61,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
           <h1 className="font-semibold text-blue-500">₱ {rooms.roomtype_price}</h1>
          </div>
          <div className="relative h-full"> {/* or set a specific height */}
-          <Button className="absolute bottom-0 right-0 m-4">Add Room</Button>
+          <Button className="absolute bottom-0 right-0 m-4" onClick={() => handleBookedRoom(rooms)}>Add Room</Button>
          </div>
         </div>
         <Separator className="my-4" />

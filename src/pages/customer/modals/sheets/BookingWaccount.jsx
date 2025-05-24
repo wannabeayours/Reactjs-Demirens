@@ -40,7 +40,11 @@ function BookingWaccount({ rooms, selectedRoom }) {
      <div>
       <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
      </div>
+     <div>
+      hello
+     </div>
      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
       <Card>
        <CardContent>
         <ScrollArea>
@@ -101,13 +105,13 @@ function BookingWaccount({ rooms, selectedRoom }) {
       <div className=" space-y-3">
        <Card>
         <CardContent>
-         <h1>BOOKING</h1>
+         <h1>BOOKING SUMMARY</h1>
         </CardContent>
 
        </Card>
        <Card>
         <CardContent>
-         <h1>BOOKING</h1>
+         <h1>PAYMENT METHOD</h1>
         </CardContent>
 
        </Card>
