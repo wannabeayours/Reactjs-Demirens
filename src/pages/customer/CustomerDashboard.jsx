@@ -88,7 +88,9 @@ function CustomerDashboard() {
   }
 
   const onSubmit = async (data) => {
-    //wow filter
+   localStorage.setItem("checkIn", data.checkIn);
+   localStorage.setItem("checkOut", data.checkOut);
+    
   }
   useEffect(() => {
     getRooms();
@@ -141,7 +143,7 @@ function CustomerDashboard() {
                 <Label className={"mb-2"}>Number of Guests</Label>
                 <div className="flex items-center justify-start space-x-2">
                   
-                  <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)}><MinusIcon /></Button>
+                  <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
                   <Input
                    className="w-1/4"
                     type="number"
@@ -351,18 +353,18 @@ function CustomerDashboard() {
                 <div>
                   {/* Top row badges */}
                   <div className="flex flex-row gap-4 mb-3">
-                    <div className="bg-blue-100 rounded-full p-2 flex items-center gap-1.5 w-fit">
+                    <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit">
                       <User className="w-4 h-4" />
                       <h3 className="text-sm">3 Guests</h3>
                     </div>
-                    <div className="bg-blue-100 rounded-full p-2 flex items-center gap-1.5 w-fit">
+                    <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit">
                       <Square className="w-4 h-4" />
                       <h3 className="text-sm">23 m2</h3>
                     </div>
                   </div>
 
                   {/* Separate badge below */}
-                  <div className="bg-blue-100 rounded-full p-2 flex items-center gap-1.5 w-fit mb-3">
+                  <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit mb-3">
                     <Bed className="w-4 h-4" />
                     <h3 className="text-sm">2 Beds</h3>
                   </div>
@@ -372,7 +374,7 @@ function CustomerDashboard() {
                   {
                     room.status_id === 3 ?
                       <BookingWaccount rooms={rooms} selectedRoom={room} /> :
-                      <Button disabled>Book Now</Button>
+                      <Button disabled className="w-full">Book Now</Button>
                   }
 
                 </div>
