@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import axios from 'axios'
 
 function BookingWaccount({ rooms, selectedRoom }) {
  const [allRooms, setAllRooms] = useState([])
@@ -19,23 +20,59 @@ function BookingWaccount({ rooms, selectedRoom }) {
  const [checkOut, setCheckOut] = useState(new Date())
  const [numberOfNights, setNumberOfNights] = useState(1)
 
+const customerBookingWithAccount = async () => {
+ try {
+  const url = localStorage.getItem('url') + "customer.php";
+  const customerId = localStorage.getItem("userId");
+  const downPayment = (selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0) * 1.12 * 0.5).toFixed(2);
+ const bookingDetails = {
+   "checkIn": checkIn,
+   "checkOut": checkOut,
+   "downpayment": downPayment,
+ }
+ const roomDetails = selectedRooms.map((room) => {
+  return {
+   roomTypeId: room.room_type,
+  }
+ })
+ console.log("roomDetails", roomDetails);
+ const jsonData = {
+  customerId : customerId,
+  bookingDetails: bookingDetails,
+  roomDetails: roomDetails 
+ }
+  const formData = new FormData();
+  formData.append("operation", "customerBookingWithAccount");
+  formData.append("json", JSON.stringify(jsonData));
+  const res = await axios.post(url, formData);
+  console.log("noOOo", res);
+  if (res.data === 1) {
+   toast.success("Booking successful");
+   setOpen(false);
+   localStorage.removeItem('checkIn')
+   localStorage.removeItem('checkOut')
+   setSelectedRooms([]);
+  }
 
 
-
+ } catch (error) {
+  toast.error("Something went wrong");
+  console.error(error);
+  
+ }
+}
 
 
  useEffect(() => {
   if (open) {
    const checkInStr = localStorage.getItem('checkIn')
    const checkOutStr = localStorage.getItem('checkOut')
-
    const checkInDate = new Date(checkInStr)
    const checkOutDate = new Date(checkOutStr)
-
    setCheckIn(checkInDate)
    setCheckOut(checkOutDate)
 
-   // Calculate number of nights
+   // Calculate number of gabii
    const diffTime = checkOutDate.getTime() - checkInDate.getTime()
    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) // convert ms to days
 
@@ -45,7 +82,7 @@ function BookingWaccount({ rooms, selectedRoom }) {
    setSelectedRooms([{
     roomtype_name: selectedRoom.roomtype_name,
     roomtype_price: selectedRoom.roomtype_price,
-    room_type_id: selectedRoom.room_type_id,
+    room_type: selectedRoom.room_type,
     roomtype_description: selectedRoom.roomtype_description
    }])
   }
@@ -209,6 +246,7 @@ function BookingWaccount({ rooms, selectedRoom }) {
          </CardContent>
 
         </Card>
+        <Button onClick = {customerBookingWithAccount}>Confirm Booking</Button>
        </div>
 
       </div>
