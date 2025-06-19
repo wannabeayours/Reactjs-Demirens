@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Button } from '@/components/ui/button'
-import { ArrowBigRight, Bed, MinusCircle, MinusIcon, Plus, PlusIcon, Square, User } from 'lucide-react'
+import { ArrowBigRight, Bed, Info, MinusCircle, MinusIcon, Plus, PlusIcon, Square, User } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet'
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import BookingWaccount from './modals/sheets/BookingWaccount'
 import DatePicker from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
+import { Link } from 'react-router-dom'
 
 
 
@@ -88,9 +89,9 @@ function CustomerDashboard() {
   }
 
   const onSubmit = async (data) => {
-   localStorage.setItem("checkIn", data.checkIn);
-   localStorage.setItem("checkOut", data.checkOut);
-    
+    localStorage.setItem("checkIn", data.checkIn);
+    localStorage.setItem("checkOut", data.checkOut);
+
   }
   useEffect(() => {
     getRooms();
@@ -140,28 +141,28 @@ function CustomerDashboard() {
                   )}
                 />
                 <div>
-                <Label className={"mb-2"}>Number of Guests</Label>
-                <div className="flex items-center justify-start space-x-2">
-                  
-                  <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
-                  <Input
-                   className="w-1/4"
-                    type="number"
-                    readOnly
-                    value={guestNumber}
-                   
-                    
-                  />
-                  <Button  type="button" variant="outline" onClick={() => setGuestNumber(guestNumber + 1)}><Plus /></Button>
-                  
-                </div>
-                
+                  <Label className={"mb-2"}>Number of Guests</Label>
+                  <div className="flex items-center justify-start space-x-2">
+
+                    <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
+                    <Input
+                      className="w-1/4"
+                      type="number"
+                      readOnly
+                      value={guestNumber}
+
+
+                    />
+                    <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber + 1)}><Plus /></Button>
+
+                  </div>
+
                 </div>
                 <div className="flex items-center justify-start mt-5 ">
-                <Button className="w-full">Search</Button>
+                  <Button className="w-full">Search</Button>
                 </div>
-               
-              
+
+
               </form>
 
             </Form>
@@ -346,10 +347,22 @@ function CustomerDashboard() {
                 </div>
                 <div>
                   <h5>{room.roomtype_description}</h5>
+                  <Link>
+                    <div className="flex flex-row space-x-2 text-blue-500">
+                      <div>
+                        More info
+                      </div>
+                      <div>
+                        <Info />
+                      </div>
+
+                    </div>
+                  </Link>
                 </div>
                 <div className="mb-6 mt-6" >
                   <h2 className="text-lg font-semibold text-blue-600">₱ {room.roomtype_price}</h2>
                 </div>
+
                 <div>
                   {/* Top row badges */}
                   <div className="flex flex-row gap-4 mb-3">

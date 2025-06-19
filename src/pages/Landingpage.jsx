@@ -3,12 +3,13 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bed, BedIcon, Car, CheckCheck, Dumbbell, HandPlatter, Square, Star, User, Wifi } from 'lucide-react';
+import { ArrowRight, Bed, BedIcon, Car, CheckCheck, Dumbbell, HandPlatter, Info, Square, Star, User, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LandingHeader from '@/components/layout/LandingHeader';
 import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 
 function Landingpage() {
@@ -146,7 +147,7 @@ function Landingpage() {
                 <h3 className='mt-2'>Choose from our selection of beautifully designed rooms, each offering comfort, style, and convenience.</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-10 p-5">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mt-10 p-5">
                 {rooms.length === 0 ? <p>No rooms available</p> : rooms.map((room, index) => (
                   <Card key={index} className="flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300">
                     <CardHeader>
@@ -161,10 +162,22 @@ function Landingpage() {
                       </div>
                       <div>
                         <h5>{room.roomtype_description}</h5>
+                        <Link>
+                          <div className="flex flex-row space-x-2 text-blue-500">
+                            <div>
+                              More info
+                            </div>
+                            <div>
+                              <Info />
+                            </div>
+
+                          </div>
+                        </Link>
                       </div>
                       <div className="mb-6 mt-6" >
                         <h2 className="text-lg font-semibold text-blue-600">₱ {room.roomtype_price}</h2>
                       </div>
+
                       <div>
                         {/* Top row badges */}
                         <div className="flex flex-row gap-4 mb-3">
@@ -196,7 +209,9 @@ function Landingpage() {
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-center">
-                <Button variant="link">View all rooms <ArrowRight className="w-4 h-4" /></Button>
+                <Link to="/customer/rooms">
+                  <Button variant="link">View all rooms <ArrowRight className="w-4 h-4" /></Button>
+                </Link>
               </div>
 
             </div>
