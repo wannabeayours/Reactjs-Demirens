@@ -12,6 +12,9 @@ function CustomerViewBookings() {
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [currentbookings, setCurrentbookings] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [bookings, setBookings] = useState([]);
+
 
 
   const customerViewBookings = async () => {
@@ -57,35 +60,48 @@ function CustomerViewBookings() {
     }
   }
 
-  const customerCancelBooking = async () => {
+  const customerCancelBooking = async (bookingId) => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
-      const bookingId = localStorage.getItem("bookingId");
-      const jsonData = { "booking_id": bookingId };
+  
+      const jsonData = { booking_id: bookingId };
       const formData = new FormData();
       formData.append("json", JSON.stringify(jsonData));
-      formData.append("operation", "customerCancelBooking")
-      const res = await axios.post(url, formData)
-      console.log("Submit", res);
-      customerViewBookings();
-
-
+      formData.append("operation", "customerCancelBooking");
+  
+      const res = await axios.post(url, formData);
+  
+      if (res.data === 1 || res.data.success === 1) {
+        toast.success('Booking cancelled!');
+  
+        // Remove it from the list
+        const updatedBookings = bookings.filter((b) => b.booking_id !== bookingId);
+        setBookings(updatedBookings);
+  
+        if (updatedBookings.length === 0) {
+          setErrorMessage('No booking details, book first!');
+        }
+      } else {
+        toast.error('Failed to cancel booking.');
+      }
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-
     }
-  }
+  };
+  
+  
 
-  const handleShowAlert = () => {
+  const handleShowAlert = (bookingId) => {
     // "This action cannot be undone. It will permanently delete the item and remove it from your list"
     setAlertMessage("Are you sure you want to cancel your booking?");
+    setSelectedBookingId(bookingId);
     setShowAlert(true);
   };
   const handleCloseAlert = (status) => {
-    if (status === 1) {
+    if (status === 1 && selectedBookingId) {
       // if gi click ang confirm, execute tanan diri 
-      customerCancelBooking();
+      customerCancelBooking(selectedBookingId);
     }
     setShowAlert(false);
   };
@@ -115,7 +131,17 @@ function CustomerViewBookings() {
                       <Card className="mb-4 bg-[#769FCD] p-5">
                         <div className="flex justify-between items-center w-full">
                           <h2 className="text-lg font-semibold">{item.roomtype_name}</h2>
-                          <h2 className="font-semibold"><Badge variant="secondary">Pending</Badge></h2>
+                          <Badge
+                            className={`text-md font-semibold text-white 
+                                    ${item.booking_status_name === 'Pending' ? 'bg-orange-500' : ''}
+                                    ${item.booking_status_name === 'Cancelled' ? 'bg-red-500' : ''}
+                                    ${item.booking_status_name === 'Approved' ? 'bg-green-500' : ''}
+                                  `}
+                          >
+                            {item.booking_status_name}
+                          </Badge>
+
+
                         </div>
                       </Card>
                     </div>
@@ -140,11 +166,13 @@ function CustomerViewBookings() {
                       <h2 className="font-semibold">Check-out Date: {item.booking_checkout_dateandtime}</h2>
                     </div>
                     <div className="mt-6">
-                      <Button variant="outline" onClick={handleShowAlert}>Cancel Booking</Button>
+                      <Button variant="outline" onClick={() => handleShowAlert(item.booking_id)}>
+                        Cancel Booking
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center text-gray-600">No booking details available</div>
+                  <div className="text-center text-black">No booking details available</div>
                 )
               )}
             </div>

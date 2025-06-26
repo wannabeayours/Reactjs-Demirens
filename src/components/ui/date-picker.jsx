@@ -22,7 +22,7 @@ const DatePicker = ({
   name,
   label = "Date",
   futureAllowed = true,
-  pastAllowed = true,
+  pastAllowed = false,
   design,
   withTime = false,
   isRequired = false,

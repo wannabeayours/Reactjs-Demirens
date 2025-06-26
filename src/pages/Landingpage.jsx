@@ -209,7 +209,7 @@ function Landingpage() {
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-center">
-                <Link to="/customer/rooms">
+                <Link to="/customer/bookings">
                   <Button variant="link">View all rooms <ArrowRight className="w-4 h-4" /></Button>
                 </Link>
               </div>
