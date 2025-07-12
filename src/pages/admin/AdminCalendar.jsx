@@ -1,8 +1,12 @@
 import React from 'react'
+import AdminHeader from '@/components/layout/AdminHeader';
 
 function AdminCalendar() {
   return (
-    <div>AdminCalendar</div>
+    <div>
+      
+      <AdminHeader/>
+      AdminCalendar</div>
   )
 }
 

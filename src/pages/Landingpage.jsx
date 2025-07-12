@@ -3,19 +3,83 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Bed, BedIcon, Car, CheckCheck, Dumbbell, HandPlatter, Info, Square, Star, User, Wifi } from 'lucide-react';
+import { ArrowRight, Bed, BedIcon, Car, CheckCheck, Dumbbell, HandPlatter, Info, MinusIcon, Plus, Square, Star, User, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LandingHeader from '@/components/layout/LandingHeader';
 import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'; import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from 'react-hook-form'
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from "@/components/ui/form"
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import DatePicker from '@/components/ui/date-picker';
+
+
+const schema = z.object({
+  checkIn: z.string().min(1, { message: "Check in is required" }),
+  checkOut: z.string().min(1, { message: "Check out is required" }),
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const checkOut = new Date(data.checkOut);
+
+  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+    return false;
+  }
+
+  const normalize = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
+
+  return normalize(checkOut).getTime() > normalize(checkIn).getTime();
+}, {
+  message: "Check out must be later than check in",
+  path: ["checkOut"],
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const now = new Date();
+  return checkIn.getTime() > now.getTime();
+}, {
+  message: "Check in must be in the future",
+  path: ["checkIn"],
+});
 
 
 function Landingpage() {
   const [feedback, setFeedback] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [guestNumber, setGuestNumber] = useState(0);
 
+  const aboutimages = [
+    { src: './assets/images/beach.png', title: 'Explore the beach', location: 'Boracay, Philippines' },
+    { src: './assets/images/beach.png', title: 'Relaxing waves', location: 'Siargao, Philippines' },
+    { src: './assets/images/beach.png', title: 'Sunny shores', location: 'El Nido, Palawan' },
+    { src: './assets/images/beach.png', title: 'Paradise found', location: 'Camiguin, Philippines' },
+    { src: './assets/images/beach.png', title: 'Island breeze', location: 'Cebu, Philippines' },
+  ];
+
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      checkIn: "",
+      checkOut: "",
+
+    },
+  })
+
+  const onSubmit = async (data) => {
+    localStorage.setItem("checkIn", data.checkIn);
+    localStorage.setItem("checkOut", data.checkOut);
+
+  }
   const getFeedbacks = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
@@ -67,10 +131,85 @@ function Landingpage() {
 
 
           {/* Section 1 - Welcome */}
-          <section className="flex items-center justify-center  w-full  h-screen ">
-            <h1 className="text-5xl font-bold ">
+          <section className="flex items-center justify-center h-screen ">
+            <div >
+            <div>
+            <h1 className="text-5xl font-bold text-white ">
               WELCOME TO DEMIREN HOTEL AND RESTAURANT
             </h1>
+            </div>
+        
+            <div className="flex items-center justify-center h-[25vh] ">
+              <Card className={"bg-transparent border-none shadow-white"} >
+                <CardContent>
+                  <Form {...form}>
+
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
+                      <FormField
+                        control={form.control}
+                        name="checkIn"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-in"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={true}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="checkOut"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-out"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={true}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      <div>
+                        <Label className={"mb-2"}>Number of Guests</Label>
+                        <div className="flex items-center justify-start space-x-2 ">
+
+                          <Button type="button" variant="secondary" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
+                          <Input
+                            className="w-1/4"
+                            type="number"
+                            readOnly
+                            value={guestNumber}
+
+
+                          />
+                          <Button type="button" variant="secondary" onClick={() => setGuestNumber(guestNumber + 1)}><Plus/></Button>
+
+                        </div>
+
+                      </div>
+                      <div className="flex items-center justify-start mt-5 ">
+                        <Button className="w-full">Search</Button>
+                      </div>
+
+
+                    </form>
+
+                  </Form>
+                </CardContent>
+
+              </Card>
+
+            </div>
+            </div>
+       
           </section>
 
           {/* Section 2  */}
@@ -79,7 +218,7 @@ function Landingpage() {
 
               <div className="w-full md:w-1/2 flex  justify-center  mb-8 md:mb-0">
                 <img
-                  src=""
+                  src="./assets/images/beach.png"
                   alt="About"
                   className="w-full max-w-sm rounded-lg shadow-lg"
                 />
@@ -89,10 +228,11 @@ function Landingpage() {
               <div className="w-full md:w-1/2 px-4 text-white text-center md:text-left">
                 <h2 className="text-4xl font-bold mb-4">Hotel Demiren and Restaurant</h2>
                 <p className="text-lg leading-relaxed">
-                  We are passionate about delivering high-quality solutions. Our team is dedicated to creating
-                  engaging digital experiences that leave a lasting impression.
+                  Welcome to Hotel Demiren and Restaurant, where comfort meets elegance. Nestled in a relaxing environment, we are more than just a place to stay — we are your home away from home.
+                  We are passionate about providing high-quality service and creating memorable experiences for every guest. Whether you're here for a relaxing getaway, a business trip, or a family vacation, our team is dedicated to making your stay comfortable, enjoyable, and unforgettable.
+                  At Hotel Demiren, hospitality is not just a service — it's our commitment. Enjoy our well-appointed rooms, delicious cuisine, and warm, personalized care that reflects our passion for excellence.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-col-span-2">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-col-span-2">
                   <div className="p-4 mt-5">
                     <ul>
                       <li className="flex items-center gap-2">
@@ -125,7 +265,7 @@ function Landingpage() {
                       </li>
                     </ul>
                   </div>
-                </div>
+                </div> */}
 
               </div>
             </div>

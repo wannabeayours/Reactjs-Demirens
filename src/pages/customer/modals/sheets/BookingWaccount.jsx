@@ -66,6 +66,7 @@ function BookingWaccount({ rooms, selectedRoom }) {
   }
 
 
+
   useEffect(() => {
     if (open) {
       const checkInStr = localStorage.getItem('checkIn')
@@ -90,6 +91,20 @@ function BookingWaccount({ rooms, selectedRoom }) {
       }])
     }
   }, [open, rooms, selectedRoom])
+
+  const handleRemoveRoom = (indexRemove) => {
+    const updatedRooms = selectedRooms.filter((_, index) => index !== indexRemove);
+    setSelectedRooms(updatedRooms);
+  
+    if (updatedRooms.length === 0) {
+      setGuestNumber(0);
+      setNumberOfNights(1);
+      toast.info("Room selection cleared!");
+    } else {
+      toast.info("Room removed.");
+    }
+  };
+
   return (
     <>
 
@@ -136,7 +151,9 @@ function BookingWaccount({ rooms, selectedRoom }) {
                           {selectedRooms.map((room, index) => (
                             <div key={index}>
                               <div className="flex justify-end">
-                                <Trash2 className="cursor-pointer text-red-500" />
+                                <Trash2 className="cursor-pointer text-red-500"
+                                  onClick={() => handleRemoveRoom(index)}
+                                />
 
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">

@@ -59,7 +59,10 @@ function LandingHeader() {
 
 
   return (
-    <div className={`sticky  top-0 left-0 w-full  flex items-center justify-between px-8 py-8 z-50 transition-all duration-500 ease-in-out ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
+    <div
+      className={`sticky top-0 left-0 w-full flex items-center justify-between px-8 z-50 transition-all duration-500 ease-in-out ${
+        scrolled ? 'bg-white shadow-md py-2 text-black' : 'bg-transparent py-4 text-white'
+      }`} >      
       <div className="flex items-center gap-10">
         <div className="font-bold text-lg uppercase">LOGO</div>
         <nav className="hidden md:flex gap-6 text-sm font-medium">
@@ -83,12 +86,12 @@ function LandingHeader() {
           </Button>
         </Link>
         <Link to="/login">
-          <Button variant={"outline"} className={"mr-4"}>
+          <Button variant={"secondary"} className={"mr-4"}>
             Sign In
           </Button>
         </Link>
 
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
       </div>
 
 

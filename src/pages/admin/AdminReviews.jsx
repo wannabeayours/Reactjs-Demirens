@@ -1,12 +1,12 @@
-import { Button } from '@/components/ui/button';
+import AdminHeader from '@/components/layout/AdminHeader'
 import React from 'react'
-import { Link } from 'react-router-dom'
 
 function AdminReviews() {
   return (
-    <Link to="/login"> 
-    <Button>Go to Login</Button>
-  </Link>
+    <div>
+      
+      <AdminHeader/>
+      AdminReviews</div>
   )
 }
 

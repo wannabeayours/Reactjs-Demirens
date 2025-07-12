@@ -1,8 +1,11 @@
 import React from 'react'
+import AdminHeader from '@/components/layout/AdminHeader';
 
 function AdminRequestedAmenities() {
   return (
-    <div>AdminRequestedAmenities</div>
+    <div>
+    <AdminHeader/>
+      AdminRequestedAmenities</div>
   )
 }
 

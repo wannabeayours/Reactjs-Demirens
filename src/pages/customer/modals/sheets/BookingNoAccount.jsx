@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
@@ -51,7 +51,7 @@ function BookingNoAccount({ rooms, selectedRoom }) {
       const room = selectedRooms[0];
 
       const jsonData = {
-        customers_walk_in_fname:  data.walkinfirstname,
+        customers_walk_in_fname: data.walkinfirstname,
         customers_walk_in_lname: data.walkinlastname,
         customers_walk_in_email: data.email,
         customers_walk_in_phone_number: data.contactNumber,
@@ -121,6 +121,18 @@ function BookingNoAccount({ rooms, selectedRoom }) {
     },
   })
 
+  const handleRemoveRoom = (indexRemove) => {
+    const updatedRooms = selectedRooms.filter((_, index) => index !== indexRemove);
+    setSelectedRooms(updatedRooms);
+
+    if (updatedRooms.length === 0) {
+      setGuestNumber(0);
+      setNumberOfNights(1);
+      toast.info("Room selection cleared!");
+    } else {
+      toast.info("Room removed.");
+    }
+  };
 
 
   return (
@@ -242,7 +254,9 @@ function BookingNoAccount({ rooms, selectedRoom }) {
                               {selectedRooms.map((room, index) => (
                                 <div key={index}>
                                   <div className="flex justify-end">
-                                    <Trash2 className="cursor-pointer text-red-500" />
+                                    <Trash2 className="cursor-pointer text-red-500"
+                                      onClick={() => handleRemoveRoom(index)}
+                                    />
 
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">

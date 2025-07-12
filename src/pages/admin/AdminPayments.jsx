@@ -1,8 +1,11 @@
 import React from 'react'
+import AdminHeader from '@/components/layout/AdminHeader';
 
 function AdminPayments() {
   return (
-    <div>AdminPayments</div>
+    <div>
+    <AdminHeader/>
+    AdminPayments</div>
   )
 }
 

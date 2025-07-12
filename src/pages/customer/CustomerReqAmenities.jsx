@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableCaption, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Send } from 'lucide-react'
 import React from 'react'
+import RequestAmenities from './modals/sheets/RequestAmenities'
 
 
 function CustomerReqAmenities() {
@@ -16,8 +17,8 @@ function CustomerReqAmenities() {
         </div>
         <div className="flex justify-end">
         <Button> 
-          <Send/>
-          Request Amenities
+          
+          <RequestAmenities/>
         </Button>
         </div>
 
