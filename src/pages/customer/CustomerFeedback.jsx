@@ -71,7 +71,7 @@ function CustomerFeedback() {
 
  return (
   <div className="flex items-center justify-center flex-col ">
-   <Card className={"px-10 mt-10 w-full md:w-1/2"}>
+   <Card className={"px-10 mt-20 w-full md:w-1/2 bg-transparent"}>
 
     <CardContent>
 

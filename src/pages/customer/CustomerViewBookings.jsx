@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import ShowAlert from '@/components/ui/show-alert';
 import { Badge } from '@/components/ui/badge';
+import { Book } from 'lucide-react';
 
 function CustomerViewBookings() {
   const [viewBook, setViewBook] = useState([]);
@@ -125,70 +126,95 @@ function CustomerViewBookings() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
-      {errorMessage ? (
-        <div className="col-span-full text-red-500 text-center">
-          <strong>{errorMessage}</strong>
-        </div>
-      ) : viewBook.length === 0 ? (
-        <div className="col-span-full text-center text-black">
-          No booking details available
-        </div>
-      ) : (
-        viewBook.map((item, index) => (
-          <div key={index}>
-            <Card className="px-10 mt-10 ">
-              <div className="shadow-lg rounded-lg p-6 ">
+    <div className="flex  flex-col ">
+
+      <div className="flex items-center pl-4">
+        <h1 className="text-4xl font-bold flex items-center gap-2">
+          <Book className="w-6 h-6" />
+          View Bookings
+        </h1>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
+
+        {errorMessage ? (
+          <div className="col-span-full text-red-500 text-center">
+            <strong>{errorMessage}</strong>
+          </div>
+        ) : viewBook.length === 0 ? (
+          <div className="col-span-full text-center text-black">
+            No booking details available
+          </div>
+        ) : (
+          viewBook.map((item, index) => (
+            <div key={index}>
+
+              <Card className="px-10 mt-20 shadow-xl  ">
+
                 <div>
-                  <Card className="mb-4 bg-[#769FCD] p-5">
-                    <div className="flex justify-between items-center w-full">
-                      <h2 className="text-lg font-semibold">{item.roomtype_name}</h2>
-                      <Badge
-                        className={`text-md font-semibold text-white 
+
+                  <div className="flex justify-between items-center w-full text-black">
+                    <h2 className="text-3xl font-semibold text-[#113F67]">{item.roomtype_name}</h2>
+                    <Badge
+                      className={`text-md font-semibold text-white 
                       ${item.booking_status_name === 'Pending' ? 'bg-orange-500' : ''}
                       ${item.booking_status_name === 'Cancelled' ? 'bg-red-500' : ''}
                       ${item.booking_status_name === 'Approved' ? 'bg-green-500' : ''}
                     `}
-                      >
-                        {item.booking_status_name}
-                      </Badge>
-                    </div>
-                  </Card>
+                    >
+                      {item.booking_status_name}
+                    </Badge>
+                  </div>
+
                 </div>
 
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Number: {item.roomnumber_id}</h2>
+                <div className="mb-4 text-black flex justify-between">
+                  <h2 className="font-semibold">Room Number:</h2>
+                  <h2 className="font-semibold">{item.roomnumber_id}</h2>
                 </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Sizes: {item.room_sizes} </h2>
+        
+
+                <div className="mb-4 text-black flex justify-between items-center">
+                  <h2 className="font-semibold">Room Sizes:</h2>
+                  <h2 className="font-semibold">{item.room_sizes}</h2>
                 </div>
-                <div className="mb-4">
+
+                <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Room Price:</h2>
+                  <h2 className="font-semibold">₱ {item.room_price}</h2>
                 </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Room Beds: {item.room_beds} Beds</h2>
+
+                <div className="mb-4 text-black flex justify-between items-center">
+                  <h2 className="font-semibold">Room Beds:</h2>
+                  <h2 className="font-semibold">{item.room_beds} Beds</h2>
                 </div>
-                <div className="mb-4">
-                  <h2 className="font-semibold">Down Payment: ₱ {item.booking_downpayment} </h2>
+
+                <div className="mb-4 text-black flex justify-between items-center">
+                  <h2 className="font-semibold">Down Payment:</h2>
+                  <h2 className="font-semibold">₱ {item.booking_downpayment}</h2>
                 </div>
-                <div className="mb-4">
+
+
+
+                <div className="mb-4 text-black">
                   <h2 className="font-semibold">Check-in Date: {item.booking_checkin_dateandtime} </h2>
                   <h2 className="font-semibold">Check-out Date: {item.booking_checkout_dateandtime}</h2>
                 </div>
-                <div className="mt-6">
-                  <Button variant="outline" onClick={() => handleShowAlert(item.booking_id)}>
+                <div className="mt-6 flex justify-end">
+                  <Button className="bg-[#FDF5AA] hover:bg-yellow-600 text-black" onClick={() => handleShowAlert(item.booking_id)}>
                     Cancel Booking
                   </Button>
 
                 </div>
-              </div>
-            </Card>
-          </div>
-        ))
-      )}
 
-      <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={1} />
+              </Card>
+            </div>
+          ))
+        )}
+
+        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={1} />
+      </div>
     </div>
+
 
   );
 }

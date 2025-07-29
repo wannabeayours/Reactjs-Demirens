@@ -61,6 +61,7 @@ const schema = z.object({
 function CustomerBooking() {
   const [rooms, setRooms] = useState([]);
   const [guestNumber, setGuestNumber] = useState(0);
+  const [isSearched, setIsSearched] = useState(false);
 
 
   const form = useForm({
@@ -91,6 +92,10 @@ function CustomerBooking() {
   const onSubmit = async (data) => {
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
+    localStorage.setItem("guestNumber", guestNumber);
+    setIsSearched(true);
+
+
 
   }
   useEffect(() => {
@@ -100,10 +105,13 @@ function CustomerBooking() {
 
 
   return (
-    <div >
+    <div className="bg-transparent min-h-screen text-white">
 
-      <div className="flex items-center justify-center h-[50vh] bg-secondary">
-        <Card >
+      <div
+        className="flex items-center justify-center h-[50vh] bg-secondary bg-fixed bg-center bg-cover"
+        style={{ backgroundImage: 'url("/assets/images/hotels.jpg")' }}
+      >
+        <Card className=" w-full max-w-5xl">
           <CardContent>
             <Form {...form}>
 
@@ -141,7 +149,7 @@ function CustomerBooking() {
                   )}
                 />
                 <div>
-                  <Label className={"mb-2"}>Number of Guests</Label>
+                  <Label className={"mb-2 "}>Number of Guests</Label>
                   <div className="flex items-center justify-start space-x-2">
 
                     <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
@@ -159,7 +167,7 @@ function CustomerBooking() {
 
                 </div>
                 <div className="flex items-center justify-start mt-5 ">
-                  <Button className="w-full">Search</Button>
+                  <Button className="w-full bg-[#FDF5AA] hover:bg-yellow-600 text-black">Search</Button>
                 </div>
 
 
@@ -172,79 +180,87 @@ function CustomerBooking() {
 
       </div>
 
-      
+
       <div className="flex flex-col items-center justify-center py-10 px-4 ">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {rooms.filter((room) => room.status_id === 3).length === 0 ? (
-            <p>No rooms available</p>
-          ) : (
-            rooms
-              .filter((room) => room.status_id === 3)
+        {!isSearched ? (
+          <p className="text-center text-lg font-semibold text-[#bba008] mt-10">
+            Please check in, check out, and enter number of guests first.
+          </p>
+        ) : rooms.filter(room => room.status_id === 3 && room.max_capacity >= guestNumber).length === 0 ? (
+          <p className="text-center text-lg font-semibold text-gray-600 mt-10">
+            No rooms available for {guestNumber} guest(s).
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {rooms
+              .filter(room => room.status_id === 3 && room.max_capacity >= guestNumber)
               .map((room, index) => (
-                <Card key={index} className="flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader>
-                    <img src={room.roomtype_image} alt="Room" className="w-full h-48 object-cover" />
-                  </CardHeader>
-                  <CardContent className="flex flex-col flex-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <h5 className="text-lg font-semibold">{room.roomtype_name}</h5>
-                      <div className="flex justify-between items-center mb-2">
-                        <Badge className={room.status_id === 3 ? "bg-green-500" : "bg-red-500"}>{room.status_name}</Badge>
-                      </div>
-                    </div>
+                <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 bg-white">
+                  {/* Room Image */}
+                  <div className="relative">
+                    <img
+                      src={room.roomtype_image || room.images?.[0]} // fallback if needed
+                      alt={room.roomtype_name}
+                      className="w-full h-52 object-cover rounded-t-2xl"
+                    />
+                    <Badge className={`absolute top-3 right-3 ${room.status_id === 3 ? 'bg-green-500' : 'bg-red-500'}`}>
+                      {room.status_name}
+                    </Badge>
+                  </div>
+
+                  <CardContent className="flex flex-col flex-1 p-4 space-y-4">
+                    {/* Title & Description */}
                     <div>
-                      <h5>{room.roomtype_description}</h5>
-                      <Link>
-                        <div className="flex flex-row space-x-2 text-blue-500">
-                          <div>
-                            More info
-                          </div>
-                          <div>
-                            <Info />
-                          </div>
-
-                        </div>
-                      </Link>
-                    </div>
-                    <div className="mb-6 mt-6" >
-                      <h2 className="text-lg font-semibold text-blue-600">₱ {room.roomtype_price}</h2>
+                      <h2 className="text-xl font-semibold text-gray-800">{room.roomtype_name}</h2>
+                      <p className="text-sm text-gray-600 mt-1">{room.roomtype_description}</p>
                     </div>
 
-                    <div>
-                      {/* Top row badges */}
-                      <div className="flex flex-row gap-4 mb-3">
-                        <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit">
-                          <User className="w-4 h-4" />
-                          <h3 className="text-sm">3 Guests</h3>
-                        </div>
-                        <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit">
-                          <Square className="w-4 h-4" />
-                          <h3 className="text-sm">23 m2</h3>
-                        </div>
+                    {/* Info Links */}
+                    <Link className="text-sm text-blue-500 hover:underline flex items-center gap-1">
+                      More info <Info size={16} />
+                    </Link>
+
+                    {/* Price */}
+                    <div className="text-lg font-semibold text-blue-600">
+                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </div>
+
+                    {/* Room Features */}
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
+                        <User size={16} />
+                        {room.max_capacity} Guest{room.max_capacity > 1 && 's'}
                       </div>
-
-                      {/* Separate badge below */}
-                      <div className="bg-secondary rounded-full p-2 flex items-center gap-1.5 w-fit mb-3">
-                        <Bed className="w-4 h-4" />
-                        <h3 className="text-sm">2 Beds</h3>
+                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
+                        <Bed size={16} />
+                        2 Beds
+                      </div>
+                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
+                        <Square size={16} />
+                        23 m²
                       </div>
                     </div>
 
+                    {/* Book Button */}
                     <div className="mt-auto">
-                      {
-                        room.status_id === 3 ?
-                          <BookingNoAccount rooms={rooms} selectedRoom={room} /> :
-                          <Button disabled className="w-full">Book Now</Button>
-                      }
-
+                      {room.status_id === 3 ? (
+                        <BookingNoAccount rooms={rooms} selectedRoom={room} />
+                      ) : (
+                        <Button disabled className="w-full">Book Now</Button>
+                      )}
                     </div>
-
                   </CardContent>
                 </Card>
-              ))
-          )}
-        </div>
+              ))}
+          </div>
+        )}
+
+
+
       </div>
     </div>
   )

@@ -15,10 +15,10 @@ function Sidebar() {
 
   return (
     <div>
-      <Sheet >
+      <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline">
-            <MenuSquareIcon className="w-4 h-4" />
+          <Button>
+            <MenuSquareIcon className="w-4 h-4 text-black" />
           </Button>
 
         </SheetTrigger>

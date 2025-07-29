@@ -137,9 +137,9 @@ function UpdateProfile({ data, getProfile }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger>
-                <Button className="mr-2">
-                    <LucideEdit className="w-4 h-4 mr-2" />
-                    Edit Profile
+                <Button className="mr-2 bg-[#FDF5AA] hover:bg-yellow-600">
+                    <LucideEdit className="w-4 h-4 mr-2 text-black" />
+                    <h1 className="text-black">Edit Profile</h1>
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -265,7 +265,7 @@ function UpdateProfile({ data, getProfile }) {
                                         Cancel
                                     </Button>
                                 </DialogClose>
-                                <Button type="submit" className="ml-2" >
+                                <Button type="submit" className="ml-2 bg-[#FDF5AA] hover:bg-yellow-600 text-black" >
                                     Update
                                 </Button>
                             </div>

@@ -116,11 +116,11 @@ function Landingpage() {
   }, []);
   return (
 
-    <div className="relative">
+    <div >
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
-        style={{ backgroundImage: 'url("./assets/images/beach.png")' }}
-      ></div>
+        className="fixed inset-0 bg-[#1A2947] z-0"
+      >
+      </div>
 
 
       <div className="fixed inset-0 bg-black/50 z-10"></div>
@@ -131,160 +131,151 @@ function Landingpage() {
 
 
           {/* Section 1 - Welcome */}
-          <section className="flex items-center justify-center h-screen ">
-            <div >
-              <div>
-                <h1 className="text-5xl font-bold text-white ">
-                  WELCOME TO DEMIREN HOTEL AND RESTAURANT
-                </h1>
-              </div>
+          <section className="h-screen flex flex-col">
+            {/* Top Half - Image background with heading */}
+            <div
+              className="h-[150%] bg-fixed  bg-cover bg-center bg-no-repeat flex items-center justify-center rounded-2xl overflow-hidden"
+              style={{ backgroundImage: 'url("./assets/images/hotels.jpg")' }}
+            >
+              <h1 className="text-4xl md:text-5xl font-bold text-white text-center px-4">
+                WELCOME TO DEMIREN HOTEL AND RESTAURANT
+              </h1>
+            </div>
 
-              <div className="flex items-center justify-center h-[25vh] ">
-                <Card className={"bg-transparent border-none shadow-white"} >
-                  <CardContent>
-                    <Form {...form}>
+            {/* Bottom Half - Solid color with form */}
+            <div className="h-1/2 bg-[#0D1423] flex items-start justify-center p-6 z-10 relative">
 
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
-                        <FormField
-                          control={form.control}
-                          name="checkIn"
-                          render={({ field }) => (
-                            <FormItem>
-                              <DatePicker
-                                form={form}
-                                name={field.name}
-                                label="Check-in"
-                                pastAllowed={false}
-                                futureAllowed={true}
-                                withTime={true}
-                              />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="checkOut"
-                          render={({ field }) => (
-                            <FormItem>
-                              <DatePicker
-                                form={form}
-                                name={field.name}
-                                label="Check-out"
-                                pastAllowed={false}
-                                futureAllowed={true}
-                                withTime={true}
-                              />
-                            </FormItem>
-                          )}
-                        />
-                        <div>
-                          <Label className={"mb-2"}>Number of Guests</Label>
-                          <div className="flex items-center justify-start space-x-2 ">
-
-                            <Button type="button" variant="secondary" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
-                            <Input
-                              className="w-1/4"
-                              type="number"
-                              readOnly
-                              value={guestNumber}
-
-
+              <Card className="bg-transparent border-none shadow-white w-full max-w-5xl">
+                <CardContent>
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white"
+                    >
+                      <FormField
+                        control={form.control}
+                        name="checkIn"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-in"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={true}
                             />
-                            <Button type="button" variant="secondary" onClick={() => setGuestNumber(guestNumber + 1)}><Plus /></Button>
-
-                          </div>
-
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="checkOut"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-out"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={true}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      <div>
+                        <Label className="mb-2">Number of Guests</Label>
+                        <div className="flex items-center justify-start space-x-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setGuestNumber(guestNumber - 1)}
+                            disabled={guestNumber === 0}
+                          >
+                            <MinusIcon />
+                          </Button>
+                          <Input
+                            className="w-1/4"
+                            type="number"
+                            readOnly
+                            value={guestNumber}
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setGuestNumber(guestNumber + 1)}
+                          >
+                            <Plus />
+                          </Button>
                         </div>
-                        <div className="flex items-center justify-start mt-5 ">
-                          <Button className="w-full">Search</Button>
-                        </div>
-
-
-                      </form>
-
-                    </Form>
-                  </CardContent>
-
-                </Card>
-
-              </div>
+                      </div>
+                      <div className="flex items-center justify-start mt-5">
+                        <Button className="w-full bg-[#bba008] hover:bg-yellow-600">Search</Button>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
             </div>
-
           </section>
 
-          {/* Section 2  */}
-          <section id="about" className="flex items-center justify-center h-screen w-full bg-[#769FCD]">
-            <div className="flex w-11/12 max-w-7xl mx-auto flex-col md:flex-row items-center">
-
-              <div className="w-full md:w-1/2 flex  justify-center  mb-8 md:mb-0">
-                <img
-                  src="./assets/images/beach.png"
-                  alt="About"
-                  className="w-full max-w-sm rounded-lg shadow-lg"
-                />
-              </div>
 
 
-              <div className="w-full md:w-1/2 px-4 text-white text-center md:text-left">
-                <h2 className="text-4xl font-bold mb-4">Hotel Demiren and Restaurant</h2>
-                <p className="text-lg leading-relaxed">
-                  Welcome to Hotel Demiren and Restaurant, where comfort meets elegance. Nestled in a relaxing environment, we are more than just a place to stay — we are your home away from home.
-                  We are passionate about providing high-quality service and creating memorable experiences for every guest. Whether you're here for a relaxing getaway, a business trip, or a family vacation, our team is dedicated to making your stay comfortable, enjoyable, and unforgettable.
-                  At Hotel Demiren, hospitality is not just a service — it's our commitment. Enjoy our well-appointed rooms, delicious cuisine, and warm, personalized care that reflects our passion for excellence.
+          {/* Section 2 */}
+          <section id="about" className="flex items-center justify-center h-screen w-full bg-[#0D1423]">
+            <div className="w-full md:w-1/2 flex items-center justify-center">
+              <div className="px-8 text-center text-white">
+                <h2 className="text-4xl font-bold mb-4 text-[#bba008]">Demiren Hotel</h2>
+                <hr className="border-t-2 border-[#bba008] w-16 mx-auto mb-4" />
+                <p className="text-lg max-w-md mx-auto">
+                  Showcase the best your property has to offer by highlighting one of your accommodations.
+                  Add a flattering photo, then describe the room’s best feature.
                 </p>
-                {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-col-span-2">
-                  <div className="p-4 mt-5">
-                    <ul>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="p-4 mt-5">
-                    <ul>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCheck className="w-4 h-4" />
-                        <span>asa</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div> */}
-
               </div>
             </div>
+
+            {/* Right Image Side */}
+            <div className="w-full md:w-1/2 h-full">
+              <img
+                src="./assets/images/abouts.jpg"
+                alt="Garden Villa"
+                className="w-full h-full object-cover rounded-3xl overflow-hidden"
+              />
+            </div>
           </section>
+
+
+
+
           {/* Section 3  */}
           <section className="flex items-center justify-center h-screen">
-            <div className="w-full max-w-4xl">
-              <h2 className="text-3xl font-bold mb-4">Video</h2>
+            <div className="w-full max-w-4xl text-center">
+
+              <video
+                className="w-full max-w-[500%] rounded-2xl border-4 border-yellow-600 shadow-2xl"
+                controls
+                autoPlay
+                muted
+                loop
+              >
+                <source src="/assets/videos/vi.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+
+
 
             </div>
           </section>
+
           {/* Section 4  */}
-          <section className="h-screen p-6 bg-white">
+          <section className="h-screen p-6 bg-[#0D1423]">
             <div className="w-full h-screen">
               <div className="mt-11 text-center">
-                <h1 className="text-2xl font-bold text-black inline-bloc px-4 py-2">
+                <h1 className="text-2xl font-bold text-[#bba008] inline-bloc px-4 py-2">
                   Our Rooms
                 </h1>
-                <h3 className='mt-2'>Choose from our selection of beautifully designed rooms, each offering comfort, style, and convenience.</h3>
+                <h3 className='mt-2 text-white'>Choose from our selection of beautifully designed rooms, each offering comfort, style, and convenience.</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mt-10 p-5">
@@ -294,7 +285,7 @@ function Landingpage() {
                   rooms
                     .filter((room) => room.status_id === 3)
                     .map((room, index) => (
-                      <Card key={index} className="flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                      <Card key={index} className="flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-[#F5F7FA]">
                         <CardHeader>
                           <img src={room.roomtype_image} alt="Room" className="w-full h-48 object-cover" />
                         </CardHeader>
@@ -308,7 +299,7 @@ function Landingpage() {
                           <div>
                             <h5>{room.roomtype_description}</h5>
                             <Link>
-                              <div className="flex flex-row space-x-2 text-blue-500">
+                              <div className="flex flex-row space-x-2 text-[#0D1423]">
                                 <div>
                                   More info
                                 </div>
@@ -320,7 +311,7 @@ function Landingpage() {
                             </Link>
                           </div>
                           <div className="mb-6 mt-6" >
-                            <h2 className="text-lg font-semibold text-blue-600">₱ {room.roomtype_price}</h2>
+                            <h2 className="text-lg font-semibold text-blue-600"> ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
                           </div>
 
                           <div>
@@ -345,14 +336,14 @@ function Landingpage() {
 
                           <div className="mt-auto">
 
-                            <Button className="w-full text-lg py-2" disabled={room.status_id !== 3}>Book Now</Button>
+                            <Button className="w-full text-lg py-2 bg-[#0D1423] hover:bg-[#3A4455] transition duration-300" disabled={room.status_id !== 3}>Book Now</Button>
 
                           </div>
 
                         </CardContent>
                       </Card>
-                      ))
-                    )}
+                    ))
+                )}
               </div>
               <div className="mt-4 flex items-center justify-center">
                 <Link to="/customer/bookings">
@@ -364,20 +355,20 @@ function Landingpage() {
           </section>
 
           {/* Section 5  */}
-          <section className="h-screen p-6 bg-white">
+          <section className="h-screen p-6 bg-[#0D1423]">
             <div className="w-full h-screen">
               <div className="mt-11 text-center">
-                <h1 className="text-2xl font-bold text-black inline-bloc px-4 py-2 rounded">
+                <h1 className="text-2xl font-bold text-[#bba008] inline-bloc px-4 py-2 rounded">
                   Hotel Amenities
                 </h1>
-                <h3 className='mt-2'>Enjoy our wide range of premuim amenities designed to make your stay comfortable and memorable.  </h3>
+                <h3 className='mt-2 text-white'>Enjoy our wide range of premuim amenities designed to make your stay comfortable and memorable.  </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-14">
                 <div className="flex flex-col items-center text-center p-4">
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Dumbbell className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Fitness Center</h2>
+                  <h2 className="text-lg font-semibold text-white">Fitness Center</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -386,7 +377,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Wifi className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Free WiFi</h2>
+                  <h2 className="text-lg font-semibold text-white">Free WiFi</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -395,7 +386,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <HandPlatter className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Restaurant</h2>
+                  <h2 className="text-lg font-semibold text-white">Restaurant</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -405,7 +396,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Car className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Free Parking</h2>
+                  <h2 className="text-lg font-semibold text-white">Free Parking</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -418,7 +409,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Dumbbell className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Fitness Center</h2>
+                  <h2 className="text-lg font-semibold text-white">Fitness Center</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -427,7 +418,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Dumbbell className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Fitness Center</h2>
+                  <h2 className="text-lg font-semibold text-white">Fitness Center</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -436,7 +427,7 @@ function Landingpage() {
                   <div className="bg-blue-100 rounded-full p-4 mb-3">
                     <Dumbbell className="w-8 h-8 text-blue-500" />
                   </div>
-                  <h2 className="text-lg font-semibold">Fitness Center</h2>
+                  <h2 className="text-lg font-semibold text-white">Fitness Center</h2>
                   <p className="text-sm text-gray-500">
                     Modern equipment and personal trainers
                   </p>
@@ -448,19 +439,19 @@ function Landingpage() {
 
 
           {/* Section 6  */}
-          <section className="h-screen p-6 bg-white">
+          <section className="h-screen p-6 bg-[#0D1423]">
             <div>
               <div className="mt-11 text-center mb-10">
-                <h1 className="text-2xl font-bold text-black inline-bloc px-4 py-2">
+                <h1 className="text-2xl font-bold text-[#bba008]  inline-bloc px-4 py-2">
                   Guest Testimonials
                 </h1>
-                <h3 className='mt-2'>See what our guest have to say about their stay  </h3>
+                <h3 className='mt-2 text-white'>See what our guest have to say about their stay  </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-14">
                 {feedback.map((item, index) => (
                   <div key={index}>
 
-                    <div className="border-l-4 border-blue-300 pl-3">
+                    <div className="border-l-4 border-[#bba008] pl-3">
                       <Card className="shadow-md">
 
                         <CardHeader >

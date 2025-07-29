@@ -6,6 +6,8 @@ import { Bed, Info, Square, User } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import ViewRooms from './modals/sheets/ViewRooms'
+import LandingHeader from '@/components/layout/LandingHeader'
 
 function CustomerRooms() {
   const [rooms, setRooms] = useState([]);
@@ -28,13 +30,16 @@ function CustomerRooms() {
   }, []);
   return (
     <div>
+      <LandingHeader />
 
-      <section className="flex items-center justify-center h-screen bg-gray-100">
+      <section className="flex flex-col items-center justify-center h-screen bg-cover bg-center bg-fixed bg-no-repeat text-white px-4"
+        style={{ backgroundImage: 'url("/assets/images/hotels.jpg")' }}
+      >
         <h1 className="text-4xl font-bold">Rooms</h1>
       </section>
 
 
-      <section className="flex items-center justify-center py-20 bg-white">
+      <section className="flex items-center justify-center py-20 ">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-10 p-5">
           {rooms.filter((room) => room.status_id === 3).length === 0 ? (
             <p>No rooms available</p>
@@ -76,10 +81,8 @@ function CustomerRooms() {
                         <h3 className="text-sm">2 Beds</h3>
                       </div>
                     </div>
-                
-                    <Button className="mt-auto w-full" >
-                      View Room
-                    </Button>
+
+                    <ViewRooms room={room} />
 
 
 

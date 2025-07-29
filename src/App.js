@@ -43,7 +43,7 @@ import FrontdeskLogin from './pages/frontdesk/FrontdeskLogin';
 import FrontdeskDashboard from './pages/frontdesk/FrontdeskDashboard';
 import FrontdeskWalkin from './pages/frontdesk/FrontdeskWalkin';
 import FrontdeskReservation from './pages/frontdesk/FrontdeskResvation';
-import FD_RoomAvail from './pages/frontdesk/FD_RoomAvail';
+
 function App() {
 
   useEffect(() => {
@@ -112,12 +112,14 @@ function App() {
             {/* <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
 
             {/* Customer Route */}
+            
             <Route path="/customer/about" element={<CustomerAbout />} />
             <Route path="/customer/bookings" element={<CustomerBooking />} />
             <Route path="/customer/rooms" element={<CustomerRooms />} />
             <Route path="/customer/gallery" element={<CustomerGallery />} />
             <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
             <Route path="/customer" element={<CustomerMain />} />
+            
 
 
 

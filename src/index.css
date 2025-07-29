@@ -2,4 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+ @apply bg-[#113F67] text-white min-h-screen;
+}
 

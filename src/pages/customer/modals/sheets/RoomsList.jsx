@@ -28,7 +28,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
   <>
    <Sheet open={open} onOpenChange={setOpen}>
     <SheetTrigger asChild>
-     <Button>Add Room</Button>
+     <Button className="bg-[#FDF5AA] hover:bg-yellow-600 text-black">Add Room</Button>
     </SheetTrigger>
     <SheetContent side="bottom">
      

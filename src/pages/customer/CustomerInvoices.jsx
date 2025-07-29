@@ -1,9 +1,14 @@
-import React from 'react'
+import React from 'react';
 
-function CustomerInvoices() {
+const CustomerInvoices = () => {
   return (
-    <div>CustomerInvoices</div>
-  )
-}
 
-export default CustomerInvoices
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">My Invoices</h1>
+        {/* Invoice table or content goes here */}
+      </div>
+   
+  );
+};
+
+export default CustomerInvoices;

@@ -66,7 +66,7 @@ function Changepass() {
     return (
         <Dialog>
             <DialogTrigger>
-                <Button variant="outline">
+                <Button className="bg-[#bba008] hover:bg-yellow-600">
                     Change Password
                 </Button>
             </DialogTrigger>

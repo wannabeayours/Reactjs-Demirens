@@ -60,9 +60,8 @@ function LandingHeader() {
 
   return (
     <div
-      className={`sticky top-0 left-0 w-full flex items-center justify-between px-8 z-50 transition-all duration-500 ease-in-out ${
-        scrolled ? 'bg-white shadow-md py-2 text-black' : 'bg-transparent py-4 text-white'
-      }`} >      
+      className={`sticky top-0 left-0 w-full flex items-center justify-between px-8 z-50 transition-all duration-500 ease-in-out ${scrolled ? 'bg-[#0D1423]  shadow-md py-2 text-white' : 'bg-transparent py-4 text-white'
+        }`} >
       <div className="flex items-center gap-10">
         <div className="font-bold text-lg uppercase">LOGO</div>
         <nav className="hidden md:flex gap-6 text-sm font-medium">
@@ -81,7 +80,7 @@ function LandingHeader() {
 
       <div className="flex items-center gap-3">
         <Link to="/customer/bookings">
-          <Button className={"mr-4"}>
+          <Button className="mr-4 bg-[#bba008]  hover:bg-yellow-600">
             Book Now
           </Button>
         </Link>

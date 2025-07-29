@@ -9,43 +9,50 @@ import RequestAmenities from './modals/sheets/RequestAmenities'
 
 function CustomerReqAmenities() {
   return (
-    <div className="flex items-center justify-center flex-col">
-      <Card className={" px-10 mt-10 w-1/2"}>
-      <div>
-        <div>
-        <h3 className=" mb-4 text-lg font-bold">Requested Amenities</h3>
-        </div>
-        <div className="flex justify-end">
-        <Button> 
-          
-          <RequestAmenities/>
-        </Button>
-        </div>
+    <div className="flex  flex-col ">
 
+      <div className="flex items-center pl-4">
+        <h1 className="text-4xl font-bold flex items-center gap-2">
+          <Send className="w-6 h-6" />
+          Request Amenities
+        </h1>
       </div>
-      
-        <Table>
-          <TableCaption>A list of your requested Amenities.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">Amenities</TableHead>
-              <TableHead >Date</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead className="text-right">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell >Towel, Extra Bed</TableCell>
-              <TableCell>2025-04-01</TableCell>
-              <TableCell>₱450.00</TableCell>
-              <TableCell className="text-right">
-                <Badge variant="secondary">Pending</Badge>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Card>
+      <div className="flex items-center justify-center flex-col ">
+        <Card className={" px-10  w-1/2 mt-20 bg-transparent shadow-xl "}>
+          <div >
+          
+            <div className="flex justify-end">
+
+
+              <RequestAmenities />
+
+            </div>
+
+          </div>
+
+          <Table>
+            <TableCaption>A list of your requested Amenities.</TableCaption>
+            <TableHeader >
+              <TableRow>
+                <TableHead className="w-[250px] text-white">Amenities</TableHead>
+                <TableHead className="text-white">Date</TableHead>
+                <TableHead className="text-white">Total</TableHead>
+                <TableHead className="text-right text-white">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="text-white">
+                <TableCell >Towel, Extra Bed</TableCell>
+                <TableCell>2025-04-01</TableCell>
+                <TableCell>₱450.00</TableCell>
+                <TableCell className="text-right">
+                  <Badge variant="secondary">Pending</Badge>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
     </div>
   )
 }
