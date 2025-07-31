@@ -14,7 +14,7 @@ import axios from 'axios'
 import { Link } from 'react-router-dom'
 import ConfirmBooking from '../ConfirmBooking'
 
-function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber }) {
+function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData }) {
   const [allRooms, setAllRooms] = useState([])
   const [selectedRooms, setSelectedRooms] = useState([])
   const [open, setOpen] = useState(false)
@@ -65,6 +65,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
         localStorage.removeItem('checkIn')
         localStorage.removeItem('checkOut')
         setSelectedRooms([]);
+        handleClearData();
       }
 
 

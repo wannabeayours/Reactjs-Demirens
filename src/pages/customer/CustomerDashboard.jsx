@@ -90,6 +90,13 @@ function CustomerDashboard() {
     }
   }
 
+  const handleClearData = () => {
+    localStorage.removeItem("checkIn");
+    localStorage.removeItem("checkOut");
+    localStorage.removeItem("guestNumber");
+    setIsSearched(false);
+  }
+
   const onSubmit = async (data) => {
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
@@ -242,7 +249,7 @@ function CustomerDashboard() {
                     {/* Book Button */}
                     <div className="mt-auto">
                       {room.status_id === 3 ? (
-                        <BookingWaccount rooms={rooms} selectedRoom={room} />
+                        <BookingWaccount rooms={rooms} selectedRoom={room} handleClearData={handleClearData} />
                       ) : (
                         <Button disabled className="w-full">Book Now</Button>
                       )}
