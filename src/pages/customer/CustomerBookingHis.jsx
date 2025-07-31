@@ -46,19 +46,19 @@ function CustomerBookingHis() {
     };
 
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true },
-    { header: 'Room Type', accessor: 'roomtype_name', sortable: true },
-    { header: 'Room Number', accessor: 'roomnumber_id', sortable: true },
+    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-white" },
+    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true ,headerClassName:"text-white"},
+    { header: 'Room Type', accessor: 'roomtype_name', sortable: true ,headerClassName:"text-white"},
+    { header: 'Room Number', accessor: 'roomnumber_id', sortable: true,headerClassName:"text-white" },
     {
-      header: 'Status', cell: (row) => (
+      header: 'Status',headerClassName:"text-white", cell: (row) => (
         <Badge className={row.booking_status_name === "Approved" ? "bg-green-500" : row.booking_status_name === "Pending" ? "bg-orange-500"  : "bg-red-500"}>
           {row.booking_status_name}
         </Badge>
       )
     },
     {
-      header: 'Actions',
+      header: 'Actions',headerClassName:"text-white",
       cell: (row) => (
         <div className="flex gap-4">
         <Eye className="cursor-pointer hover:text-[#34699A]" />
@@ -69,6 +69,7 @@ function CustomerBookingHis() {
       )
       
     },
+    
 
 
 

@@ -95,19 +95,14 @@ function CustomerDashboard() {
     localStorage.setItem("checkOut", data.checkOut);
     localStorage.setItem("guestNumber", guestNumber);
     setIsSearched(true);
-
-
-
   }
   useEffect(() => {
     getRooms();
   }, []);
 
-
   return (
 
     <div className=" min-h-screen text-white">
-
       <div
         className="flex items-center justify-center h-[50vh]  bg-fixed bg-center bg-cover mt-16 rounded-3xl border-2 border-[#FDF5AA] "
         style={{ backgroundImage: 'url("/assets/images/hotels.jpg")' }}
@@ -116,7 +111,7 @@ function CustomerDashboard() {
           <CardContent>
             <Form {...form}>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 xl:grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="checkIn"
@@ -182,7 +177,6 @@ function CustomerDashboard() {
       </div>
 
       <div className="flex flex-col items-center justify-center py-10 px-4 ">
-
         {!isSearched ? (
           <p className="text-center text-lg font-semibold text-[#bba008] mt-10">
             Please check in, check out, and enter number of guests first.
@@ -192,7 +186,7 @@ function CustomerDashboard() {
             No rooms available for {guestNumber} guest(s).
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
             {rooms
               .filter(room => room.status_id === 3 && room.max_capacity >= guestNumber)
               .map((room, index) => (

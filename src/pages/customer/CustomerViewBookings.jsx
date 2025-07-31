@@ -52,6 +52,7 @@ function CustomerViewBookings() {
       formData.append("operation", "customerCurrentBookingsWithAccount");
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
+      console.log("res ni customerCurrentBooking", res.data);
       setCurrentbookings(res.data !== 0 ? res.data : []);
       console.log("view bookings:", res.data);
     } catch (error) {
@@ -128,14 +129,13 @@ function CustomerViewBookings() {
   return (
     <div className="flex  flex-col ">
 
-      <div className="flex items-center pl-4">
+      <div className="">
         <h1 className="text-4xl font-bold flex items-center gap-2">
           <Book className="w-6 h-6" />
           View Bookings
         </h1>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
-
+      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-2" } gap-3`}>
         {errorMessage ? (
           <div className="col-span-full text-red-500 text-center">
             <strong>{errorMessage}</strong>
@@ -147,11 +147,8 @@ function CustomerViewBookings() {
         ) : (
           viewBook.map((item, index) => (
             <div key={index}>
-
               <Card className="px-10 mt-20 shadow-xl  ">
-
                 <div>
-
                   <div className="flex justify-between items-center w-full text-black">
                     <h2 className="text-3xl font-semibold text-[#113F67]">{item.roomtype_name}</h2>
                     <Badge
@@ -180,32 +177,29 @@ function CustomerViewBookings() {
 
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Room Price:</h2>
-                  <h2 className="font-semibold">₱ {item.room_price}</h2>
+                  <h2 className="font-semibold">₱ {item.roomtype_price}</h2>
                 </div>
-
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Room Beds:</h2>
                   <h2 className="font-semibold">{item.room_beds} Beds</h2>
                 </div>
-
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Down Payment:</h2>
-                  <h2 className="font-semibold">₱ {item.booking_downpayment}</h2>
+                  <h2 className="font-semibold">₱ {item.downPay}</h2>
                 </div>
-
-
-
-                <div className="mb-4 text-black">
-                  <h2 className="font-semibold">Check-in Date: {item.booking_checkin_dateandtime} </h2>
-                  <h2 className="font-semibold">Check-out Date: {item.booking_checkout_dateandtime}</h2>
+                <div className="mb-4 text-black flex justify-between items-center">
+                  <h2 className="font-semibold">Check-in Date:</h2>
+                  <h2 className="font-semibold">{item.checkIn}</h2>
+                </div>
+                <div className="mb-4 text-black flex justify-between items-center">
+                  <h2 className="font-semibold">Check-out Date:</h2>
+                  <h2 className="font-semibold">{item.checkOut}</h2>
                 </div>
                 <div className="mt-6 flex justify-end">
                   <Button className="bg-[#FDF5AA] hover:bg-yellow-600 text-black" onClick={() => handleShowAlert(item.booking_id)}>
                     Cancel Booking
                   </Button>
-
                 </div>
-
               </Card>
             </div>
           ))

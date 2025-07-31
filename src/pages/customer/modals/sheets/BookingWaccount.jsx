@@ -35,10 +35,12 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
       const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
       const downPayment = (selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0) * 1.12 * 0.5).toFixed(2);
+      const totalAmount = (selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0) * 1.12).toFixed(2);
       const bookingDetails = {
         "checkIn": checkIn,
         "checkOut": checkOut,
         "downpayment": downPayment,
+        "totalAmount": totalAmount
       }
       const roomDetails = selectedRooms.map((room) => {
         return {
@@ -246,7 +248,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
                                         }
                                         disabled={(guestCounts[room.room_type] || 1) <= 1}
                                       >
-                                        <MinusIcon />
+                                        <MinusIcon  className='text-black'/>
                                       </Button>
 
                                       <Input
@@ -270,7 +272,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
                                         }
                                         disabled={(guestCounts[room.room_type] || 1) >= (room.max_capacity || 1)}
                                       >
-                                        <Plus />
+                                        <Plus className='text-black' />
                                       </Button>
                                     </div>
 
@@ -334,7 +336,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
                                               }));
                                             }}
                                           >
-                                            <MinusIcon />
+                                            <MinusIcon className='text-black' />
                                           </Button>
 
                                           <Input
@@ -354,7 +356,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber 
                                               }));
                                             }}
                                           >
-                                            <Plus />
+                                            <Plus className='text-black' />
                                           </Button>
 
 

@@ -59,7 +59,7 @@ function CustomerProfile() {
           </h1>
         </div>
           <div className="flex items-center justify-center flex-col ">
-            <Card className={"px-10 mt-20 w-full md:w-1/2 bg-transparent border-b-[#FDF5AA]"}>
+            <Card className={"px-10 mt-20 w-full bg-transparent border-b-[#FDF5AA]"}>
               <div className="flex flex-col items-center justify-center">
                 <Avatar className="w-40 h-40">
                   <AvatarImage src="https://github.com/shadcn.png" alt="profile" />
@@ -73,10 +73,10 @@ function CustomerProfile() {
                 </div>
               </div>
             </Card>
-            <Card className={"px-10 mt-10 w-full md:w-1/2 bg-transparent border-[#FDF5AA]"}>
+            <Card className={"px-10 mt-10 w-full bg-transparent border-[#FDF5AA]"}>
               <CardContent>
                 <CardTitle className="text-lg font-semibold text-white">Personal Details</CardTitle>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-white">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4 text-white">
                   <div >
                     <Label className="mb-2">
                       First Name:

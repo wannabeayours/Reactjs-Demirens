@@ -20,6 +20,10 @@ const DataTable = ({
   tableCaption,
   isSelectable = false,
   selectedData,
+  limitNumberWords = true,
+  hideHeader = false,
+  headerClassName
+  //additionalAccessor
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -194,7 +198,7 @@ const DataTable = ({
 
   const truncateText = (text, maxLength = 50) => {
     if (typeof text !== 'string') return text;
-    if (text.length <= maxLength) return text;
+    if (!limitNumberWords || text.length <= maxLength) return text;
     return (
       <TooltipProvider>
         <Tooltip>
@@ -202,33 +206,38 @@ const DataTable = ({
             <span>{text.slice(0, maxLength)}...</span>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="max-w-xs whitespace-normal">{text}</p>
+            <div className="max-w-xs max-h-56 overflow-y-auto whitespace-pre-wrap text-sm p-2">
+              {text}
+            </div>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     );
   };
 
+
   return (
     <div>
-      <div className={`flex ${isMobile ? 'flex-col' : 'justify-between'} items-start sm:items-center mb-4`}>
-        <div className="flex items-center gap-2 mb-2 sm:mb-0">
+      {hideHeader ? null : (
+        <div className={`flex ${isMobile ? 'flex-col' : 'justify-between'} items-start sm:items-center mb-4`}>
+          <div className="flex items-center gap-2 mb-2 sm:mb-0">
             {title && <h2 className="text-xl font-bold p-3">{title}</h2>}
-          {add && add}
-          {headerAction && headerAction}
+            {add && add}
+            {headerAction && headerAction}
+          </div>
+          <div className="flex w-full p-3 md:w-1/2 md:justify-end">
+            {!hideSearch && data.length > 0 && (
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className={`${isMobile ? 'w-full' : 'max-w-xs'}`}
+              />
+            )}
+          </div>
         </div>
-        <div className="flex w-full p-3 md:w-1/2 md:justify-end">
-          {!hideSearch && data.length > 0 && (
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className={`${isMobile ? 'w-full' : 'max-w-xs'}`}
-            />
-          )}
-        </div>
-      </div>
+      )}
       {filteredData.length > 0 ? (
         <>
           <div className="overflow-x-auto">
@@ -247,10 +256,20 @@ const DataTable = ({
                   {autoIndex && <TableHead>#</TableHead>}
                   {columns.map((column, index) =>
                     (!isMobile || !column.hiddenOnMobile) && (
+                      // <TableHead
+                      //   key={index}
+                      //   onClick={() => column.sortable && handleSort(column.accessor)}
+                      //   className={column.sortable ? 'cursor-pointer' : ''}
+                      // >
+                      //   <div className="flex items-center gap-1">
+                      //     {column.header}
+                      //     {column.sortable && <ChevronsUpDown className="h-4 w-4" />}
+                      //   </div>
+                      // </TableHead>
                       <TableHead
                         key={index}
                         onClick={() => column.sortable && handleSort(column.accessor)}
-                        className={column.sortable ? 'cursor-pointer' : ''}
+                        className={`${column.sortable ? 'cursor-pointer' : ''} ${column.headerClassName || ''}`}
                       >
                         <div className="flex items-center gap-1">
                           {column.header}
@@ -292,10 +311,25 @@ const DataTable = ({
                             key={colIndex}
                             className={typeof column.className === 'function' ? column.className(row) : column.className || ''}
                           >
-                            {truncateText(column.cell ? column.cell(row) : (typeof column.accessor === 'function' ? column.accessor(row) : row[column.accessor]))}
+                            {truncateText(
+                              column.cell
+                                ? column.cell(row, (currentPage - 1) * itemsPerPage + rowIndex)
+                                : column.additionalAccessor
+                                  ? typeof column.additionalAccessor === 'function'
+                                    ? column.additionalAccessor(row)
+                                    : `${typeof column.accessor === 'function'
+                                      ? column.accessor(row)
+                                      : row[column.accessor]
+                                    }${column.additionalAccessor}`
+                                  : (typeof column.accessor === 'function'
+                                    ? column.accessor(row)
+                                    : row[column.accessor])
+                            )}
+
                           </TableCell>
                         )
                       )}
+
                     </TableRow>
                   );
                 })}
@@ -327,7 +361,9 @@ const DataTable = ({
           )}
         </>
       ) : (
-        <div className="text-center py-4">No data found</div>
+        <div className="text-center py-4">No data found
+          {/* {String(JSON.stringify(data))} */}
+        </div>
       )}
     </div>
   );

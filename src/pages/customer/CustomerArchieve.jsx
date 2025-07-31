@@ -21,12 +21,12 @@ function CustomerArchieve() {
   ];
 
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true },
+    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-white" },
+    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true , headerClassName:"text-white"},
 
 
     {
-      header: 'Actions',
+      header: 'Actions', headerClassName:"text-white",
       cell: (row) => (
         <div className="flex gap-4">
           <ArchiveRestore className="cursor-pointer hover:text-[#34699A]"

@@ -36,7 +36,7 @@ function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-screen max-w-none p-8 rounded-none">
+      <DialogContent className="w-[900px] h-[600px] p-8 rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold leading-none tracking-tight text-[#bba008]">Confirm Booking</DialogTitle>
           <DialogDescription>
@@ -44,7 +44,8 @@ function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2 text-sm mt-6 ">
+        <div className="space-y-2 text-sm mt-6 overflow-y-auto max-h-[400px] pr-2">
+
           <div className="flex justify-between gap-8">
             <div className="flex items-center gap-2">
               <span className="font-medium">Check In:</span>
@@ -129,7 +130,7 @@ function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleConfirm} className="bg-[#0D1423] hover:bg-[#3A4455]">Confirm Booking</Button>
+          <Button onClick={handleConfirm} className="bg-[#FDF5AA] hover:bg-yellow-600 text-black">Confirm Booking</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
