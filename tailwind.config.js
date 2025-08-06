@@ -44,6 +44,14 @@ module.exports = {
         'fade-in': 'fadeIn 100ms ease-out forwards',
         'fade-out': 'fadeOut 100ms ease-in forwards',
       },
+      // backgroundImage: {
+      //   'landing-bg': "url('/assets/images/dems1.png')",
+      // },
+       // 'landing-bg-dark': "url('/assets/images/dems1-dark.png')",
+       fontFamily: {
+        playfair: ['Playfair Display', 'serif'],
+      },
+      
     },
   },
   plugins: [

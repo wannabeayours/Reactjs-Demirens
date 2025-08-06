@@ -24,6 +24,7 @@ function CustomerViewBookings() {
       const bookingCustomerId = localStorage.getItem('userId');
       console.log('Using Customer ID:', bookingCustomerId);
       const jsonData = { "booking_customer_id": bookingCustomerId };
+      console.log('jsondata', jsonData);
       const formData = new FormData();
       formData.append('operation', 'customerCurrentBookingsWithAccount');
       formData.append('json', JSON.stringify(jsonData));
@@ -48,6 +49,7 @@ function CustomerViewBookings() {
       const url = localStorage.getItem('url') + "customer.php";
       const CustomerId = localStorage.getItem("userId");
       const jsonData = { "booking_customer_id": CustomerId };
+      console.log("jsondata", jsonData);
       const formData = new FormData();
       formData.append("operation", "customerCurrentBookingsWithAccount");
       formData.append("json", JSON.stringify(jsonData));
@@ -73,11 +75,8 @@ function CustomerViewBookings() {
       const formData = new FormData();
       formData.append("json", JSON.stringify(jsonData));
       formData.append("operation", "customerCancelBooking");
-
       const res = await axios.post(url, formData);
-
       console.log("response", res.data);
-
       if (res.data === 1 || res.data.success === 1) {
         console.log("response", res.data);
         customerViewBookings();
@@ -99,9 +98,6 @@ function CustomerViewBookings() {
       console.error(error);
     }
   };
-
-
-
 
   const handleShowAlert = (bookingId) => {
     // "This action cannot be undone. It will permanently delete the item and remove it from your list"

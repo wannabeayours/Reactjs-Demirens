@@ -110,7 +110,7 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply w-full h-full m-0 p-0 overflow-x-hidden;
+  html {
+    scroll-behavior: smooth;
   }
 }

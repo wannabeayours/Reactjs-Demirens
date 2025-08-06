@@ -61,7 +61,7 @@ const CustomerSidebar = ({ handleViewChange }) => {
         </SheetTrigger>
         <SheetContent side="left">
           <SheetHeader>
-            <SheetTitle>DEMIREN HOTEL AND RESTAURANTssssssss</SheetTitle>
+            <SheetTitle>DEMIREN HOTEL AND RESTAURANT</SheetTitle>
             <SheetDescription>Hotel Management System</SheetDescription>
           </SheetHeader>
 

@@ -43,6 +43,8 @@ import FrontdeskLogin from './pages/frontdesk/FrontdeskLogin';
 import FrontdeskDashboard from './pages/frontdesk/FrontdeskDashboard';
 import FrontdeskWalkin from './pages/frontdesk/FrontdeskWalkin';
 import FrontdeskReservation from './pages/frontdesk/FrontdeskResvation';
+import CustomerRoomView from './pages/customer/CustomerRoomView';
+import RoomSearch from './pages/customer/RoomSearch';
 
 function App() {
 
@@ -81,7 +83,7 @@ function App() {
         {/* <LandingHeader /> */}
 
 
-        <div style={{ flex: 1, padding: '20px' }}>
+        <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -118,6 +120,8 @@ function App() {
             <Route path="/customer/rooms" element={<CustomerRooms />} />
             <Route path="/customer/gallery" element={<CustomerGallery />} />
             <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
+            <Route path="/customer/roomsearch" element={<RoomSearch />} />
+            <Route path="/customer/roomview" element={<CustomerRoomView />} />
             <Route path="/customer" element={<CustomerMain />} />
             
 

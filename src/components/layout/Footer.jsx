@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 function Footer() {
   return (
-    <footer className="py-8 ">
+    <footer className="py-8 bg-blue-900 rounded-t-3xl text-white ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* QUICK LINKS */}
@@ -58,7 +58,7 @@ function Footer() {
         </div>
 
         {/* COPYRIGHT */}
-        <div className="border-t border-black pt-6 text-center text-sm">
+        <div className="border-t border-white pt-6 text-center text-sm">
           <p>Copyright © 2025 by Demiren Hotel and Restaurant. All rights reserved.</p>
         </div>
       </div>

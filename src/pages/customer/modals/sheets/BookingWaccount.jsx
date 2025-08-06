@@ -154,7 +154,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         </SheetTrigger>
         <SheetContent side="bottom" className="!bg-[#113F67] text-white p-6 border-none rounded-t-3xl ">
           <ScrollArea className="h-[100vh] md:h-[calc(100vh-300px)]" >
-            
+
 
             <div className="flex flex-wrap items-start justify-between gap-4 p-4">
               <div className="flex space-x-4">
@@ -249,7 +249,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                         }
                                         disabled={(guestCounts[room.room_type] || 1) <= 1}
                                       >
-                                        <MinusIcon  className='text-black'/>
+                                        <MinusIcon className='text-black' />
                                       </Button>
 
                                       <Input
@@ -460,7 +460,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
                 </Card>
                 <Button
-                className="bg-[#FDF5AA] hover:bg-yellow-600 text-black"
+                  className="bg-[#FDF5AA] hover:bg-yellow-600 text-black"
 
                   onClick={() => {
                     if (selectedRooms.length === 0) return;

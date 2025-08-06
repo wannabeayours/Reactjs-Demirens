@@ -19,6 +19,7 @@ function CustomerBookingHis() {
       const url = localStorage.getItem('url') + "customer.php";
       const CustomerId = localStorage.getItem("userId");
       const jsonData = { "booking_customer_id": CustomerId };
+      console.log("jsondata", jsonData)
       const formData = new FormData();
       formData.append("operation", "customerViewBookings");
       formData.append("json", JSON.stringify(jsonData));

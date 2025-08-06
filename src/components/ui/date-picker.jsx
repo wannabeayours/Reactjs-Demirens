@@ -14,13 +14,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, ClockIcon } from "lucide-react";
+import { CalendarIcon} from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const DatePicker = ({
   form,
   name,
-  label = "Date",
+  // label = "Date",
+  placeholder = "Pick a date",
   futureAllowed = true,
   pastAllowed = false,
   design,
@@ -107,7 +108,7 @@ const DatePicker = ({
       render={({ field }) => (
         <FormItem>
           <FormLabel>
-            {label}
+            {/* {label} */}
             {isRequired && <span className="text-red-500"> *</span>}
           </FormLabel>
           <div className="flex flex-col gap-2">
@@ -135,7 +136,8 @@ const DatePicker = ({
                         format(new Date(field.value), "MMM dd, yyyy")
                       )
                     ) : (
-                      <span>Pick a date</span>
+                      <span>{placeholder}</span>
+
                     )}
                   </Button>
                 </PopoverTrigger>
