@@ -62,7 +62,7 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
           <h2 className="text-lg font-bold">Hotel Demiren and Restaurant</h2>
         </div>
         <ScrollArea className="h-[calc(100vh-150px)] p-2">
-          <div className="space-y-2">
+          <div className="space-y-6">
             {sidebarList.map((link, i) => (
               <SidebarLink
                 key={i}

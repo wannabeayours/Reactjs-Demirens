@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import ShowAlert from '@/components/ui/show-alert';
 import { Badge } from '@/components/ui/badge';
-import { Book } from 'lucide-react';
+import { Book, SmileIcon } from 'lucide-react';
 
 function CustomerViewBookings() {
   const [viewBook, setViewBook] = useState([]);
@@ -22,6 +22,7 @@ function CustomerViewBookings() {
     try {
       const url = localStorage.getItem('url') + 'customer.php';
       const bookingCustomerId = localStorage.getItem('userId');
+      console.log('bookingCustomerId', bookingCustomerId);
       console.log('Using Customer ID:', bookingCustomerId);
       const jsonData = { "booking_customer_id": bookingCustomerId };
       console.log('jsondata', jsonData);
@@ -44,26 +45,7 @@ function CustomerViewBookings() {
     }
   };
 
-  const customerCurrentBookings = async () => {
-    try {
-      const url = localStorage.getItem('url') + "customer.php";
-      const CustomerId = localStorage.getItem("userId");
-      const jsonData = { "booking_customer_id": CustomerId };
-      console.log("jsondata", jsonData);
-      const formData = new FormData();
-      formData.append("operation", "customerCurrentBookingsWithAccount");
-      formData.append("json", JSON.stringify(jsonData));
-      const res = await axios.post(url, formData);
-      console.log("res ni customerCurrentBooking", res.data);
-      setCurrentbookings(res.data !== 0 ? res.data : []);
-      console.log("view bookings:", res.data);
-    } catch (error) {
-      toast.error("Something went wrong");
-      console.error(error);
-
-    }
-  }
-
+ 
   //kani ambot sakto bani
   const customerCancelBooking = async (bookingId) => {
     console.log("na call ko");
@@ -119,7 +101,7 @@ function CustomerViewBookings() {
 
   useEffect(() => {
     customerViewBookings();
-    customerCurrentBookings();
+    
   }, []);
 
   return (
@@ -131,9 +113,10 @@ function CustomerViewBookings() {
           View Bookings
         </h1>
       </div>
-      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-2" } gap-3`}>
+      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-2"} gap-3`}>
         {errorMessage ? (
-          <div className="col-span-full text-red-500 text-center">
+          <div className="col-span-full flex flex-row items-center justify-center text-center h-96 gap-2">
+            <SmileIcon className="w-10 h-10" />
             <strong>{errorMessage}</strong>
           </div>
         ) : viewBook.length === 0 ? (
@@ -164,7 +147,7 @@ function CustomerViewBookings() {
                   <h2 className="font-semibold">Room Number:</h2>
                   <h2 className="font-semibold">{item.roomnumber_id}</h2>
                 </div>
-        
+
 
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Room Sizes:</h2>

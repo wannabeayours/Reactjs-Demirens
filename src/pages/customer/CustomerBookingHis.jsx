@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table';
 import ShowAlert from '@/components/ui/show-alert';
 import axios from 'axios';
-import { Eye, HistoryIcon, Trash, Trash2 } from 'lucide-react';
+import { Eye, HistoryIcon, Trash } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 
@@ -47,19 +47,19 @@ function CustomerBookingHis() {
     };
 
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-white" },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true ,headerClassName:"text-white"},
-    { header: 'Room Type', accessor: 'roomtype_name', sortable: true ,headerClassName:"text-white"},
-    { header: 'Room Number', accessor: 'roomnumber_id', sortable: true,headerClassName:"text-white" },
+    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-black" },
+    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true ,headerClassName:"text-black"},
+    { header: 'Room Type', accessor: 'roomtype_name', sortable: true ,headerClassName:"text-black"},
+    { header: 'Room Number', accessor: 'roomnumber_id', sortable: true,headerClassName:"text-black" },
     {
-      header: 'Status',headerClassName:"text-white", cell: (row) => (
+      header: 'Status',headerClassName:"text-black", cell: (row) => (
         <Badge className={row.booking_status_name === "Approved" ? "bg-green-500" : row.booking_status_name === "Pending" ? "bg-orange-500"  : "bg-red-500"}>
           {row.booking_status_name}
         </Badge>
       )
     },
     {
-      header: 'Actions',headerClassName:"text-white",
+      header: 'Actions',headerClassName:"text-black",
       cell: (row) => (
         <div className="flex gap-4">
         <Eye className="cursor-pointer hover:text-[#34699A]" />
@@ -100,7 +100,7 @@ function CustomerBookingHis() {
 
       <Card className={"px-10 mt-20 w-full bg-transparent shadow-xl  "}>
 
-        <div className="text-white">
+        <div className="text-black">
 
           <DataTable columns={col} data={history} itemsPerPage={10} />
 

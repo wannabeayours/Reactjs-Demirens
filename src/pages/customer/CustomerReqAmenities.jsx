@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableCaption, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -18,9 +17,9 @@ function CustomerReqAmenities() {
         </h1>
       </div>
       <div className="flex items-center justify-center flex-col ">
-        <Card className={" px-10  w-1/2 mt-20 bg-transparent shadow-xl "}>
+        <Card className={" px-10  w-full mt-20 bg-transparent shadow-xl "}>
           <div >
-          
+
             <div className="flex justify-end">
 
 
@@ -34,17 +33,25 @@ function CustomerReqAmenities() {
             <TableCaption>A list of your requested Amenities.</TableCaption>
             <TableHeader >
               <TableRow>
-                <TableHead className="w-[250px] text-white">Amenities</TableHead>
-                <TableHead className="text-white">Date</TableHead>
-                <TableHead className="text-white">Total</TableHead>
-                <TableHead className="text-right text-white">Status</TableHead>
+                <TableHead className="w-[250px] ">Amenities</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead >Total</TableHead>
+                <TableHead className="text-right">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow className="text-white">
-                <TableCell >Towel, Extra Bed</TableCell>
+              <TableRow >
+                <TableCell >Towel</TableCell>
                 <TableCell>2025-04-01</TableCell>
                 <TableCell>₱450.00</TableCell>
+                <TableCell className="text-right">
+                  <Badge variant="secondary">Pending</Badge>
+                </TableCell>
+              </TableRow>
+              <TableRow >
+                <TableCell >Extra Bed</TableCell>
+                <TableCell>2025-04-01</TableCell>
+                <TableCell>₱500.00</TableCell>
                 <TableCell className="text-right">
                   <Badge variant="secondary">Pending</Badge>
                 </TableCell>

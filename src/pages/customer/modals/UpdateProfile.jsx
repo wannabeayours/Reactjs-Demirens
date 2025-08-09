@@ -24,6 +24,7 @@ import DatePicker from '@/components/ui/date-picker'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
+import { Label } from '@/components/ui/label'
 
 
 const schema = z.object({
@@ -137,9 +138,9 @@ function UpdateProfile({ data, getProfile }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger>
-                <Button className="mr-2 bg-[#FDF5AA] hover:bg-yellow-600">
-                    <LucideEdit className="w-4 h-4 mr-2 text-black" />
-                    <h1 className="text-black">Edit Profile</h1>
+                <Button className="mr-2 ">
+                    <LucideEdit className="w-4 h-4 mr-2 " />
+                    <h1 >Edit Profile</h1>
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -241,9 +242,10 @@ function UpdateProfile({ data, getProfile }) {
                                 )}
                             />
 
-
+                            <Label> Date of birth </Label>
                             <FormField
                                 control={form.control}
+                                label="Date of birth"
                                 name="dob"
                                 render={({ field }) => (
                                     <FormItem>
@@ -265,7 +267,7 @@ function UpdateProfile({ data, getProfile }) {
                                         Cancel
                                     </Button>
                                 </DialogClose>
-                                <Button type="submit" className="ml-2 bg-[#FDF5AA] hover:bg-yellow-600 text-black" >
+                                <Button type="submit" className="ml-2 " >
                                     Update
                                 </Button>
                             </div>

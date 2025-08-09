@@ -55,6 +55,7 @@ function App() {
 
     localStorage.setItem("userId", 2);
     localStorage.setItem("customerOnlineId", 1);
+    
   }, []);
 
 

@@ -9,30 +9,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import axios from 'axios'
-import { Badge } from '@/components/ui/badge'
-import {
-  Iron,
-  GlassWater,
-  Coffee,
-  Thermometer,
-  Fridge,
-  Snowflake,
-  ShieldCheck,
-  Tv,
-  Wifi,
-  LampDesk,
-  ShowerHead,
-  Bath,
-  Droplets,
-  Phone,
-  Baby,
-  Ban,
-  BedDouble,
-  ConciergeBell,
-  Sparkles,
-} from 'lucide-react';
+
 
 function ViewRooms({ room }) {
   const [open, setOpen] = useState(false);
@@ -73,8 +50,8 @@ function ViewRooms({ room }) {
               </div>
 
               {/* Right Column: Room Details */}
-              <div className="flex flex-col justify-center items-end space-y-4 p-4 w-full border border-[#bba008] rounded-2xl">
-                <h2 className="text-2xl font-bold text-[#bba008]">{room.roomtype_name}</h2>
+              <div className="flex flex-col justify-center items-end space-y-4 p-4 w-full border  rounded-2xl">
+                <h2 className="text-2xl font-bold text-blue-500]">{room.roomtype_name}</h2>
                 <p className="text-white">
                   {room.roomtype_description}
                 </p>

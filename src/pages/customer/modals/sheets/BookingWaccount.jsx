@@ -7,14 +7,15 @@ import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Separator } from '@/components/ui/separator'
-import { BedIcon, Dog, Info, MinusIcon, Plus, Trash2, X } from 'lucide-react'
+import { BedIcon, Dog, Info, MinusIcon, Moon, Plus, Trash2, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
 import ConfirmBooking from '../ConfirmBooking'
+import Moreinfo from './Moreinfo'
 
-function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData }) {
+function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
   const [allRooms, setAllRooms] = useState([])
   const [selectedRooms, setSelectedRooms] = useState([])
   const [open, setOpen] = useState(false)
@@ -34,13 +35,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     try {
       const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
+      const childrenNumber = localStorage.getItem("children");
+      const adultNumber = localStorage.getItem("adult");
       const downPayment = (selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0) * 1.12 * 0.5).toFixed(2);
       const totalAmount = (selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0) * 1.12).toFixed(2);
       const bookingDetails = {
         "checkIn": checkIn,
         "checkOut": checkOut,
         "downpayment": downPayment,
-        "totalAmount": totalAmount
+        "totalAmount": totalAmount,
+        "children": childrenNumber,
+        "adult": adultNumber
       }
       const roomDetails = selectedRooms.map((room) => {
         return {
@@ -145,15 +150,23 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     }
   };
 
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false)
+  }
+
+  const openConfirmModal = () => {
+    setShowConfirmModal(true);
+  }
+
   return (
     <>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button className="w-full bg-[#FDF5AA] hover:bg-yellow-600 text-black">Book Now</Button>
+          <Button >Book Now</Button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="!bg-[#113F67] text-white p-6 border-none rounded-t-3xl ">
-          <ScrollArea className="h-[100vh] md:h-[calc(100vh-300px)]" >
+        <SheetContent side="bottom" className=" text-black p-6 border-none rounded-t-3xl ">
+          <ScrollArea className="h-[100vh] md:h-[calc(100vh-100px)]" >
 
 
             <div className="flex flex-wrap items-start justify-between gap-4 p-4">
@@ -175,38 +188,21 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
 
               </div>
-              <Card className="min-w-[900px] bg-transparent shadow-2xl border-none text-white">
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-2">
-                      <X className="text-red-500" />
-                      <h1>NO PETS ALLOWED</h1>
 
+            </div>
+
+
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
+
+              <Card className="bg-transparent shadow-xl  text-black w-[97%]">
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+                    <div className="flex justify-end">
+                      <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <X className="text-red-500" />
-                      <h1>NO SMOKING</h1>
-
-                    </div>
-
 
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex justify-end">
-                <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
-              </div>
-
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-
-              <Card className="bg-transparent shadow-2xl  text-white">
-                <CardContent>
                   <ScrollArea className="h-[calc(100vh-300px)]">
                     <div >
                       {selectedRooms.length > 0 ? (
@@ -221,12 +217,12 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
                                 <div>
-                                  <h1 className="font-semibold text-2xl">{room.roomtype_name}</h1>
+                                  <h1 className="font-semibold text-2xl font-playfair text-blue-500">{room.roomtype_name}</h1>
                                   <h1>{room.roomtype_description}</h1>
-                                  <Link>
-                                    <div className="flex flex-row space-x-2 text-blue-500">
+                                  <Link >
+                                    <div className="flex flex-row space-x-2 mt-4 mb-2 ">
                                       <div>
-                                        More info
+                                        <Moreinfo room={room} />
                                       </div>
                                       <div>
                                         <Info />
@@ -234,55 +230,20 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
                                     </div>
                                   </Link>
-                                  <h1 className="font-semibold text-blue-500"> ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
-                                  <div className="mt-4">
-                                    <Label className="mb-2">Number of Guests</Label>
-                                    <div className="flex items-center justify-start space-x-2">
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                          setGuestCounts(prev => ({
-                                            ...prev,
-                                            [room.room_type]: Math.max((prev[room.room_type] || 1) - 1, 1),
-                                          }))
-                                        }
-                                        disabled={(guestCounts[room.room_type] || 1) <= 1}
-                                      >
-                                        <MinusIcon className='text-black' />
-                                      </Button>
+                                  <h1 className="flex items-center gap-2 font-semibold text-blue-500">
+                                    <Moon size={20} />
+                                    ₱ {Number(room.roomtype_price).toLocaleString('en-PH', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}/night
+                                  </h1>
 
-                                      <Input
-                                        className="w-1/4 text-center"
-                                        type="number"
-                                        readOnly
-                                        value={guestCounts[room.room_type] || 1}
-                                      />
 
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                          setGuestCounts(prev => ({
-                                            ...prev,
-                                            [room.room_type]: Math.min(
-                                              (prev[room.room_type] || 1) + 1,
-                                              room.max_capacity || 1
-                                            ),
-                                          }))
-                                        }
-                                        disabled={(guestCounts[room.room_type] || 1) >= (room.max_capacity || 1)}
-                                      >
-                                        <Plus className='text-black' />
-                                      </Button>
-                                    </div>
-
-                                  </div>
 
                                 </div>
 
                                 <div className="flex justify-center">
-                                  <Carousel className="w-full max-w-[280px]">
+                                  <Carousel className="w-full max-w-[295px]">
                                     <CarouselContent>
                                       {Array.from({ length: 5 }).map((_, index) => (
                                         <CarouselItem key={index}>
@@ -302,11 +263,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                 </div>
 
                               </div>
-                              <div >
+                              <div className='flex justify-start'>
 
-                                <Card className="w-full mt-2 border-none shawdow-2xl bg-transparent  text-white ">
+                                <Card className="w-full mt-2 border-none shawdow-2xl bg-transparent  text-black ">
                                   <CardContent>
-                                    <div className="flex items-center justify-between w-full gap-4">
+                                    <div className="flex items-start  w-full gap-4">
 
                                       {/* Label + Icon + Title */}
                                       <div className="flex flex-col">
@@ -326,7 +287,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                       {/* Quantity */}
                                       <div className="flex flex-col items-center">
                                         <Label>Quantity</Label>
-                                        <div className="flex items-center space-x-2 mt-2">
+                                        <div className="flex items-start space-x-2 mt-2">
                                           <Button
                                             type="button"
                                             variant="outline"
@@ -392,75 +353,85 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
               </Card>
 
-              <div className=" space-y-3">
+              <div className=" space-y-8 ">
 
-                <Card className="bg-transparent shadow-2xl  rounded-2xl">
-                  <CardContent className="space-y-3 text-white">
+                <Card className="bg-transparent shadow-xl  rounded-2xl ">
+                  <CardContent className="space-y-3 text-black ">
                     <h1 className="font-semibold text-lg">BOOKING SUMMARY</h1>
                     {selectedRooms.length > 0 ? selectedRooms.map((room, index) => (
                       <div>
 
-                        <div key={index} className="flex justify-between">
-                          <h1 className="font-semibold ">{room.roomtype_name}</h1>
-                          <h1 >₱ {(Number(room.roomtype_price) * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
+                        <div key={index} className="flex justify-between items-center py-2 ">
+                          <h1 className="font-semibold  ">Room Type: {room.roomtype_name}</h1>
+                          <h1 className="text-xl md:text-2xl" >₱ {(Number(room.roomtype_price) * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
 
 
                         </div>
 
-                        <h1 className="text-end text-sm">{`(${numberOfNights} Nights x ₱ ${(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}</h1>
+                        <h1 className="text-end text-xl md:text-xl">{`(${numberOfNights} Nights x ₱ ${(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}</h1>
 
 
                         <Separator className="w-full mt-4" />
                       </div>
 
                     )) : null}
-
-
-                    <div className="flex justify-between">
-
-
-                      <h1 className="font-semibold ">Sub Total</h1>
-                      <h1 className="font-semibold ">₱ {(selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0)).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
+                    <div className="flex justify-between items-center py-2 ">
+                      <h1 className="font-semibold">VAT (12%)</h1>
+                      <h1 className=" md:text-xl">
+                        ₱ {selectedRooms.reduce((total, room) => {
+                          const roomTotal = Number(room.roomtype_price) * numberOfNights;
+                          const basePrice = roomTotal / 1.12;
+                          const vatAmount = roomTotal - basePrice;  // Or basePrice * 0.12
+                          return total + vatAmount;
+                        }, 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </h1>
                     </div>
-                    <div className="flex justify-between ">
-                      <h1 className="font-semibold">VAT (12%):</h1>
-                      <h1 className='font-semibold'>₱ {(selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0) * 0.12).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
 
+                    <div className="flex justify-between items-center py-2">
+                      <h1 className="font-semibold">Sub Total</h1>
+                      <h1 className="md:text-2xl">
+                        ₱ {selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0)
+                          .toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </h1>
                     </div>
-                    <div className="flex justify-end">
+
+
+
+
+                    <div className="flex justify-end my-2">
                       <hr className="w-1/5 h-1 bg-black border-none" />
                     </div>
 
-                    <div className="flex justify-between ">
+                    <div className="flex justify-between items-center py-2">
                       <h1 className="font-semibold">Total Amount:</h1>
-                      <h1 className="font-semibold">
-                        ₱ {(
-                          selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0) * 1.12
-                        ).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <h1 className="font-semibold md:text-2xl">
+                        ₱ {selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0)
+                          .toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </h1>
-
                     </div>
-                    <div>
-                      <div className="flex justify-between">
 
-                        <h1 className="font-semibold text-red-500">Down Payment: </h1>
-                        <h1 className="font-semibold text-red-500">₱ {((selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0) * 1.12) * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
 
-                      </div>
-                      <h1 className="text-red-500">{`(50% of  total amount)`}</h1>
+
+                    <div className="flex justify-between items-center py-2">
+                      <h1 className="font-semibold">Down Payment (50%):</h1>
+                      <h1 className="font-semibold md:text-2xl text-blue-500">
+                        ₱ {(selectedRooms.reduce((total, room) => total + Number(room.roomtype_price) * numberOfNights, 0) / 2)
+                          .toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </h1>
                     </div>
 
                   </CardContent>
 
                 </Card>
+
                 <Card className="bg-transparent shadow-2xl  rounded-2xl">
-                  <CardContent className="space-y-3 text-white">
+                  <CardContent className="space-y-3 text-black">
                     <h1>PAYMENT METHOD</h1>
                   </CardContent>
 
                 </Card>
                 <Button
-                  className="bg-[#FDF5AA] hover:bg-yellow-600 text-black"
+
 
                   onClick={() => {
                     if (selectedRooms.length === 0) return;
@@ -494,12 +465,15 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   Confirm Booking
                 </Button>
 
-                <ConfirmBooking
-                  open={showConfirmModal}
-                  onOpenChange={setShowConfirmModal}
-                  summary={summaryInfo}
-                  onConfirmBooking={customerBookingWithAccount}
-                />
+                {showConfirmModal &&
+                  <ConfirmBooking
+                    open={openConfirmModal}
+                    onClose={closeConfirmModal}
+                    // onOpenChange={setShowConfirmModal}
+                    summary={summaryInfo}
+                    onConfirmBooking={customerBookingWithAccount}
+                  />
+                }
 
               </div>
 

@@ -1,6 +1,6 @@
 import LandingHeader from '@/components/layout/LandingHeader'
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import axios from 'axios';
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner';
@@ -19,16 +19,42 @@ import { Label } from '@/components/ui/label';
 
 
 
+
 const schema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  email: z.string().email({ message: "Please enter a valid email" }),
-  message: z.string().min(1, { message: "Please enter a message" }),
-})
+  checkIn: z.string().min(1, { message: "Check in is required" }),
+  checkOut: z.string().min(1, { message: "Check out is required" }),
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const checkOut = new Date(data.checkOut);
+
+  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+    return false;
+  }
+
+
+  const normalize = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
+
+  return normalize(checkOut).getTime() > normalize(checkIn).getTime();
+}, {
+  message: "Check out must be later than check in",
+  path: ["checkOut"],
+}).refine((data) => {
+  const checkIn = new Date(data.checkIn);
+  const now = new Date();
+  return checkIn.getTime() > now.getTime();
+}, {
+  message: "Check in must be in the future",
+  path: ["checkIn"],
+});
+
 
 function Landingpage() {
   const [rooms, setRooms] = useState([]);
-  const [guestNumber, setGuestNumber] = useState(0);
-  const scrollRef = useRef(null);
+  const [adultNumber, setAdultNumber] = useState(0);
+  const [childrenNumber, setChildrenNumber] = useState(0);
+  const [isSearched, setIsSearched] = useState(false);
+
   const navigateTo = useNavigate();
 
 
@@ -42,8 +68,8 @@ function Landingpage() {
 
 
   const scroll = (scrollOffset) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
+    if (scroll.current) {
+      scroll.current.scrollBy({
         left: scrollOffset,
         behavior: 'smooth',
       });
@@ -86,13 +112,26 @@ function Landingpage() {
     }
   }
 
+  const handleClearData = () => {
+    localStorage.removeItem("checkIn");
+    localStorage.removeItem("checkOut");
+    localStorage.removeItem("guestNumber");
+    localStorage.removeItem("children");
+    localStorage.removeItem("adult");
+    setIsSearched(false);
+  }
 
 
   const onSubmit = async (data) => {
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
-    // localStorage.setItem("guestNumber", guestNumber);
-    navigateTo("/customer/roomsearch");
+    localStorage.setItem("children", childrenNumber);
+    localStorage.setItem("adult", adultNumber);
+    localStorage.setItem("guestNumber", Number(adultNumber) + Number(childrenNumber));
+    console.log("mga data sa pag search", data);
+    getRooms(data);
+    setIsSearched(true);
+    navigateTo("/customer/roomsearch"); 
   }
 
   const onContactSubmit = async (data) => {
@@ -148,99 +187,89 @@ function Landingpage() {
                 </p>
                 <p className="text-xl md:text-xl mt-2">and every moment is made memorable.</p>
               </div>
-              <div className=" flex items-start justify-start">
-                <div className="bg-black/75 flex rounded-md md:rounded-full p-4  md:h-20 md:w-fit ml-0 mt-10 ">
+              <div className=" flex items-start justify-start ">
+                <Card className=" w-full max-w-6xl bg-black/70 border-none text-white">
+                  <CardContent>
+                    <Form {...form}>
 
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                      {/* Check-in */}
-                      <FormField
-                        control={form.control}
-                        name="checkIn"
-                        render={({ field }) => (
-                          <FormItem>
-                            <DatePicker
-                              form={form}
-                              name={field.name}
-                              placeholder='Check-in'
-                              pastAllowed={false}
-                              futureAllowed={true}
-                              withTime={true}
-                            />
-                          </FormItem>
-                        )}
-                      />
-                      {/* Check-out */}
-                      <FormField
-                        control={form.control}
-                        name="checkOut"
-                        render={({ field }) => (
-                          <FormItem>
-                            <DatePicker
-                              form={form}
-                              name={field.name}
-                              placeholder='Check-out'
-                              pastAllowed={false}
-                              futureAllowed={true}
-                              withTime={true}
-
-                            />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="w-full md:w-[190px]">
-                        <Label>Adults</Label>
-                        <div className="flex items-center justify-start space-x-2">
-
-                          <Button type="button" variant="outline" ><MinusIcon className="text-black" /></Button>
-                          <Input
-                            className="w-1/4"
-                            type="number"
-                            readOnly
-                            
-
-
+                      <form onSubmit={form.handleSubmit(onSubmit)} >
+                        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="checkIn"
+                            render={({ field }) => (
+                              <FormItem>
+                                <DatePicker
+                                  form={form}
+                                  name={field.name}
+                                  label="Check-in"
+                                  pastAllowed={false}
+                                  futureAllowed={true}
+                                  withTime={true}
+                                />
+                              </FormItem>
+                            )}
                           />
-                          <Button type="button" variant="outline" ><Plus className="text-black" /></Button>
+                          <FormField
+                            control={form.control}
+                            name="checkOut"
+                            render={({ field }) => (
+                              <FormItem>
+                                <DatePicker
+                                  form={form}
+                                  name={field.name}
+                                  label="Check-out"
+                                  pastAllowed={false}
+                                  futureAllowed={true}
+                                  withTime={true}
+                                />
+                              </FormItem>
+                            )}
+                          />
 
+                          <div>
+                            <Label className={"mb-2 "}>Adults</Label>
+                            <div className="flex items-center justify-start space-x-2">
+
+                              <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber - 1)} disabled={adultNumber === 0}><MinusIcon className="text-black" /></Button>
+                              <Input
+                                className="w-1/4"
+                                type="number"
+                                readOnly
+                                value={adultNumber}
+                              />
+                              <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber + 1)}><Plus className="text-black" /></Button>
+
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className={"mb-2 "}>Children</Label>
+                            <div className="flex items-center justify-start space-x-2">
+
+                              <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber - 1)} disabled={childrenNumber === 0}><MinusIcon className="text-black" /></Button>
+                              <Input
+                                className="w-1/4"
+                                type="number"
+                                readOnly
+                                value={childrenNumber}
+                              />
+                              <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber + 1)}><Plus className="text-black" /></Button>
+                            </div>
+                          </div>
+                          <div className="flex items-end ">
+                            <Button className="w-full  ">Search</Button>
+                          </div>
                         </div>
 
-                      </div>
-
-                      <div className="w-full md:w-[190px]">
-                        <Label >Children</Label>
-                        <div className="flex items-center justify-start space-x-2">
-
-                          <Button type="button" variant="outline" ><MinusIcon className="text-black" /></Button>
-                          <Input
-                            className="w-1/4"
-                            type="number"
-                            readOnly
-                           
 
 
-                          />
-                          <Button type="button" variant="outline" ><Plus className="text-black" /></Button>
+                      </form>
 
-                        </div>
+                    </Form>
+                  </CardContent>
 
-                      </div>
-
-
-
-
-
-                      {/* Search Button */}
-                      <Button
-                        type="submit"
-                        className="self-center bg-[#34699A] text-white rounded-full px-6 py-2 w-full md:w-auto"
-                      >
-                        Search
-                      </Button>
-                    </form>
-                  </Form>
-                </div>
+                </Card>
               </div>
 
 
@@ -323,7 +352,7 @@ function Landingpage() {
 
                   <ScrollArea className="w-full overflow-x-auto ">
 
-                    <div ref={scrollRef} className="flex flex-nowrap space-x-6 px-4 py-6">
+                    <div ref={scroll} className="flex flex-nowrap space-x-6 px-4 py-6">
                       {rooms.filter((room) => room.status_id === 3).length === 0 ? (
                         <p>No rooms available</p>
                       ) : (

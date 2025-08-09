@@ -1,20 +1,14 @@
-import React, { useEffect, useState } from 'react'
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowBigRight, Bed, Info, MinusCircle, MinusIcon, Plus, PlusIcon, Square, User } from 'lucide-react'
+import { BedDoubleIcon, MinusIcon, Moon, Plus, Smile, User } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet'
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Form,
   FormField,
   FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
 } from "@/components/ui/form"
-
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from 'react-hook-form'
@@ -24,7 +18,9 @@ import { Badge } from '@/components/ui/badge'
 import BookingWaccount from './modals/sheets/BookingWaccount'
 import DatePicker from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+
+
 
 
 
@@ -56,10 +52,10 @@ const schema = z.object({
   path: ["checkIn"],
 });
 
-
 function CustomerDashboard() {
   const [rooms, setRooms] = useState([]);
-  const [guestNumber, setGuestNumber] = useState(0);
+  const [adultNumber, setAdultNumber] = useState(0);
+  const [childrenNumber, setChildrenNumber] = useState(0);
   const [isSearched, setIsSearched] = useState(false);
 
 
@@ -73,39 +69,45 @@ function CustomerDashboard() {
     },
   })
 
-
-
-  const getRooms = async () => {
+  const getRooms = async (data) => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
+      const jsonData = {
+        "checkIn": data.checkIn,
+        "checkOut": data.checkOut,
+        "guestNumber": Number(adultNumber) + Number(childrenNumber)
+      }
       const formData = new FormData();
-      formData.append("operation", "getRooms");
+      formData.append("operation", "getAvailableRoomsWithGuests");
+      formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("res ni getRooms", res);
-      setRooms(res.data !== 0 ? res.data : {});
+      setRooms(res.data !== 0 ? res.data : []);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
 
     }
   }
-
   const handleClearData = () => {
     localStorage.removeItem("checkIn");
     localStorage.removeItem("checkOut");
     localStorage.removeItem("guestNumber");
+    localStorage.removeItem("children");
+    localStorage.removeItem("adult");
     setIsSearched(false);
   }
 
   const onSubmit = async (data) => {
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
-    localStorage.setItem("guestNumber", guestNumber);
+    localStorage.setItem("children", childrenNumber);
+    localStorage.setItem("adult", adultNumber);
+    localStorage.setItem("guestNumber", Number(adultNumber) + Number(childrenNumber));
+    console.log("mga data sa pag search", data);
+    getRooms(data);
     setIsSearched(true);
   }
-  useEffect(() => {
-    getRooms();
-  }, []);
 
   return (
 
@@ -118,59 +120,74 @@ function CustomerDashboard() {
           <CardContent>
             <Form {...form}>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-                <FormField
-                  control={form.control}
-                  name="checkIn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <DatePicker
-                        form={form}
-                        name={field.name}
-                        label="Check-in"
-                        pastAllowed={false}
-                        futureAllowed={true}
-                        withTime={true}
+              <form onSubmit={form.handleSubmit(onSubmit)} >
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="checkIn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <DatePicker
+                          form={form}
+                          name={field.name}
+                          label="Check-in"
+                          pastAllowed={false}
+                          futureAllowed={true}
+                          withTime={true}
+                        />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="checkOut"
+                    render={({ field }) => (
+                      <FormItem>
+                        <DatePicker
+                          form={form}
+                          name={field.name}
+                          label="Check-out"
+                          pastAllowed={false}
+                          futureAllowed={true}
+                          withTime={true}
+                        />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div>
+                    <Label className={"mb-2 "}>Adults</Label>
+                    <div className="flex items-center justify-start space-x-2">
+
+                      <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber - 1)} disabled={adultNumber === 0}><MinusIcon /></Button>
+                      <Input
+                        className="w-1/4"
+                        type="number"
+                        readOnly
+                        value={adultNumber}
                       />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="checkOut"
-                  render={({ field }) => (
-                    <FormItem>
-                      <DatePicker
-                        form={form}
-                        name={field.name}
-                        label="Check-out"
-                        pastAllowed={false}
-                        futureAllowed={true}
-                        withTime={true}
-                      />
-                    </FormItem>
-                  )}
-                />
-                <div>
-                  <Label className={"mb-2 "}>Number of Guests</Label>
-                  <div className="flex items-center justify-start space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber + 1)}><Plus /></Button>
 
-                    <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber - 1)} disabled={guestNumber === 0}><MinusIcon /></Button>
-                    <Input
-                      className="w-1/4"
-                      type="number"
-                      readOnly
-                      value={guestNumber}
-
-
-                    />
-                    <Button type="button" variant="outline" onClick={() => setGuestNumber(guestNumber + 1)}><Plus /></Button>
-
+                    </div>
                   </div>
 
+                  <div>
+                    <Label className={"mb-2 "}>Children</Label>
+                    <div className="flex items-center justify-start space-x-2">
+
+                      <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber - 1)} disabled={childrenNumber === 0}><MinusIcon /></Button>
+                      <Input
+                        className="w-1/4"
+                        type="number"
+                        readOnly
+                        value={childrenNumber}
+                      />
+                      <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber + 1)}><Plus /></Button>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center justify-start mt-5 ">
-                  <Button className="w-full bg-[#FDF5AA] hover:bg-yellow-600 text-black">Search</Button>
+                  <Button className="w-full ">Search</Button>
                 </div>
 
 
@@ -184,79 +201,89 @@ function CustomerDashboard() {
       </div>
 
       <div className="flex flex-col items-center justify-center py-10 px-4 ">
-        {!isSearched ? (
-          <p className="text-center text-lg font-semibold text-[#bba008] mt-10">
-            Please check in, check out, and enter number of guests first.
-          </p>
-        ) : rooms.filter(room => room.status_id === 3 && room.max_capacity >= guestNumber).length === 0 ? (
+      {!isSearched ? (
           <p className="text-center text-lg font-semibold text-gray-600 mt-10">
-            No rooms available for {guestNumber} guest(s).
+            Please check in and check out first.
+          </p>
+        ) : rooms.length === 0 ? (
+          <p className="text-center text-lg font-semibold text-gray-600 mt-10">
+            No rooms available for {Number(adultNumber) + Number(childrenNumber)} guest(s).
           </p>
         ) : (
+
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
-            {rooms
-              .filter(room => room.status_id === 3 && room.max_capacity >= guestNumber)
-              .map((room, index) => (
-                <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 bg-white">
-                  {/* Room Image */}
-                  <div className="relative">
-                    <img
-                      src={room.roomtype_image || room.images?.[0]} // fallback if needed
-                      alt={room.roomtype_name}
-                      className="w-full h-52 object-cover rounded-t-2xl"
-                    />
-                    <Badge className={`absolute top-3 right-3 ${room.status_id === 3 ? 'bg-green-500' : 'bg-red-500'}`}>
-                      {room.status_name}
-                    </Badge>
+             {rooms.map((room, index) => (
+
+
+              <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 bg-white">
+
+                {/* Image Section */}
+                <div className="h-[30vh] w-full overflow-hidden ">
+                  <img src={room.image_url} alt="Room" className="w-full h-full object-cover" />
+
+                </div>
+
+                {/* Info Section */}
+                <div className="flex flex-col p-4 flex-1">
+                  <h5 className="text-4xl font-semibold mb-2">{room.roomtype_name}</h5>
+                  {/* <Button
+                    variant="link"
+                    className="w-full justify-start"
+
+                  >
+                    View Room →
+                  </Button> */}
+                  <p
+                    className="text-sm text-gray-600 mb-4 overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3, // bilang sa lines na ipakita
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {room.roomtype_description}
+                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    {/* Price + Moon icon */}
+                    <h2 className="text-xl font-bold text-blue-600 flex items-center gap-1">
+                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/night
+                      <Moon size={20} />
+                    </h2>
+
+                    {/* Room Details in Badge Row */}
+                    <div className="flex gap-2">
+                      <Badge className="bg-transparent border-blue-500 text-blue-500">{room.room_sizes}</Badge>
+                      <Badge className="bg-transparent border-blue-500 text-blue-500">
+                        {room.room_capacity}
+                        <User size={20} className="ml-1" />
+                      </Badge>
+                      <Badge className="bg-transparent border-blue-500 text-blue-500">
+                        {room.room_beds}
+                        <BedDoubleIcon size={20} className="ml-1" />
+                      </Badge>
+                    </div>
                   </div>
 
-                  <CardContent className="flex flex-col flex-1 p-4 space-y-4">
-                    {/* Title & Description */}
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-800">{room.roomtype_name}</h2>
-                      <p className="text-sm text-gray-600 mt-1">{room.roomtype_description}</p>
-                    </div>
 
-                    {/* Info Links */}
-                    <Link className="text-sm text-blue-500 hover:underline flex items-center gap-1">
-                      More info <Info size={16} />
-                    </Link>
 
-                    {/* Price */}
-                    <div className="text-lg font-semibold text-blue-600">
-                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </div>
+                  <div className="mt-auto">
+                    {room.status_id === 3 ? (
+                      <BookingWaccount 
+                        rooms={rooms} 
+                        selectedRoom={room} 
+                        handleClearData={handleClearData}
+                        adultNumber={adultNumber}
+                        childrenNumber={childrenNumber}
+                      />
+                    ) : (
+                      <Button disabled className="w-full">Book Now</Button>
+                    )}
+                  </div>
+                </div>
 
-                    {/* Room Features */}
-                    <div className="flex flex-wrap gap-3 text-sm">
-                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
-                        <User size={16} />
-                        {room.max_capacity} Guest{room.max_capacity > 1 && 's'}
-                      </div>
-                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
-                        <Bed size={16} />
-                        2 Beds
-                      </div>
-                      <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full flex items-center gap-2">
-                        <Square size={16} />
-                        23 m²
-                      </div>
-                    </div>
 
-                    {/* Book Button */}
-                    <div className="mt-auto">
-                      {room.status_id === 3 ? (
-                        <BookingWaccount rooms={rooms} selectedRoom={room} handleClearData={handleClearData} />
-                      ) : (
-                        <Button disabled className="w-full">Book Now</Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              </Card>
+            ))}
           </div>
         )}
 

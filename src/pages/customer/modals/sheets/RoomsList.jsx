@@ -28,9 +28,9 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
   <>
    <Sheet open={open} onOpenChange={setOpen}>
     <SheetTrigger asChild>
-     <Button className="bg-[#FDF5AA] hover:bg-yellow-600 text-black">Add Room</Button>
+     <Button >Add Room</Button>
     </SheetTrigger>
-    <SheetContent side="bottom">
+    <SheetContent side="bottom" className="rounded-t-3xl bg-blue-50" >
      
      <ScrollArea className="md:h-[calc(100vh-200px)] h-[100vh]">
       {availableRooms.length > 0 ? availableRooms.map((rooms, index) => (

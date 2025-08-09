@@ -1,72 +1,75 @@
-import { Button } from '@/components/ui/button'
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog'
-import { Separator } from '@/components/ui/separator'
-import React from 'react'
-import { toast } from 'sonner'
+import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Separator } from '@/components/ui/separator';
+import { ArrowRight } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 
-function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
-  if (!summary) return null;
-
+function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
+  if (!open || !summary) return null;
   const {
     rooms = [],
     numberOfNights = 0,
-    vat = 0,
-    total = 0,
-    downpayment = 0,
     checkIn,
     checkOut,
   } = summary;
+
+  const subtotalRaw = rooms.reduce((total, room) => {
+    return total + Number(room.roomtype_price) * numberOfNights;
+  }, 0);
+
+  const subtotal = Number(subtotalRaw.toFixed(2));
+
+  const basePrice = Number((subtotal / 1.12).toFixed(2));
+  const vat = Number((subtotal - basePrice).toFixed(2));
+  const downpayment = Number((subtotal / 2).toFixed(2));
+  const total = subtotal;
+
+
 
   const handleConfirm = () => {
     if (typeof onConfirmBooking === 'function') {
       onConfirmBooking();
     } else {
-      toast.error("Booking function is not available.");
+      toast.error('Booking function is not available.');
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[900px] h-[600px] p-8 rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold leading-none tracking-tight text-[#bba008]">Confirm Booking</DialogTitle>
-          <DialogDescription>
-            This can no longer be canceled after 24 hours. Please review your booking details below.
-          </DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+      <div className="bg-white w-[90vw] max-w-[1100px] h-[700px] p-8 rounded-3xl overflow-y-auto shadow-xl relative">
+        <Button onClick={()=> onClose()} className="absolute top-4 right-4 text-xl font-bold">×</Button>
+
+        <div>
+          <h1 className="text-4xl font-semibold leading-none tracking-tight font-playfair text-blue-500">Confirm Booking</h1>
+          <p className="text-gray-500 mt-1">
+            This can no longer be canceled after 24 hours. Please review your booking details below :
+          </p>
+        </div>
 
         <div className="space-y-2 text-sm mt-6 overflow-y-auto max-h-[400px] pr-2">
-
-          <div className="flex justify-between gap-8">
+          <div className="flex  gap-8">
             <div className="flex items-center gap-2">
               <span className="font-medium">Check In:</span>
               <span>{new Date(checkIn).toLocaleDateString()}</span>
             </div>
-
+            <div>
+              <ArrowRight className="w-6 h-6" />
+            </div>
             <div className="flex items-center gap-2">
               <span className="font-medium">Check Out:</span>
               <span>{new Date(checkOut).toLocaleDateString()}</span>
             </div>
           </div>
 
-          <Separator className="my-2 " />
+          <Separator className="my-2" />
+
           {rooms.length > 0 ? (
             rooms.map((room, index) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start mb-4">
-                {/* Column 1: Image Carousel */}
                 <div>
                   <Carousel className="w-full">
                     <CarouselContent>
-                      {/* Replace with your actual room images */}
                       <CarouselItem>
                         <img src="/images/room1.jpg" alt="Room image" className="rounded-md" />
                       </CarouselItem>
@@ -79,25 +82,35 @@ function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
                   </Carousel>
                 </div>
 
-                {/* Column 2: Room Label */}
                 <div className="flex flex-col justify-center items-center gap-3 p-3">
                   <p className="text-sm text-muted-foreground">Room</p>
                   <p className="text-lg font-semibold">Room {index + 1}</p>
                 </div>
 
-                {/* Column 3: Room Details */}
                 <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Type:</span>
-                    <span>{room.roomtype_name}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Guests:</span>
-                    <span>{room.guestCount || 1}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>₱ {Number(room.roomtype_price).toLocaleString()} × {numberOfNights}</span>
-                    <span className="text-blue-500 font-medium">
+                                     <div className="flex justify-between items-center py-2 text-xl">
+                     <span className="font-medium">Type:</span>
+                     <span className="font-semibold">{room.roomtype_name}</span>
+                   </div>
+                   
+                   <div className="flex justify-between text-xl">
+                     <span>Adults:</span>
+                     <span>{localStorage.getItem('adultNumber') || 1}</span>
+                   </div>
+                   
+                   <div className="flex justify-between text-xl">
+                     <span>Children:</span>
+                     <span>{localStorage.getItem('childrenNumber') || 0}</span>
+                   </div>
+                   
+                   <div className="flex justify-between text-xl">
+                     <span>Total Guests:</span>
+                     <span>{(parseInt(localStorage.getItem('adultNumber')) || 1) + (parseInt(localStorage.getItem('childrenNumber')) || 0)}</span>
+                   </div>
+                               
+                   <div className="flex justify-between items-center py-2 text-md">
+                    <span>₱ {Number(room.roomtype_price).toLocaleString()} × {numberOfNights}/nights</span>
+                    <span className="text-blue-500 font-medium text-xl">
                       ₱ {(Number(room.roomtype_price) * numberOfNights).toLocaleString()}
                     </span>
                   </div>
@@ -112,28 +125,26 @@ function ConfirmBooking({ open, onOpenChange, summary, onConfirmBooking }) {
             <p className="text-sm italic text-gray-500">No rooms selected</p>
           )}
 
-          <div className="flex justify-between">
-            <span className="font-medium">VAT (12%):</span>
-            <span>₱ {Number(vat).toLocaleString()}</span>
+          <div className="flex justify-between items-center py-2 text-md">
+            <span className="font-medium text-xl">VAT (12%):</span>
+            <span className="items-center py-2 text-xl">₱ {Number(vat).toLocaleString()}</span>
           </div>
           <div className="flex justify-between font-semibold">
-            <span>Total:</span>
-            <span>₱ {Number(total).toLocaleString()}</span>
+            <span className="items-center py-2 text-xl">Total:</span>
+            <span className="items-center py-2 text-xl">₱ {Number(total).toLocaleString()}</span>
           </div>
-          <div className="flex justify-between font-semibold text-red-500">
-            <span>Downpayment (50%):</span>
-            <span>₱ {Number(downpayment).toLocaleString()}</span>
+          <div className="flex justify-between font-semibold ">
+            <span className="items-center py-2 text-xl">Downpayment (50%):</span>
+            <span className="items-center py-2 text-xl text-blue-500">₱ {Number(downpayment).toLocaleString()}</span>
           </div>
         </div>
 
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleConfirm} className="bg-[#FDF5AA] hover:bg-yellow-600 text-black">Confirm Booking</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="flex justify-end gap-2 mt-24 items-end ">
+          <Button variant="outline" onClick={() => onClose()}>Cancel</Button>
+          <Button onClick={handleConfirm}>Confirm Booking</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
