@@ -12,6 +12,8 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
     numberOfNights = 0,
     checkIn,
     checkOut,
+    adult,
+    children,
   } = summary;
 
   const subtotalRaw = rooms.reduce((total, room) => {
@@ -38,17 +40,17 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <div className="bg-white w-[90vw] max-w-[1100px] h-[700px] p-8 rounded-3xl overflow-y-auto shadow-xl relative">
-        <Button onClick={()=> onClose()} className="absolute top-4 right-4 text-xl font-bold">×</Button>
+        <Button onClick={() => onClose()} className="absolute top-4 right-4 text-xl font-bold">×</Button>
 
         <div>
-          <h1 className="text-4xl font-semibold leading-none tracking-tight font-playfair text-blue-500">Confirm Booking</h1>
+          <h1 className="text-4xl font-semibold leading-none tracking-tight font-playfair ">Confirm Booking</h1>
           <p className="text-gray-500 mt-1">
             This can no longer be canceled after 24 hours. Please review your booking details below :
           </p>
         </div>
 
         <div className="space-y-2 text-sm mt-6 overflow-y-auto max-h-[400px] pr-2">
-          <div className="flex  gap-8">
+          {/* <div className="flex  gap-8">
             <div className="flex items-center gap-2">
               <span className="font-medium">Check In:</span>
               <span>{new Date(checkIn).toLocaleDateString()}</span>
@@ -60,14 +62,14 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
               <span className="font-medium">Check Out:</span>
               <span>{new Date(checkOut).toLocaleDateString()}</span>
             </div>
-          </div>
+          </div> */}
 
           <Separator className="my-2" />
 
           {rooms.length > 0 ? (
             rooms.map((room, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start mb-4">
-                <div>
+              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mb-4">
+                <div className="m-8">
                   <Carousel className="w-full">
                     <CarouselContent>
                       <CarouselItem>
@@ -82,38 +84,46 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
                   </Carousel>
                 </div>
 
-                <div className="flex flex-col justify-center items-center gap-3 p-3">
-                  <p className="text-sm text-muted-foreground">Room</p>
-                  <p className="text-lg font-semibold">Room {index + 1}</p>
-                </div>
 
-                <div className="space-y-1">
-                                     <div className="flex justify-between items-center py-2 text-xl">
-                     <span className="font-medium">Type:</span>
-                     <span className="font-semibold">{room.roomtype_name}</span>
-                   </div>
-                   
-                   <div className="flex justify-between text-xl">
-                     <span>Adults:</span>
-                     <span>{localStorage.getItem('adultNumber') || 1}</span>
-                   </div>
-                   
-                   <div className="flex justify-between text-xl">
-                     <span>Children:</span>
-                     <span>{localStorage.getItem('childrenNumber') || 0}</span>
-                   </div>
-                   
-                   <div className="flex justify-between text-xl">
-                     <span>Total Guests:</span>
-                     <span>{(parseInt(localStorage.getItem('adultNumber')) || 1) + (parseInt(localStorage.getItem('childrenNumber')) || 0)}</span>
-                   </div>
-                               
-                   <div className="flex justify-between items-center py-2 text-md">
+
+                <div className="space-y-1 ">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-2xl">{room.roomtype_name}</span>
+                    <span className="text-md">Total Amount: ₱ {Number(total).toLocaleString()}</span>
+                  </div>
+                  <div className="flex gap-4 ">
+                  <div className="flex items-center gap-2 ">
+                    <span className="font-medium">Check In:</span>
+                    <span>{new Date(checkIn).toLocaleDateString()}</span>
+                  </div>
+                  <div>
+                    <ArrowRight className="w-6 h-6" />
+                  </div>
+                  <div className="flex items-center gap-2  ">
+                    <span className="font-medium">Check Out:</span>
+                    <span>{new Date(checkOut).toLocaleDateString()}</span>
+                  </div>
+                  </div>
+                  <div className="flex gap-4  ">
+                  <div className="flex items-center gap-2">
+                    <span>Adults:</span>
+                    <span>{localStorage.getItem('adult') || 1}</span>
+                  </div>
+                  <div className="h-5 w-px bg-black" />
+                  <div className="flex items-center gap-2">
+                    <span>Children:</span>
+                    <span>{localStorage.getItem('children') || 0}</span>
+                  </div>
+               </div>
+
+
+
+                  {/* <div className="flex justify-between items-center py-2 text-md">
                     <span>₱ {Number(room.roomtype_price).toLocaleString()} × {numberOfNights}/nights</span>
                     <span className="text-blue-500 font-medium text-xl">
                       ₱ {(Number(room.roomtype_price) * numberOfNights).toLocaleString()}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="col-span-full">

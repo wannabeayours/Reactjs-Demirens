@@ -175,7 +175,7 @@ function CustomerViewBookings() {
                   <h2 className="font-semibold">{item.checkOut}</h2>
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <Button className="bg-[#FDF5AA] hover:bg-yellow-600 text-black" onClick={() => handleShowAlert(item.booking_id)}>
+                  <Button  onClick={() => handleShowAlert(item.booking_id)}>
                     Cancel Booking
                   </Button>
                 </div>

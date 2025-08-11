@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { BedDoubleIcon, MinusIcon, Moon, Plus, Smile, User } from 'lucide-react'
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -59,7 +58,6 @@ function CustomerDashboard() {
   const [isSearched, setIsSearched] = useState(false);
 
 
-
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -101,8 +99,8 @@ function CustomerDashboard() {
   const onSubmit = async (data) => {
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
-    localStorage.setItem("children", childrenNumber);
     localStorage.setItem("adult", adultNumber);
+    localStorage.setItem("children", childrenNumber);
     localStorage.setItem("guestNumber", Number(adultNumber) + Number(childrenNumber));
     console.log("mga data sa pag search", data);
     getRooms(data);
@@ -112,16 +110,15 @@ function CustomerDashboard() {
   return (
 
     <div className=" min-h-screen text-white">
-      <div
-        className="flex items-center justify-center h-[50vh]  bg-fixed bg-center bg-cover mt-16 rounded-3xl border-2 border-[#FDF5AA] "
-        style={{ backgroundImage: 'url("/assets/images/hotels.jpg")' }}
-      >
-        <Card className=" w-full max-w-5xl">
+
+
+      <div className="flex items-center justify-center min-h-[10vh] w-full py-10 px-4">
+        <Card className=" w-full max-w-6xl">
           <CardContent>
             <Form {...form}>
 
               <form onSubmit={form.handleSubmit(onSubmit)} >
-                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
                   <FormField
                     control={form.control}
                     name="checkIn"
@@ -133,7 +130,7 @@ function CustomerDashboard() {
                           label="Check-in"
                           pastAllowed={false}
                           futureAllowed={true}
-                          withTime={true}
+                          withTime={false}
                         />
                       </FormItem>
                     )}
@@ -149,7 +146,7 @@ function CustomerDashboard() {
                           label="Check-out"
                           pastAllowed={false}
                           futureAllowed={true}
-                          withTime={true}
+                          withTime={false}
                         />
                       </FormItem>
                     )}
@@ -185,10 +182,13 @@ function CustomerDashboard() {
                       <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber + 1)}><Plus /></Button>
                     </div>
                   </div>
+                  <div className="flex items-center">
+                    <Button type="submit" className="w-full">Search</Button>
+
+
+                  </div>
                 </div>
-                <div className="flex items-center justify-start mt-5 ">
-                  <Button className="w-full ">Search</Button>
-                </div>
+
 
 
               </form>
@@ -198,10 +198,11 @@ function CustomerDashboard() {
 
         </Card>
 
+
       </div>
 
       <div className="flex flex-col items-center justify-center py-10 px-4 ">
-      {!isSearched ? (
+        {!isSearched ? (
           <p className="text-center text-lg font-semibold text-gray-600 mt-10">
             Please check in and check out first.
           </p>
@@ -212,10 +213,10 @@ function CustomerDashboard() {
         ) : (
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
-             {rooms.map((room, index) => (
+            {rooms.map((room, index) => (
 
 
-              <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 bg-white">
+              <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
 
                 {/* Image Section */}
                 <div className="h-[30vh] w-full overflow-hidden ">
@@ -246,8 +247,8 @@ function CustomerDashboard() {
                   <div className="flex items-center justify-between mb-4">
                     {/* Price + Moon icon */}
                     <h2 className="text-xl font-bold text-blue-600 flex items-center gap-1">
-                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/night
-                      <Moon size={20} />
+                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
+                      <BedDoubleIcon size={20} />
                     </h2>
 
                     {/* Room Details in Badge Row */}
@@ -268,9 +269,9 @@ function CustomerDashboard() {
 
                   <div className="mt-auto">
                     {room.status_id === 3 ? (
-                      <BookingWaccount 
-                        rooms={rooms} 
-                        selectedRoom={room} 
+                      <BookingWaccount
+                        rooms={rooms}
+                        selectedRoom={room}
                         handleClearData={handleClearData}
                         adultNumber={adultNumber}
                         childrenNumber={childrenNumber}
