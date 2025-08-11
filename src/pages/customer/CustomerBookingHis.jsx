@@ -21,7 +21,7 @@ function CustomerBookingHis() {
       const jsonData = { "booking_customer_id": CustomerId };
       console.log("jsondata", jsonData)
       const formData = new FormData();
-      formData.append("operation", "customerViewBookings");
+      formData.append("operation", "getBookingHistory");
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
@@ -50,7 +50,7 @@ function CustomerBookingHis() {
     { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-black" },
     { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true ,headerClassName:"text-black"},
     { header: 'Room Type', accessor: 'roomtype_name', sortable: true ,headerClassName:"text-black"},
-    { header: 'Room Number', accessor: 'roomnumber_id', sortable: true,headerClassName:"text-black" },
+    { header: 'Room Number', accessor: (row) => row.roomnumber_id ?? 'N/A', sortable: true,headerClassName:"text-black" },
     {
       header: 'Status',headerClassName:"text-black", cell: (row) => (
         <Badge className={row.booking_status_name === "Approved" ? "bg-green-500" : row.booking_status_name === "Pending" ? "bg-orange-500"  : "bg-red-500"}>

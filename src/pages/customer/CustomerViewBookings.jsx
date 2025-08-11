@@ -27,7 +27,7 @@ function CustomerViewBookings() {
       const jsonData = { "booking_customer_id": bookingCustomerId };
       console.log('jsondata', jsonData);
       const formData = new FormData();
-      formData.append('operation', 'customerCurrentBookingsWithAccount');
+      formData.append('operation', 'customerViewBookings');
       formData.append('json', JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log('woaaah res ni vack to vack:', res);
@@ -45,7 +45,7 @@ function CustomerViewBookings() {
     }
   };
 
- 
+
   //kani ambot sakto bani
   const customerCancelBooking = async (bookingId) => {
     console.log("na call ko");
@@ -101,7 +101,7 @@ function CustomerViewBookings() {
 
   useEffect(() => {
     customerViewBookings();
-    
+
   }, []);
 
   return (
@@ -131,13 +131,9 @@ function CustomerViewBookings() {
                   <div className="flex justify-between items-center w-full text-black">
                     <h2 className="text-3xl font-semibold text-[#113F67]">{item.roomtype_name}</h2>
                     <Badge
-                      className={`text-md font-semibold text-white 
-                      ${item.booking_status_name === 'Pending' ? 'bg-orange-500' : ''}
-                      ${item.booking_status_name === 'Cancelled' ? 'bg-red-500' : ''}
-                      ${item.booking_status_name === 'Approved' ? 'bg-green-500' : ''}
-                    `}
+                      className={`text-md font-semibold text-white  bg-orange-500`}
                     >
-                      {item.booking_status_name}
+                      Pending
                     </Badge>
                   </div>
 
@@ -164,18 +160,18 @@ function CustomerViewBookings() {
                 </div>
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Down Payment:</h2>
-                  <h2 className="font-semibold">₱ {item.downPay}</h2>
+                  <h2 className="font-semibold">₱ {item.booking_downpayment}</h2>
                 </div>
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Check-in Date:</h2>
-                  <h2 className="font-semibold">{item.checkIn}</h2>
+                  <h2 className="font-semibold">{item.booking_checkin_dateandtime}</h2>
                 </div>
                 <div className="mb-4 text-black flex justify-between items-center">
                   <h2 className="font-semibold">Check-out Date:</h2>
-                  <h2 className="font-semibold">{item.checkOut}</h2>
+                  <h2 className="font-semibold">{item.booking_checkout_dateandtime}</h2>
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <Button  onClick={() => handleShowAlert(item.booking_id)}>
+                  <Button onClick={() => handleShowAlert(item.booking_id)}>
                     Cancel Booking
                   </Button>
                 </div>

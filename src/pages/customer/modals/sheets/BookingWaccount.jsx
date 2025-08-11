@@ -67,18 +67,21 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         "children": childrenNumber,
         "adult": adultNumber
       }
+      console.log("selected rooms", selectedRooms)
       const roomDetails = selectedRooms.map((room) => {
         return {
-          roomTypeId: room.room_type,
+          roomTypeId: room.room_type, 
           guestCount: guestCounts[room.room_type] || 1,
-        }
-      })
+        };
+      });
+
       console.log("roomDetails", roomDetails);
       const jsonData = {
         customerId: customerId,
         bookingDetails: bookingDetails,
         roomDetails: roomDetails
       }
+      console.log("jsondata", jsonData)
       const formData = new FormData();
       formData.append("operation", "customerBookingWithAccount");
       formData.append("json", JSON.stringify(jsonData));
@@ -122,13 +125,13 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       setNumberOfNights(diffDays);
 
       setAllRooms(rooms);
-
+      console.log("SELECTED ROOOOOOM", selectedRoom)
       const selected = {
         roomtype_name: selectedRoom.roomtype_name,
         roomtype_price: selectedRoom.roomtype_price,
-        room_type: selectedRoom.room_type,
+        room_type: selectedRoom.roomtype_id,
         roomtype_description: selectedRoom.roomtype_description,
-        room_capacity: selectedRoom.room_capacity , // fallback to 1 if undefined
+        room_capacity: selectedRoom.room_capacity, // fallback to 1 if undefined
       };
 
       setSelectedRooms([selected]);
@@ -150,7 +153,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         ? Math.max(0, storedChildren)
         : (typeof childrenNumber === 'number' ? Math.max(0, childrenNumber) : 0);
       setChildrenNum(initialChildren);
-      
+
     }
   }, [open, rooms, selectedRoom, adultNumber, childrenNumber]);
 
