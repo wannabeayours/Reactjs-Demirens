@@ -13,12 +13,18 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
 
 
  const handleBookedRoom = (room) => {
-  setSelectedRooms([...selectedRooms, room]);
+  setSelectedRooms([...selectedRooms, {
+   room_capacity: room.room_capacity,
+   room_type: room.roomtype_id,
+   roomtype_price: room.roomtype_price,
+   roomtype_description: room.roomtype_description,
+   roomtype_name: room.roomtype_name
+  }]);
   setOpen(false);
  }
 
  useEffect(() => {
-  const filteredRooms = rooms.filter((room) => room.status_id === 3 );
+  const filteredRooms = rooms.filter((room) => room.status_id === 3);
   setAvailableRooms(filteredRooms || []);
   console.log("filtered rooms", filteredRooms);
  }, [rooms, selectedRooms, setSelectedRooms])
@@ -31,7 +37,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
      <Button >Add Room</Button>
     </SheetTrigger>
     <SheetContent side="bottom" className="rounded-t-3xl bg-blue-50" >
-     
+
      <ScrollArea className="md:h-[calc(100vh-200px)] h-[100vh]">
       {availableRooms.length > 0 ? availableRooms.map((rooms, index) => (
        <div>

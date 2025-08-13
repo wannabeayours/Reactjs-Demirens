@@ -21,15 +21,16 @@ function CustomerArchieve() {
   ];
 
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-white" },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true , headerClassName:"text-white"},
+    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-black" },
+    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true , headerClassName:"text-black"},
 
 
     {
-      header: 'Actions', headerClassName:"text-white",
+      header: 'Actions', headerClassName:"text-black",
       cell: (row) => (
-        <div className="flex gap-4">
-          <ArchiveRestore className="cursor-pointer hover:text-[#34699A]"
+        <div className="flex gap-4 ">
+
+          <ArchiveRestore className="cursor-pointer hover:text-[#34699A] text-black"
             onClick={() => handleShowAlert(row)} />
 
         </div>
@@ -67,7 +68,7 @@ function CustomerArchieve() {
 
 
       <Card className={"px-10 mt-20 w-full bg-transparent shadow-xl  "}>
-        <div className="text-white">
+        <div >
 
           <DataTable columns={col} data={fakeArchivedBookings} itemsPerPage={10} />
 

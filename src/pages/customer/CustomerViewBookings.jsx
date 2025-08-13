@@ -1,36 +1,31 @@
 import { Card } from '@/components/ui/card';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
 import ShowAlert from '@/components/ui/show-alert';
 import { Badge } from '@/components/ui/badge';
-import { Book, SmileIcon } from 'lucide-react';
+import { Book, SmileIcon, Trash2, X } from 'lucide-react';
 
 function CustomerViewBookings() {
   const [viewBook, setViewBook] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
-  const [currentbookings, setCurrentbookings] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
-  const [bookings, setBookings] = useState([]);
-
-
+  const [selectedRoomData, setSelectedRoomData] = useState(null); // For remove room
 
   const customerViewBookings = async () => {
     try {
       const url = localStorage.getItem('url') + 'customer.php';
       const bookingCustomerId = localStorage.getItem('userId');
-      console.log('bookingCustomerId', bookingCustomerId);
-      console.log('Using Customer ID:', bookingCustomerId);
-      const jsonData = { "booking_customer_id": bookingCustomerId };
-      console.log('jsondata', jsonData);
+      const jsonData = { booking_customer_id: bookingCustomerId };
       const formData = new FormData();
       formData.append('operation', 'customerViewBookings');
       formData.append('json', JSON.stringify(jsonData));
+
       const res = await axios.post(url, formData);
-      console.log('woaaah res ni vack to vack:', res);
+      console.log("Bookings response:", res.data);
 
       if (res.data.length === 0) {
         setErrorMessage('No booking details, book first!');
@@ -45,33 +40,17 @@ function CustomerViewBookings() {
     }
   };
 
-
-  //kani ambot sakto bani
   const customerCancelBooking = async (bookingId) => {
-    console.log("na call ko");
-    console.log("booking id ni", bookingId);
     try {
       const url = localStorage.getItem('url') + "customer.php";
-
       const jsonData = { booking_id: bookingId };
       const formData = new FormData();
       formData.append("json", JSON.stringify(jsonData));
       formData.append("operation", "customerCancelBooking");
       const res = await axios.post(url, formData);
-      console.log("response", res.data);
-      if (res.data === 1 || res.data.success === 1) {
-        console.log("response", res.data);
+      if (res.data === 1) {
         customerViewBookings();
         toast.success('Booking cancelled!');
-
-        // ✅ Instead of removing, update status name to 'Cancelled'
-        const updatedBookings = viewBook.map((b) =>
-          b.booking_id === bookingId
-            ? { ...b, booking_status_name: "Cancelled" }
-            : b
-        );
-        setViewBook(updatedBookings);
-
       } else {
         toast.error('Failed to cancel booking.');
       }
@@ -81,27 +60,61 @@ function CustomerViewBookings() {
     }
   };
 
+  const removeBookingRoom = async (bookingId, roomId) => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const jsonData = { bookingId: bookingId, bookingRoomId: roomId };
+      const formData = new FormData();
+      formData.append("json", JSON.stringify(jsonData));
+      formData.append("operation", "removeBookingRoom");
+      const res = await axios.post(url, formData);
+      if (res.data === 1) {
+        customerViewBookings();
+        toast.success('Room removed!');
+      } else {
+        toast.error('Failed to remove room.');
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+    }
+  }
+
+
   const handleShowAlert = (bookingId) => {
-    // "This action cannot be undone. It will permanently delete the item and remove it from your list"
     setAlertMessage("Are you sure you want to cancel your booking?");
     setSelectedBookingId(bookingId);
+    setSelectedRoomData(null); // Not removing a room in this case
     setShowAlert(true);
-    // customerCancelBooking(bookingId);
   };
+
+  const handleShowRemoveRoomAlert = (bookingId, roomId, roomsCount) => {
+    if (roomsCount.roomsList.length === 1) {
+      toast.error("You cannot remove the last room from this booking.");
+      return;
+    }
+    setAlertMessage("Are you sure you want to remove this room?");
+    setSelectedBookingId(bookingId);
+    setSelectedRoomData({ roomId });
+    setShowAlert(true);
+  };
+
+
   const handleCloseAlert = (status) => {
-    // customerCancelBooking(selectedBookingId);
-    console.log("Called Cancel Booking");
-    if (status === 1 && selectedBookingId) {
-      // if gi click ang con   firm, execute tanan diri 
-      customerCancelBooking(selectedBookingId);
+    if (status === 1) {
+      if (selectedRoomData) {
+        // Removing a room
+        removeBookingRoom(selectedBookingId, selectedRoomData.roomId);
+      } else {
+        // Cancelling booking
+        customerCancelBooking(selectedBookingId);
+      }
     }
     setShowAlert(false);
   };
-  //  e chat sa chatgpt na ("it did not call the customerCancelBooking")
 
   useEffect(() => {
     customerViewBookings();
-
   }, []);
 
   return (
@@ -124,60 +137,101 @@ function CustomerViewBookings() {
             No booking details available
           </div>
         ) : (
-          viewBook.map((item, index) => (
-            <div key={index}>
-              <Card className="px-10 mt-20 shadow-xl  ">
-                <div>
-                  <div className="flex justify-between items-center w-full text-black">
-                    <h2 className="text-3xl font-semibold text-[#113F67]">{item.roomtype_name}</h2>
-                    <Badge
-                      className={`text-md font-semibold text-white  bg-orange-500`}
-                    >
-                      Pending
-                    </Badge>
+          <div
+            className={`grid grid-cols-1 ${viewBook.length === 1
+              ? "md:grid-cols-1"
+              : "md:grid-cols-2"
+              } gap-3 items-stretch`}
+          >
+            {viewBook.map((item, index) => (
+              <Card
+                key={index}
+                className="px-10 mt-10 shadow-xl flex flex-col h-full"
+              >
+                {/* Card Header */}
+                <div className="flex justify-between items-center w-full text-black mb-4">
+                  <h2 className="text-2xl font-bold text-[#113F67]">
+                    Booking #{item.booking_id}
+                  </h2>
+                  <Badge className="text-md font-semibold text-white bg-orange-500">
+                    Pending
+                  </Badge>
+                </div>
+
+                {/* Booking Info */}
+                <div className="mb-2 flex justify-between text-black">
+                  <span className="font-semibold">Check-in:</span>
+                  <span>{item.booking_checkin_dateandtime}</span>
+                </div>
+                <div className="mb-4 flex justify-between text-black">
+                  <span className="font-semibold">Check-out:</span>
+                  <span>{item.booking_checkout_dateandtime}</span>
+                </div>
+                <div className="mb-4 flex justify-between text-black">
+                  <span className="font-semibold">Down Payment:</span>
+                  <span>₱ {item.booking_downpayment}</span>
+                </div>
+                <div className="mb-4 flex justify-between text-black">
+                  <span className="font-semibold">Total Payment:</span>
+                  <span>₱ {item.booking_totalAmount}</span>
+                </div>
+
+                {/* Rooms List */}
+                <div className="mt-6 flex-1">
+                  <h3 className="text-lg font-semibold mb-2 text-[#113F67]">
+                    Rooms:
+                  </h3>
+                  <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                    {item.roomsList.map((room, roomIndex) => (
+                      <div
+                        key={roomIndex}
+                        className="border rounded-lg p-4 bg-gray-50 shadow-sm relative"
+                      >
+                        {/* Delete button */}
+                        <button
+                          onClick={() =>
+                            handleShowRemoveRoomAlert(
+                              item.booking_id,
+                              room.booking_room_id,
+                              item
+                            )
+                          }
+                          className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+
+                        <h4 className="text-xl font-semibold text-gray-800">
+                          {room.roomtype_name}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {room.roomtype_description}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-sm text-black">
+                          <span><strong>Room Number:</strong> {room.roomnumber_id}</span>
+                          <span><strong>Floor:</strong> {room.roomfloor}</span>
+                          <span><strong>Size:</strong> {room.room_sizes}</span>
+                          <span><strong>Beds:</strong> {room.room_beds}</span>
+                          <span><strong>Capacity:</strong> {room.max_capacity}</span>
+                          <span><strong>Price:</strong> ₱ {room.roomtype_price}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
                 </div>
 
-                <div className="mb-4 text-black flex justify-between">
-                  <h2 className="font-semibold">Room Number:</h2>
-                  <h2 className="font-semibold">{item.roomnumber_id}</h2>
-                </div>
-
-
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Room Sizes:</h2>
-                  <h2 className="font-semibold">{item.room_sizes}</h2>
-                </div>
-
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Room Price:</h2>
-                  <h2 className="font-semibold">₱ {item.roomtype_price}</h2>
-                </div>
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Room Beds:</h2>
-                  <h2 className="font-semibold">{item.room_beds} Beds</h2>
-                </div>
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Down Payment:</h2>
-                  <h2 className="font-semibold">₱ {item.booking_downpayment}</h2>
-                </div>
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Check-in Date:</h2>
-                  <h2 className="font-semibold">{item.booking_checkin_dateandtime}</h2>
-                </div>
-                <div className="mb-4 text-black flex justify-between items-center">
-                  <h2 className="font-semibold">Check-out Date:</h2>
-                  <h2 className="font-semibold">{item.booking_checkout_dateandtime}</h2>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button onClick={() => handleShowAlert(item.booking_id)}>
+                {/* Cancel Button */}
+                <div className="mt-6">
+                  <Button
+                    className="w-full"
+                    onClick={() => handleShowAlert(item.booking_id)}
+                  >
                     Cancel Booking
                   </Button>
                 </div>
               </Card>
-            </div>
-          ))
+            ))}
+          </div>
         )}
 
         <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={1} />
@@ -187,5 +241,6 @@ function CustomerViewBookings() {
 
   );
 }
+
 
 export default CustomerViewBookings;

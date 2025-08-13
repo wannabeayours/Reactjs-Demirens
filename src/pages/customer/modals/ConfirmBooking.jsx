@@ -30,12 +30,14 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
 
 
   const handleConfirm = () => {
+    console.log("Confirm button clicked");
     if (typeof onConfirmBooking === 'function') {
       onConfirmBooking();
     } else {
       toast.error('Booking function is not available.');
     }
   };
+  
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
@@ -90,6 +92,7 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold text-2xl">{room.roomtype_name}</span>
                     <span className="text-md">Total Amount: ₱ {Number(total).toLocaleString()}</span>
+                    {/* <span className="text-sm text-gray-600">Room Capacity: {room.room_capacity || 'N/A'} guests</span> */}
                   </div>
                   <div className="flex gap-4 ">
                   <div className="flex items-center gap-2 ">
@@ -107,14 +110,24 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
                   <div className="flex gap-4  ">
                   <div className="flex items-center gap-2">
                     <span>Adults:</span>
-                    <span>{localStorage.getItem('adult') || 1}</span>
+                    <span>{room.adultCount || 0}</span>
                   </div>
                   <div className="h-5 w-px bg-black" />
                   <div className="flex items-center gap-2">
                     <span>Children:</span>
-                    <span>{localStorage.getItem('children') || 0}</span>
+                    <span>{room.childrenCount || 0}</span>
                   </div>
                </div>
+               {/* <div className="flex items-center gap-2 mt-2">
+                 <span className="font-medium">Total Guests:</span>
+                 <span className="font-semibold text-blue-600">{(room.adultCount || 0) + (room.childrenCount || 0)}</span>
+               </div> */}
+               {room.extraBeds > 0 && (
+                 <div className="flex items-center gap-2 mt-1">
+                   <span className="text-sm text-gray-600">Extra Beds:</span>
+                   <span className="text-sm font-medium">{room.extraBeds}</span>
+                 </div>
+               )}
 
 
 
@@ -135,6 +148,12 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
             <p className="text-sm italic text-gray-500">No rooms selected</p>
           )}
 
+          {/* <div className="flex justify-between items-center py-2 text-md">
+            <span className="font-medium text-xl">Total Guests:</span>
+            <span className="items-center py-2 text-xl text-blue-600">
+              {rooms.reduce((total, room) => total + (room.adultCount || 0) + (room.childrenCount || 0), 0)} guests
+            </span>
+          </div> */}
           <div className="flex justify-between items-center py-2 text-md">
             <span className="font-medium text-xl">VAT (12%):</span>
             <span className="items-center py-2 text-xl">₱ {Number(vat).toLocaleString()}</span>
@@ -159,3 +178,4 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
 }
 
 export default ConfirmBooking;
+
