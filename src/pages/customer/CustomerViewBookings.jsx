@@ -126,7 +126,7 @@ function CustomerViewBookings() {
           View Bookings
         </h1>
       </div>
-      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-2"} gap-3`}>
+      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-1"} gap-3`}>
         {errorMessage ? (
           <div className="col-span-full flex flex-row items-center justify-center text-center h-96 gap-2">
             <SmileIcon className="w-10 h-10" />

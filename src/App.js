@@ -66,6 +66,7 @@ function App() {
 
     </div>
       <Toaster
+        position='top-center'
         richColors
         duration={2000}
         icons={{

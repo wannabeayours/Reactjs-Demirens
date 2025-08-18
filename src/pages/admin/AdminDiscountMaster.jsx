@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect } from 'react';
-import AdminModal from '@/components/modals/AdminModal';
+import AdminModal from '@/pages/admin/components/AdminModal';
 import { toast } from 'sonner';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import {
@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import AdminHeader from '@/components/layout/AdminHeader';
+import AdminHeader from './components/AdminHeader'
 
 import {
   Form,

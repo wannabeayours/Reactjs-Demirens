@@ -96,21 +96,24 @@ function Landingpage() {
 
     },
   })
-
+  
   const getRooms = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
       const formData = new FormData();
       formData.append("operation", "getRooms");
       const res = await axios.post(url, formData);
-      console.log("res ni getRooms", res);
-      setRooms(res.data !== 0 ? res.data : []);
+  
+      // Ensure rooms is always an array
+      const data = Array.isArray(res.data) ? res.data : [];
+      setRooms(data);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-
+      setRooms([]); // fallback
     }
   }
+  
 
   const handleClearData = () => {
     localStorage.removeItem("checkIn");

@@ -1,28 +1,74 @@
 import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table'
 import ShowAlert from '@/components/ui/show-alert';
+import axios from 'axios';
 import { Archive, ArchiveRestore } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { toast } from 'sonner';
 
 function CustomerArchieve() {
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
-  const fakeArchivedBookings = [
-    {
-      booking_id: 1,
-      booking_checkin_dateandtime: "2025-07-01 14:00",
-      booking_checkout_dateandtime: "2025-07-03 12:00"
-    },
-    {
-      booking_id: 2,
-      booking_checkin_dateandtime: "2025-07-10 13:00",
-      booking_checkout_dateandtime: "2025-07-12 11:00"
-    }
-  ];
+  const [archivedBookings, setArchivedBookings] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
+
+  const getArchivedBookings = async () => {
+    try {
+      const url = localStorage.getItem("url") + "customer.php";
+      const customerId = localStorage.getItem("userId");
+      const jsonData = {booking_customer_id: customerId}
+      console.log("jsonData", jsonData);
+      const formData = new FormData();
+      formData.append("operation", "getArchivedBookings");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      console.log("res", res);
+      if (res.data !== 0) {
+        setArchivedBookings(res.data);
+        
+      }
+      else{
+        setArchivedBookings([]);
+      }
+      
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+      
+    }
+  }
+
+  const restoreBooking = async () => {
+    try {
+      const url = localStorage.getItem("url") + "customer.php";
+      const jsonData = {bookingId: selectedBookingId}
+      const formData = new FormData();
+      formData.append("operation", "unarchiveBooking");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      console.log("res", res);
+      if (res.data === 1) {
+        toast.success("Booking restored successfully");
+        getArchivedBookings();
+      }
+      else{
+        toast.error("Booking restored unsuccessful");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+      
+    }
+  }
   const col = [
     { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-black" },
     { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true , headerClassName:"text-black"},
+    { header: 'Room Type', accessor: 'roomtype_name', sortable: true , headerClassName:"text-black"},
+    { header: 'Total Amount', accessor: 'booking_totalAmount', sortable: true , headerClassName:"text-black"},
+    { header: 'Guests', accessor: 'guests_amnt', sortable: true , headerClassName:"text-black"},
+    { header: 'Room Status', accessor: 'booking_status_name', sortable: true , headerClassName:"text-black"},
+  
 
 
     {
@@ -43,17 +89,25 @@ function CustomerArchieve() {
 
   ]
 
-  const handleShowAlert = () => {
+  const handleShowAlert = (data) => {
+    console.log("data", data);
+    setSelectedBookingId(data.booking_id);
     // "This action cannot be undone. It will permanently delete the item and remove it from your list"
     setAlertMessage("Are you sure you want to restore this booking?");
     setShowAlert(true);
   };
   const handleCloseAlert = (status) => {
     if (status === 1) {
-      // if gi click ang confirm, execute tanan diri 
+      restoreBooking();
     }
     setShowAlert(false);
   };
+
+  useEffect(() => {
+    getArchivedBookings();
+  }, []);
+
+
   return (
     <div className="flex  flex-col ">
 
@@ -70,7 +124,7 @@ function CustomerArchieve() {
       <Card className={"px-10 mt-20 w-full bg-transparent shadow-xl  "}>
         <div >
 
-          <DataTable columns={col} data={fakeArchivedBookings} itemsPerPage={10} />
+          <DataTable columns={col} data={archivedBookings} itemsPerPage={10} />
 
         </div>
       </Card>

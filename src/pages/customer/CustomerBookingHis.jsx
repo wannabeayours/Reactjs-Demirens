@@ -4,16 +4,44 @@ import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table';
 import ShowAlert from '@/components/ui/show-alert';
 import axios from 'axios';
-import { ArchiveIcon, Eye, HistoryIcon, Trash } from 'lucide-react';
+import { ArchiveIcon, Eye, HistoryIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
-
 
 
 function CustomerBookingHis() {
   const [history, setHistory] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  
+
+
+
+  const archivedBooking = async () => {
+    try {
+      const url = localStorage.getItem("url") + "customer.php";
+      const jsonData = {bookingId: selectedBookingId}
+      const formData = new FormData();
+      formData.append("operation", "archiveBooking");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      console.log("res", res);
+      if (res.data === 1) {
+        toast.success("Booking archived successfully");
+        getHistory();
+      }
+      else{
+        toast.error("Booking archived unsuccessful");
+      }
+      
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+    }
+  }
+
+
   const getHistory = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
@@ -34,14 +62,15 @@ function CustomerBookingHis() {
     }
   }
 
-  const handleShowAlert = () => {
-    // "This action cannot be undone. It will permanently delete the item and remove it from your list"
+  const handleShowAlert = (data) => {
+    console.log("data", data);
+    setSelectedBookingId(data.booking_id);
     setAlertMessage("Are you sure you want to archive this booking?");
     setShowAlert(true);
   };
   const handleCloseAlert = (status) => {
     if (status === 1) {
-      // if gi click ang confirm, execute tanan diri 
+      archivedBooking()
     }
     setShowAlert(false);
   };

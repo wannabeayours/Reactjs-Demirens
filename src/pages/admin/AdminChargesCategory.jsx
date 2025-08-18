@@ -1,8 +1,8 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect } from 'react';
-import AdminModal from '@/components/modals/AdminModal';
-import AdminHeader from '@/components/layout/AdminHeader';
+import AdminModal from '@/pages/admin/components/AdminModal';
+import AdminHeader from './components/AdminHeader'
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {

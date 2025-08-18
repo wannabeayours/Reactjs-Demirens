@@ -1,4 +1,5 @@
-import AdminHeader from '@/components/layout/AdminHeader'
+
+import AdminHeader from './components/AdminHeader'
 import React from 'react'
 
 function AdminReviews() {

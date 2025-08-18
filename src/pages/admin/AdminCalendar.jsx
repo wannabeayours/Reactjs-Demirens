@@ -1,5 +1,5 @@
 import React from 'react'
-import AdminHeader from '@/components/layout/AdminHeader';
+import AdminHeader from './components/AdminHeader'
 
 function AdminCalendar() {
   return (

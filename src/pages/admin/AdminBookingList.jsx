@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
-import AdminHeader from '@/components/layout/AdminHeader';
-import AdminModal from '@/components/modals/AdminModal';
+import AdminHeader from '@/pages/admin/components/AdminHeader';
+import AdminModal from '@/pages/admin/components/AdminModal';
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -39,252 +39,171 @@ import {
 function AdminBookingList() {
   const APIConn = `${localStorage.url}admin.php`;
 
-  const [resvData, setResvData] = useState([]);
-  const [selData, setSelData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [permission, setPermission] = useState(0)
+  const [bookings, setBookings] = useState([]);
+  const [modalData, setModalData] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [currentRefNo, setCurrentRefNo] = useState(null);
+  const [selectedRooms, setSelectedRooms] = useState({});
 
-  const bookingStatuses = {
-    1: "Approved",
-    2: "Pending",
-    3: "Cancelled"
-  };
-
-  // Modal
-  const [modalSettings, setModalSettings] = useState({
-    modalMode: '',
-    showModal: false
-  });
-
-  const editStatus = (reserveData) => {
-    setModalSettings({
-      modalMode: 'editResv',
-      showModal: true
-    })
-    console.log('Data: ', reserveData);
-    setSelData(reserveData);
-    setPermission(reserveData.booking_status_id);
-  }
-
-  //   API Connection
   const getBookings = async () => {
-    setIsLoading(true);
-    const formData = new FormData();
-    formData.append('method', 'view_bookings');
-
     try {
-      const conn = await axios.post(APIConn, formData);
-      if (conn.data) {
-        console.log(conn.data)
-        setResvData(conn.data !== 0 ? conn.data : 0)
-      } else {
-        toast('Failed to connect');
-      }
-
+      const formData = new FormData();
+      formData.append('method', 'viewBookings');
+      const res = await axios.post(APIConn, formData);
+      setBookings(res.data !== 0 ? res.data : []);
+      console.log("booking", res);
     } catch (err) {
-      toast('Something went wrong');
-      console.log(err)
-    } finally {
-      resetUseState();
-      toast('Done Loading');
-    }
-  }
-
-  const insertBookingStatus = async () => {
-    const dataSummary = {
-      booking_id: selData.booking_id,
-      booking_status_id: permission
-    }
-
-    const formData = new FormData();
-    formData.append("method", "change_status");
-    formData.append("json", JSON.stringify(dataSummary));
-    console.log(formData)
-
-    try {
-      const response = await axios.post(APIConn, formData);
-
-      if (response.data.success) {
-        toast("Booking status updated successfully");
-        // Optionally refetch data:
-        console.log(response.data)
-        getBookings();
-        resetUseState();
-      } else {
-        toast("Failed to update status");
-        console.log(response.data);
-        resetUseState();
-      }
-    } catch (err) {
-      toast("Error updating status");
-      console.error(err);
-      resetUseState();
+      toast.error('Error loading bookings');
     }
   };
 
+  const fetchVacantRooms = async (refNo) => {
+  try {
+    const formData = new FormData();
+    formData.append('method', 'reqAvailRooms');
+    formData.append('json', JSON.stringify({ reference_no: refNo }));
+    const res = await axios.post(APIConn, formData);
+    console.log(res.data); // should log your grouped array
 
-  // Other Functions
-  const formatDateTime = (dateTime) => {
-    if (!dateTime) return '';
-    const [date, time] = dateTime.split(' ');
-    const newDate = new Date(date);
-
-    return newDate.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    setModalData(res.data);
+    setSelectedRooms({});
+    setCurrentRefNo(refNo);
+    setShowModal(true);
+  } catch (err) {
+    toast.error('Error fetching vacant rooms');
   }
+};
 
-  const resetUseState = () => {
-    setIsLoading(false);
-    setModalSettings({ modalMode: "", showModal: false });
-  }
+
+  const handleRoomSelect = (roomtypeId, index, roomId) => {
+    setSelectedRooms(prev => {
+      const updated = { ...prev };
+      if (!updated[roomtypeId]) updated[roomtypeId] = [];
+      updated[roomtypeId][index] = roomId;
+      return updated;
+    });
+  };
+
+  const approveBooking = async () => {
+    const allRooms = Object.values(selectedRooms).flat();
+    if (allRooms.some(room => !room)) {
+      toast.error('Please assign all rooms.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('method', 'finalizeBookingApproval');
+    formData.append('json', JSON.stringify({
+      reference_no: currentRefNo,
+      assigned_rooms: allRooms
+    }));
+
+    const res = await axios.post(APIConn, formData);
+    if (res.data === 'success') {
+      toast.success('Booking approved!');
+      setShowModal(false);
+      getBookings();
+    } else {
+      toast.error('Failed to approve booking');
+    }
+  };
 
   useEffect(() => {
-    getBookings()
-  }, [])
+    getBookings();
+  }, []);
+
 
   return (
     <>
-      {
-        isLoading ? <p>Loading...</p> :
-          <>
-            <AdminHeader />
-            <div>
-              This is on Admins Side
-            </div>
+      <div>
+        <AdminHeader />
+      </div>
 
+      <div>
+        <h2>Pending Booking Requests</h2>
+        {bookings.length === 0 ? (
+          <p>No pending bookings.</p>
+        ) : (
+          <table border="1" cellPadding="8" cellSpacing="0">
+            <thead>
+              <tr>
+                <th>Ref No</th>
+                <th>Name</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Room Type</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((b, i) => (
+                <tr key={i}>
+                  <td>{b['Ref No']}</td>
+                  <td>{b['Name']}</td>
+                  <td>{b['Check-in']}</td>
+                  <td>{b['Check-out']}</td>
+                  <td>{b['Room Type']}</td>
+                  <td>{b['Status']}</td>
+                  <td>
+                    <button onClick={() => fetchVacantRooms(b['Ref No'])}>Approve</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
-            <div>
-                <Table>
-              <ScrollArea className="h-[400px] w-full p-4">
-                  <TableHeader>
-                    <TableRow>
-                      <Table></Table>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+        {showModal && (
+          <AdminModal
+            isVisible={showModal}
+            onClose={() => setShowModal(false)}
+            modalTitle="Assign Rooms"
+          >
+            {modalData.map((group, idx) => (
+              <div key={idx} className="mb-4">
+                <strong className="text-gray-900 dark:text-gray-100">
+                  {group.roomtype_name} (x{group.room_count})
+                </strong>
 
-                    {
-                      resvData.map((reservations, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{reservations.booking_id}</TableCell>
-                          <TableCell>{reservations.customers_walk_in_id === null ? 'Yes' : 'No'}</TableCell>
-                          <TableCell>
-                            {reservations.customers_walk_in_id !== null ? reservations.fullname : reservations.customers_online_username}
-                          </TableCell>
-                          <TableCell>{reservations.booking_status_name === null ? "Pending" : reservations.booking_status_name}</TableCell>
-                          <TableCell>₱{reservations.booking_downpayment}</TableCell>
-                          <TableCell>{formatDateTime(reservations.booking_checkin_dateandtime)}</TableCell>
-                          <TableCell>{formatDateTime(reservations.booking_checkout_dateandtime)}</TableCell>
-                          <TableCell>{reservations.ref_num}</TableCell>
-                          <TableCell>
-                            <Button className='h-8 px-3 text-sm' onClick={() => editStatus(reservations)}>
-                              <Ellipsis />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    }
-
-                  </TableBody>
-              </ScrollArea>
-                </Table>
-            </div>
-
-          </>
-      }
-
-      <AdminModal
-        isVisible={modalSettings.showModal}
-        onClose={() => setModalSettings({
-          showModal: false,
-          modalMode: ''
-        })}
-        modalTitle={modalSettings.modalMode === 'editResv' ? 'Editing...' : null}
-      >
-
-        {
-          selData && (
-            <>
-              <div className="grid grid-cols-2 gap-6 text-base p-4">
-                {/* Column 1 */}
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Name</p>
-                    <p className="text-lg font-semibold text-white">
-                      {selData.customers_online_username !== null ? selData.customers_online_username : selData.fullname}
-                    </p>
+                {[...Array(Math.max(0, parseInt(group.room_count) || 0))].map((_, i) => (
+                  <div key={i} className="mt-2">
+                    <select
+                      value={selectedRooms[group.roomtype_id]?.[i] || ''}
+                      onChange={e => handleRoomSelect(group.roomtype_id, i, e.target.value)}
+                      className="
+                border rounded p-2 w-full
+                bg-white text-black
+                dark:bg-neutral-800 dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Room</option>
+                      {group.vacant_rooms?.length > 0 ? (
+                        group.vacant_rooms.map((room, rIdx) => (
+                          <option key={rIdx} value={room.roomnumber_id}>
+                            Room #{room.roomnumber_id}
+                            {room.roomfloor && ` - Floor ${room.roomfloor}`}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No available rooms</option>
+                      )}
+                    </select>
                   </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Downpayment</p>
-                    <p className="text-lg text-white">₱{selData.booking_downpayment}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Check-In</p>
-                    <p className="text-lg text-white">{formatDateTime(selData.booking_checkin_dateandtime)}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Check-Out</p>
-                    <p className="text-lg text-white">{formatDateTime(selData.booking_checkout_dateandtime)}</p>
-                  </div>
-                </div>
-
-                {/* Column 2 */}
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Status Updated At:</p>
-                    <p className="text-lg text-white">{formatDateTime(selData.updated_at)}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Reference Number</p>
-                    <p className="text-lg text-white">{selData.ref_num}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Booking Status</p>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline">
-                          {bookingStatuses[permission] || "Select status"}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56">
-                        <DropdownMenuLabel>Status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioGroup
-                          value={String(permission)}
-                          onValueChange={(val) => setPermission(Number(val))}
-                        >
-                          <DropdownMenuRadioItem value="1">Approved</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="2">Pending</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="3">Cancelled</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">Room Numbers</p>
-                    <p className="text-lg text-white">{selData.roomnumber_ids}</p>
-                  </div>
-
-                  <div>
-                    <Button onClick={() => insertBookingStatus()}>Change Permission</Button>
-                  </div>
-                </div>
+                ))}
               </div>
+            ))}
 
-            </>
-          )
-        }
+            <div className="flex justify-end gap-2 mt-4">
+              <Button onClick={approveBooking}>Confirm</Button>
+              <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
+            </div>
+          </AdminModal>
+        )}
 
-      </AdminModal>
+
+      </div>
+
 
     </>
   )
