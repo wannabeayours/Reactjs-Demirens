@@ -166,7 +166,7 @@ function RoomSearch() {
                             label="Check-in"
                             pastAllowed={false}
                             futureAllowed={true}
-                            withTime={true}
+                            withTime={false}
                             // Prefill value from localStorage if available
                             value={field.value || localStorage.getItem("checkIn") || ""}
                             onChange={field.onChange}
@@ -185,7 +185,7 @@ function RoomSearch() {
                             label="Check-out"
                             pastAllowed={false}
                             futureAllowed={true}
-                            withTime={true}
+                            withTime={false}
                             value={field.value || localStorage.getItem("checkOut") || ""}
                             onChange={field.onChange}
                           />

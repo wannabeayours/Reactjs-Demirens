@@ -103,6 +103,7 @@ function Landingpage() {
       const formData = new FormData();
       formData.append("operation", "getRooms");
       const res = await axios.post(url, formData);
+      console.log("res ni get rooms", res)
   
       // Ensure rooms is always an array
       const data = Array.isArray(res.data) ? res.data : [];
@@ -208,7 +209,7 @@ function Landingpage() {
                                   label="Check-in"
                                   pastAllowed={false}
                                   futureAllowed={true}
-                                  withTime={true}
+                                  withTime={false}
                                 />
                               </FormItem>
                             )}
@@ -224,7 +225,7 @@ function Landingpage() {
                                   label="Check-out"
                                   pastAllowed={false}
                                   futureAllowed={true}
-                                  withTime={true}
+                                  withTime={false}
                                 />
                               </FormItem>
                             )}

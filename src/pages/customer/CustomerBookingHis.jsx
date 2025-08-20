@@ -7,21 +7,22 @@ import axios from 'axios';
 import { ArchiveIcon, Eye, HistoryIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
+import { SelectedBooking } from './modals/SelectedBooking';
 
 
 function CustomerBookingHis() {
   const [history, setHistory] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
-  
+  const [selectedBookingId, setSelectedBookingId] = useState(0);
+
 
 
 
   const archivedBooking = async () => {
     try {
       const url = localStorage.getItem("url") + "customer.php";
-      const jsonData = {bookingId: selectedBookingId}
+      const jsonData = { bookingId: selectedBookingId }
       const formData = new FormData();
       formData.append("operation", "archiveBooking");
       formData.append("json", JSON.stringify(jsonData));
@@ -31,10 +32,10 @@ function CustomerBookingHis() {
         toast.success("Booking archived successfully");
         getHistory();
       }
-      else{
+      else {
         toast.error("Booking archived unsuccessful");
       }
-      
+
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -53,7 +54,13 @@ function CustomerBookingHis() {
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
-      setHistory(res.data !== 0 ? res.data : []);
+      if(res.data !== 0){
+        setHistory(res.data);
+      }
+      else{
+        setHistory([]);
+      }
+      
 
     } catch (error) {
       toast.error("Something went wrong");
@@ -78,44 +85,36 @@ function CustomerBookingHis() {
   const col = [
     { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName: "text-black" },
     { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true, headerClassName: "text-black" },
-    { header: 'Room Type', accessor: 'roomtype_name', sortable: true, headerClassName: "text-black" },
-    { header: 'Room Number', accessor: (row) => row.roomnumber_id ?? 'N/A', sortable: true, headerClassName: "text-black" },
+    { header: 'Total Payment', accessor: 'booking_total', sortable: true, headerClassName: "text-black" },
     {
       header: 'Status',
       headerClassName: "text-black",
       cell: (row) => (
         <Badge
           className={
-            row.booking_status_name === "Approved"
+            row.booking_status === "Approved"
               ? "bg-green-500"
-              : row.booking_status_name === "Cancelled"
-              ? "bg-orange-500"
-              : row.booking_status_name === "Checked-Out"
-              ? "bg-secondary text-black"
-              : "bg-red-500"
+              : row.booking_status === "Cancelled"
+                ? "bg-orange-500"
+                : row.booking_status === "Checked-Out"
+                  ? "bg-secondary text-black"
+                  : "bg-red-500"
           }
         >
-          {row.booking_status_name}
+          {row.booking_status}
         </Badge>
       )
-    
     },
     {
       header: 'Actions', headerClassName: "text-black",
       cell: (row) => (
         <div className="flex gap-4">
-          <Eye className="cursor-pointer hover:text-[#34699A]" />
+          <SelectedBooking selectedData={row} />
           <ArchiveIcon className="cursor-pointer hover:text-red-600"
             onClick={() => handleShowAlert(row)} />
         </div>
-
       )
-
     },
-
-
-
-
   ]
 
 

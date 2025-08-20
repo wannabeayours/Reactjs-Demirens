@@ -45,6 +45,11 @@ import FrontdeskWalkin from './pages/frontdesk/FrontdeskWalkin';
 import FrontdeskReservation from './pages/frontdesk/FrontdeskResvation';
 import CustomerRoomView from './pages/customer/CustomerRoomView';
 import RoomSearch from './pages/customer/RoomSearch';
+import BookingChargesMaster from './pages/frontdesk/BookingChargesMaster';
+import BookingRequestList from './pages/frontdesk/BookingListRequest';
+import BookingChargesList from './pages/frontdesk/BookingChargesList';
+import BookingCreateInvoice from './pages/frontdesk/BookingCreateInvoice';
+import BookingDisplayInvoiceSample from './pages/frontdesk/BookingDisplayInvoiceSample';
 
 function App() {
 
@@ -109,12 +114,16 @@ function App() {
             <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
 
             {/* Frontdesk */}
-            <Route path="/frontdesk/login" element={<FrontdeskLogin />} />
+            {/* <Route path="/frontdesk/login" element={<FrontdeskLogin />} />
             <Route path="/frontdesk/dashboard" element={<FrontdeskDashboard />} />
             <Route path="/frontdesk/walkin" element={<FrontdeskWalkin />} />
-            <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} />
+            <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
             {/* <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
-
+            <Route path="/BookingChargesMaster" element={<BookingChargesMaster/>} />
+          <Route path="/BookingRequestList" element={<BookingRequestList/>} />
+          <Route path="/BookingChargesList" element={<BookingChargesList />} />
+          <Route path="/BookingCreateInvoice" element={<BookingCreateInvoice />} />
+          <Route path="/BookingDisplayInvoiceSample" element={<BookingDisplayInvoiceSample />} />
             {/* Customer Route */}
             
             <Route path="/customer/about" element={<CustomerAbout />} />

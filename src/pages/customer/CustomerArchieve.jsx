@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table'
 import ShowAlert from '@/components/ui/show-alert';
@@ -5,6 +6,7 @@ import axios from 'axios';
 import { Archive, ArchiveRestore } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
+import { SelectedBooking } from './modals/SelectedBooking';
 
 function CustomerArchieve() {
   const [alertMessage, setAlertMessage] = useState("");
@@ -17,7 +19,7 @@ function CustomerArchieve() {
     try {
       const url = localStorage.getItem("url") + "customer.php";
       const customerId = localStorage.getItem("userId");
-      const jsonData = {booking_customer_id: customerId}
+      const jsonData = { booking_customer_id: customerId }
       console.log("jsonData", jsonData);
       const formData = new FormData();
       formData.append("operation", "getArchivedBookings");
@@ -26,23 +28,23 @@ function CustomerArchieve() {
       console.log("res", res);
       if (res.data !== 0) {
         setArchivedBookings(res.data);
-        
+
       }
-      else{
+      else {
         setArchivedBookings([]);
       }
-      
+
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-      
+
     }
   }
 
   const restoreBooking = async () => {
     try {
       const url = localStorage.getItem("url") + "customer.php";
-      const jsonData = {bookingId: selectedBookingId}
+      const jsonData = { bookingId: selectedBookingId }
       const formData = new FormData();
       formData.append("operation", "unarchiveBooking");
       formData.append("json", JSON.stringify(jsonData));
@@ -52,42 +54,50 @@ function CustomerArchieve() {
         toast.success("Booking restored successfully");
         getArchivedBookings();
       }
-      else{
+      else {
         toast.error("Booking restored unsuccessful");
       }
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-      
+
     }
   }
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName:"text-black" },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true , headerClassName:"text-black"},
-    { header: 'Room Type', accessor: 'roomtype_name', sortable: true , headerClassName:"text-black"},
-    { header: 'Total Amount', accessor: 'booking_totalAmount', sortable: true , headerClassName:"text-black"},
-    { header: 'Guests', accessor: 'guests_amnt', sortable: true , headerClassName:"text-black"},
-    { header: 'Room Status', accessor: 'booking_status_name', sortable: true , headerClassName:"text-black"},
-  
-
-
+    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName: "text-black" },
+    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true, headerClassName: "text-black" },
+    { header: 'Total Payment', accessor: 'booking_total', sortable: true, headerClassName: "text-black" },
     {
-      header: 'Actions', headerClassName:"text-black",
+      header: 'Status',
+      headerClassName: "text-black",
       cell: (row) => (
-        <div className="flex gap-4 ">
-
+        <Badge
+          className={
+            row.booking_status === "Approved"
+              ? "bg-green-500"
+              : row.booking_status === "Cancelled"
+                ? "bg-orange-500"
+                : row.booking_status === "Checked-Out"
+                  ? "bg-secondary text-black"
+                  : "bg-red-500"
+          }
+        >
+          {row.booking_status}
+        </Badge>
+      )
+    },
+    {
+      header: 'Actions', headerClassName: "text-black",
+      cell: (row) => (
+        <div className="flex gap-4">
+          <SelectedBooking selectedData={row} />
           <ArchiveRestore className="cursor-pointer hover:text-[#34699A] text-black"
             onClick={() => handleShowAlert(row)} />
-
         </div>
-
       )
-
     },
-
-
-
   ]
+
 
   const handleShowAlert = (data) => {
     console.log("data", data);

@@ -40,7 +40,7 @@ function Sidebar() {
   ]
 
   const bookingLinks = [
-  { path: "/admin/add-walk-in", icon: <NotebookPen className="w-4 h-4" />, label: "Add Walk In" },
+  { path: "/admin/choose-rooms", icon: <NotebookPen className="w-4 h-4" />, label: "Add Walk In" },
   { path: "/admin/online", icon: <Laptop className="w-4 h-4" />, label: "Add Online" },
 ]
 

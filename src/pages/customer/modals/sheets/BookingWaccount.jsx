@@ -116,6 +116,9 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         // Set a flag to trigger refresh in CustomerViewBookings
         localStorage.setItem('refreshBookings', Date.now().toString());
       }
+      else{
+        toast.error("Booking error");
+      }
 
 
     } catch (error) {
@@ -134,43 +137,48 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const guestNum = parseInt(localStorage.getItem('guestNumber'));
       const storedAdult = parseInt(localStorage.getItem('adult')) || 1;
       const storedChildren = parseInt(localStorage.getItem('children'));
+  
       const checkInDate = new Date(checkInStr);
       const checkOutDate = new Date(checkOutStr);
+  
+      // ✅ Normalize to midnight so we only compare dates (ignore time)
+      checkInDate.setHours(0, 0, 0, 0);
+      checkOutDate.setHours(0, 0, 0, 0);
+  
       setCheckIn(checkInDate);
       setCheckOut(checkOutDate);
-
+  
+      // ✅ Get number of nights (at least 1 night)
       const diffTime = checkOutDate.getTime() - checkInDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.max(1, diffTime / (1000 * 60 * 60 * 24));
       setNumberOfNights(diffDays);
-
+  
       setAllRooms(rooms);
-      console.log("SELECTED ROOOOOOM", selectedRoom)
+      console.log("SELECTED ROOooooooooooM", selectedRoom);
+  
       const selected = {
         roomtype_name: selectedRoom.roomtype_name,
         roomtype_price: selectedRoom.roomtype_price,
         room_type: selectedRoom.roomtype_id,
         roomtype_description: selectedRoom.roomtype_description,
-        room_capacity: selectedRoom.room_capacity, // fallback to 1 if undefined
+        room_capacity: selectedRoom.room_capacity,
       };
-
+  
       setSelectedRooms(prev => {
-        // Check if this room is already selected
         const isAlreadySelected = prev.some(room => room.room_type === selected.room_type);
         if (isAlreadySelected) {
           return prev; // Don't add duplicate
         }
         return [...prev, selected]; // Add new room
       });
-
-
-
+  
       // ✅ Clamp guest number to max_capacity
       const validGuestNum = Math.min(guestNum, selected.room_capacity);
       setGuestCounts({
         [selected.room_type]: validGuestNum
       });
-
-      // Initialize adults from localStorage or prop
+  
+      // Initialize adults
       const initialAdult = Number.isFinite(storedAdult)
         ? Math.max(0, storedAdult)
         : (typeof adultNumber === 'number' ? Math.max(0, adultNumber) : 0);
@@ -178,8 +186,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         ...prev,
         [selected.room_type]: initialAdult
       }));
-
-      // Initialize children from localStorage or prop
+  
+      // Initialize children
       const initialChildren = Number.isFinite(storedChildren)
         ? Math.max(0, storedChildren)
         : (typeof childrenNumber === 'number' ? Math.max(0, childrenNumber) : 0);
@@ -187,9 +195,9 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         ...prev,
         [selected.room_type]: initialChildren
       }));
-
     }
   }, [open, rooms, selectedRoom, adultNumber, childrenNumber]);
+  
 
   useEffect(() => {
     setGuestCounts(prev => {
@@ -309,13 +317,13 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
                   <div className="text-xs text-gray-500">Check-in</div>
                   <div className="ml-auto text-sm font-medium">
-                    {checkIn.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    {checkIn.toLocaleString(undefined, { dateStyle: 'medium'})}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
                   <div className="text-xs text-gray-500">Check-out</div>
                   <div className="ml-auto text-sm font-medium">
-                    {checkOut.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    {checkOut.toLocaleString(undefined, { dateStyle: 'medium' })}
                   </div>
                 </div>
                 {/* <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
@@ -380,13 +388,13 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                       maximumFractionDigits: 2,
                                     })}/day
                                   </h1>
-                                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div className="mt-4 grid grid-cols-2 gap-4">
                                     <div className="rounded-2xl border-none p-4">
-                                      <div className="flex items-center justify-between">
+                                      <div className="flex items-center ">
                                         <Label className="mb-2">Adults</Label>
                                         {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
                                       </div>
-                                      <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -443,11 +451,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                     </div>
 
                                     <div className="rounded-2xl border-none p-4">
-                                      <div className="flex items-center justify-between">
+                                      <div className="flex items-center">
                                         <Label className="mb-2">Children</Label>
                                         {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
                                       </div>
-                                      <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
                                         <Button
                                           type="button"
                                           variant="outline"

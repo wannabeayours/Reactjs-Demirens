@@ -87,7 +87,7 @@ const ChooseRooms = () => {
       selectedRooms,
     });
 
-    navigate('/admin/payment-method');
+    navigate('/admin/add-walk-in');
   };
 
   // Filter rooms by search term
@@ -101,7 +101,7 @@ const ChooseRooms = () => {
       <AdminHeader />
       <div className="p-6 max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-          Walk-In — Step 2: Choose Room
+          Walk-In — Step 1: Choose Room
         </h1>
 
         {/* Booking Details Inputs */}
@@ -233,7 +233,7 @@ const ChooseRooms = () => {
             onClick={handleConfirm}
             className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
           >
-            Continue to Payment
+            Continue to Customer Info
           </button>
         </div>
       </div>

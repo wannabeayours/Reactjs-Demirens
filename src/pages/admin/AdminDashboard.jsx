@@ -32,8 +32,7 @@ function AdminDashboard() {
   const APIConn = `${localStorage.url}admin.php`;
   localStorage.setItem("role", "admin");
 
-  const [resvData, setResvData] = useState([])
-
+  const [resvData, setResvData] = useState({})
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
 
@@ -44,13 +43,19 @@ function AdminDashboard() {
 
       const res = await axios.post(APIConn, formData);
       if (res.data && Array.isArray(res.data)) {
-        const monthMap = { January: 0, February: 0, March: 0, April: 0, May: 0, June: 0, July: 0, August: 0, September: 0, October: 0, November: 0, December: 0 };
+        const monthMap = {
+          January: 0, February: 0, March: 0, April: 0,
+          May: 0, June: 0, July: 0, August: 0,
+          September: 0, October: 0, November: 0, December: 0,
+        };
+
         const monthTotalMap = { ...monthMap };
-      
+
         res.data.forEach((invoice) => {
           const date = new Date(invoice.invoice_date);
           const year = date.getFullYear();
           const monthIndex = date.getMonth();
+
           if (year === yearToFilter) {
             const monthName = Object.keys(monthMap)[monthIndex];
             if (monthName) {
@@ -59,18 +64,17 @@ function AdminDashboard() {
             }
           }
         });
-      
+
         const chartReadyData = Object.entries(monthMap).map(([month, count]) => ({
           month,
           desktop: count,
           total: monthTotalMap[month],
         }));
-      
+
         setResvData(chartReadyData);
       } else {
-        setResvData([]); // Always array
+        setResvData([]);
       }
-      
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
