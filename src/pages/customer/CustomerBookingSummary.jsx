@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 
 import { Book } from 'lucide-react';
+import RequestAmenities from './modals/sheets/RequestAmenities';
 function CustomerBookingSummary() {
   const [fname, setFname] = useState();
   const [lname, setLname] = useState();
@@ -34,6 +35,16 @@ function CustomerBookingSummary() {
             <h2>Room Type: </h2>
             <h2>Check in date: </h2>
             <h2>Check out date: </h2>
+
+          </div>
+          <div >
+
+            <div className="flex justify-end">
+
+
+              <RequestAmenities />
+
+            </div>
 
           </div>
         </Card>

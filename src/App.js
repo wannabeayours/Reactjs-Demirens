@@ -50,6 +50,11 @@ import BookingRequestList from './pages/frontdesk/BookingListRequest';
 import BookingChargesList from './pages/frontdesk/BookingChargesList';
 import BookingCreateInvoice from './pages/frontdesk/BookingCreateInvoice';
 import BookingDisplayInvoiceSample from './pages/frontdesk/BookingDisplayInvoiceSample';
+import Billings from './pages/admin/Billings';
+import Invoice from './pages/admin/Invoice';
+import OnlineReqList from './pages/admin/OnlineReqList';
+import ApproveRooms from './pages/admin/Online_Folder/ApproveRooms';
+import ApprovalReceipt from './pages/admin/Online_Folder/ApprovalReceipt';
 
 function App() {
 
@@ -92,26 +97,34 @@ function App() {
 
         <div style={{ flex: 1 }}>
           <Routes>
+            {/* Admin Pages */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<Landingpage />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
-            <Route path="/admin/roomslist" element={<AdminRoomsList />} />
-            <Route path="/admin/bookinglist" element={<AdminBookingList />} />
-            <Route path="/admin/newbook" element={<AdminNewBook />} />
-            <Route path="/admin/calendar" element={<AdminCalendar />} />
-            <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
-            <Route path="/admin/payments" element={<AdminPayments />} />
-            <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
-            <Route path="/admin/reviews" element={<AdminReviews />} />
-            <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
-            <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
-            <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
-            <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
-            <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
-            <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
-            <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/" element={<Landingpage />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/profile" element={<AdminProfile />} />
+                <Route path="/admin/roomslist" element={<AdminRoomsList />} />
+                <Route path="/admin/bookinglist" element={<AdminBookingList />} />
+                <Route path="/admin/newbook" element={<AdminNewBook />} />
+                <Route path="/admin/calendar" element={<AdminCalendar />} />
+                <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
+                <Route path="/admin/payments" element={<AdminPayments />} />
+                <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
+                <Route path="/admin/reviews" element={<AdminReviews />} />
+                <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
+                <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
+                <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
+                <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
+                <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
+                <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
+                <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+                <Route path="/admin/billings" element={<Billings />} />
+                <Route path="/admin/invoice" element={<Invoice />} />
+
+                {/* Online Pages */}
+                <Route path="/admin/online" element={<OnlineReqList />} />
+                <Route path="/admin/approve/:bookingId" element={<ApproveRooms />} />
+                <Route path="/admin/receipt/:bookingId" element={<ApprovalReceipt />} />
 
             {/* Frontdesk */}
             {/* <Route path="/frontdesk/login" element={<FrontdeskLogin />} />

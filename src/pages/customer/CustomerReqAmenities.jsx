@@ -18,7 +18,7 @@ function CustomerReqAmenities() {
       </div>
       <div className="flex items-center justify-center flex-col ">
         <Card className={" px-10  w-full mt-20 bg-transparent shadow-xl "}>
-          <div >
+          {/* <div >
 
             <div className="flex justify-end">
 
@@ -27,7 +27,7 @@ function CustomerReqAmenities() {
 
             </div>
 
-          </div>
+          </div> */}
 
           <Table>
             <TableCaption>A list of your requested Amenities.</TableCaption>
