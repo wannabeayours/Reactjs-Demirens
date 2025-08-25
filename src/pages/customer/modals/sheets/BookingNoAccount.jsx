@@ -513,7 +513,9 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
                         <p className="text-sm text-muted-foreground">You will receive payment instructions after confirming your booking.</p>
                       </CardContent>
                     </Card>
+
                     <Button
+                      type="button"
                       onClick={() => {
                         // First validate the form
                         form.handleSubmit((data) => {

@@ -270,6 +270,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
   const closeConfirmModal = () => {
     setShowConfirmModal(false)
+   
   }
 
   const openConfirmModal = () => {
@@ -690,6 +691,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <ConfirmBooking
                     open={openConfirmModal}
                     onClose={closeConfirmModal}
+                    handleClearData = { handleClearData}
                     // onOpenChange={setShowConfirmModal}
                     summary={summaryInfo}
                     onConfirmBooking={customerBookingWithAccount}

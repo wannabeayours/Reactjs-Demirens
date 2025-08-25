@@ -88,6 +88,9 @@ function CustomerDashboard() {
     }
   }
   const handleClearData = () => {
+    form.reset({checkIn:"", checkOut: ""})
+    setAdultNumber (0);
+    setChildrenNumber (0);
     localStorage.removeItem("checkIn");
     localStorage.removeItem("checkOut");
     localStorage.removeItem("guestNumber");

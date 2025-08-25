@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
-function ConfirmBooking({ open, onClose, summary, onConfirmBooking }) {
+function ConfirmBooking({ open, onClose, summary, onConfirmBooking ,  handleClearData }) {
   if (!open || !summary) return null;
   const {
     rooms = [],
