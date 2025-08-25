@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Card, CardDescription, CardTitle } from '../components/ui/card';
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,10 +11,11 @@ import {
     FormLabel,
     FormControl,
     FormMessage,
-    FormDescription
 } from "@/components/ui/form"
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/layout/ThemeToggle';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 
 
@@ -26,6 +26,8 @@ function Login() {
     const [isCaptchaValid, setIsCaptchaValid] = useState(false);
     const [captchaCharacters, setCaptchaCharacters] = useState([]);
     const [userInput, setUserInput] = useState("");
+    const navigateTo = useNavigate();
+
 
     useEffect(() => {
         generateCaptchaCharacters();
@@ -60,22 +62,9 @@ function Login() {
     };
 
 
-    //     const [firstnum , setfirstnum] = useState(Math.floor(Math.random() * 90) + 1);
-    //     const [secondnum , setsecondnum] = useState(Math.floor(Math.random() * 10) + 1);
-    //     const [sum, setsum] = useState(firstnum + secondnum);
-    //     const [isCorrect, setIsCorrect] = useState(false);
-
-
-    //    const handleSetCorrect = () => {
-    //        if (firstnum + secondnum === sum) {
-    //            setIsCorrect(true);
-    //        }
-    //     };
-
-
 
     const schema = z.object({
-        email: z.string().email({ message: "Please enter a valid email" }),
+        email: z.string().min(1,{ message: "Please enter username" }),
         password: z.string().min(1, { message: "Password is required" }),
         // captcha: z.string().min(1, { message: "Captcha is required" })
         //     .refine((val) => parseInt(val) === sum, { message: "Incorrect Captcha" })
@@ -86,162 +75,171 @@ function Login() {
         defaultValues: {
             email: "",
             password: "",
-            // captcha: ""
+            // captcha: "" 
         }
     })
 
-    const onSubmit = (values) => {
-        console.log("Login values:", values)
+    const onSubmit = async (values) => {
+        try {
+            const url = localStorage.getItem('url') + "customer.php";
+            const jsonData = { username: values.email, password: values.password };
+            const formData = new FormData();
+            formData.append("operation", "login");
+            formData.append("json", JSON.stringify(jsonData));
+            const res = await axios.post(url, formData);
+            console.log("res", res);
+
+            if (res.data !== 0) {
+                toast.success("Successfully log in");
+                localStorage.setItem("userId", res.data.customers_id);
+                localStorage.setItem("customerOnlineId", res.data.customers_online_id);
+                setTimeout(() => {
+                    navigateTo("/customer");
+                }, 1500);
+            }
+            else {
+                toast.error("Invalid username or password");
+            }
+
+        } catch (error) {
+            toast.error("Network error");
+            console.log(error);
+
+
+        }
     }
 
 
     return (
         <>
-            <div className="flex items-end justify-end">
-                <ThemeToggle />
-            </div>
-            <div className=" h-screen grid grid-cols-1 md:grid-cols-2  ">
-                {/* Left Side - Image */}
-                <div className="bg-cover bg-center flex justify-center items-center w-full h-full ">
-                    <div className="lg:block hidden ml-32">
-                        <img
-                            src="./assets/images/demsdems.png"
-                            alt="logo ko to"
-                            className="w-full max-w-[600px] h-auto object-contain"
-                        />
-                    </div>
-                </div>
-                {/* Right Side - Form */}
-                <div className="flex justify-start items-center p-8   ">
-                    <Card className="w-full max-w-md p-2 bg-[#769FCD]">
-                        <Card className="w-full max-w-md p-6 ">
-                            <div className="flex flex-col justify-center items-center">
-                            <CardTitle className="text-2xl font-bold text-[#769FCD]">DEMIREN HOTEL</CardTitle>
-                            <CardDescription className=" text-muted-foreground">
-                                Login to your account
-                            </CardDescription>
-                            </div>
-                       
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Email or Username</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="you@example.com" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem >
-                                                <div className="flex justify-between items-center">
-                                                    <FormLabel>Password</FormLabel>
-                                                    <Button variant="link">Forgot Password?</Button>
-                                                </div>
+            <div className="h-screen flex justify-center items-center px-4">
+                <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 h-full">
 
-                                                <FormControl>
-                                                    <Input type="password" placeholder="Enter Password" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="text-center">
-                                        <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
-                                        <div className="flex justify-center items-center gap-3">
-                                            {captchaCharacters.map((c, index) => (
-                                                <span key={index} style={{ color: c.color, fontSize: "24px", fontWeight: "bold" }}>
-                                                    {c.char}
-                                                </span>
-                                            ))}
-                                        </div>
+                        {/* Left side - Blue */}
+           
 
-                                        <Input
-                                            type="text"
-                                            value={userInput}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter CAPTCHA characters"
-                                            className="border p-2 w-full rounded mt-3 text-center"
+                        {/* Right side - Form */}
+                        <div className="flex justify-center items-center p-8">
+                            <div className="w-full max-w-md">
+                                {/* Title */}
+                                <h2 className="text-3xl md:text-4xl font-bold text-[#769FCD] font-playfair text-center">
+                                    DEMIREN HOTEL
+                                </h2>
+                                <p className="text-muted-foreground text-lg text-center mb-6">
+                                    Login to your account
+                                </p>
+
+                                {/* Form */}
+                                <Form {...form}>
+                                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                        {/* Email */}
+                                        <FormField
+                                            control={form.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Username</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter username" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
 
-                                        <div className="flex justify-center mt-2">
-                                            <Button
-                                                type="button"
-                                                variant="link"
-                                                onClick={generateCaptchaCharacters}
-                                                className="text-blue-500 text-sm underline"
-                                            >
-                                                Refresh CAPTCHA
-                                            </Button>
+                                        {/* Password */}
+                                        <FormField
+                                            control={form.control}
+                                            name="password"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <div className="flex justify-between items-center">
+                                                        <FormLabel>Password</FormLabel>
+
+                                                    </div>
+                                                    <FormControl>
+                                                        <Input type="password" placeholder="Enter Password" {...field} />
+                                                    </FormControl>
+                                                    <div className="flex justify-end">
+                                                        <Button variant="link" >Forgot Password?</Button>
+                                                    </div>
+
+                                                    <FormMessage />
+
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {/* Captcha */}
+                                        <div className="text-center">
+                                            <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
+                                            <div className="flex justify-center items-center gap-3">
+                                                {captchaCharacters.map((c, index) => (
+                                                    <span
+                                                        key={index}
+                                                        style={{ color: c.color, fontSize: "28px", fontWeight: "bold" }}
+                                                    >
+                                                        {c.char}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <Input
+                                                type="text"
+                                                value={userInput}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter CAPTCHA characters"
+                                                className="border p-2 w-full rounded mt-3 text-center"
+                                            />
+
+                                            <div className="flex justify-center mt-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="link"
+                                                    onClick={generateCaptchaCharacters}
+                                                    className="text-blue-500 text-sm underline"
+                                                >
+                                                    Refresh CAPTCHA
+                                                </Button>
+                                            </div>
+
+                                            {!isCaptchaValid && userInput.length > 0 && (
+                                                <p className="text-red-500 text-sm mt-1">
+                                                    Incorrect CAPTCHA, try again.
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {!isCaptchaValid && userInput.length > 0 && (
-                                            <p className="text-red-500 text-sm mt-1">Incorrect CAPTCHA, try again.</p>
+                                        {/* Login button */}
+                                        {isCaptchaValid && (
+                                            <Button className="w-full mt-4 text-lg py-6">Login</Button>
                                         )}
-                                    </div>
 
-                                    {/* Show login button only if CAPTCHA is solved */}
-                                    {isCaptchaValid && (
-                                        <Button className="w-full mt-4 ">
-                                            Login
-                                        </Button>
-                                    )}
-
-
-                                    {/* <div className="text-center">
-                                <h3>{`${firstnum} + ${secondnum} = ?`}</h3>
+                                        {/* Sign up link */}
+                                        <div className="text-center">
+                                            <p className="text-sm text-muted-foreground">
+                                                Don't have an account?{" "}
+                                                <Link to="/register" className="text-primary underline">
+                                                    Sign Up
+                                                </Link>
+                                            </p>
+                                        </div>
+                                    </form>
+                                </Form>
                             </div>
-
-                            <FormField
-                                control={form.control}
-                                name="captcha"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Input type="text" placeholder="Enter CAPTCHA" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            /> */}
-
-                                    {/* 
-                            <Button type="submit" className="w-full">
-                                Login
-                            </Button> */}
-                                    <div className="text-center">
-                                        <p className="text-sm text-muted-foreground">
-                                            Don't have an account?{" "}
-                                            <Link to="/register" className="text-primary underline">
-                                                Sign Up
-                                            </Link>
-                                        </p>
-                                    </div>
-
-                                </form>
-                            </Form>
-                        </Card>
-                    </Card>
-
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
+
         </>
     )
 }
-//ipa explain sa ni chatgpt or unsa ba kani na kuan
-// then registeration na dayn ka
-//after ana font
-//og ipa hawa sa ang header dayun sa ani na page
-//wowowowowowwow
+
 
 
 export default Login

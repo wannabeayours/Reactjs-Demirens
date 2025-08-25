@@ -58,8 +58,8 @@ function App() {
       localStorage.setItem("url", "http://localhost/demirenAPI/");
     }
 
-    localStorage.setItem("userId", 2);
-    localStorage.setItem("customerOnlineId", 1);
+    // localStorage.setItem("userId", 2);
+    // localStorage.setItem("customerOnlineId", 1);
     
   }, []);
 
