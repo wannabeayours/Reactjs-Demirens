@@ -96,7 +96,7 @@ function Landingpage() {
 
     },
   })
-  
+
   const getRooms = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
@@ -104,7 +104,7 @@ function Landingpage() {
       formData.append("operation", "getRooms");
       const res = await axios.post(url, formData);
       console.log("res ni get rooms", res)
-  
+
       // Ensure rooms is always an array
       const data = Array.isArray(res.data) ? res.data : [];
       setRooms(data);
@@ -114,7 +114,7 @@ function Landingpage() {
       setRooms([]); // fallback
     }
   }
-  
+
 
   const handleClearData = () => {
     localStorage.removeItem("checkIn");
@@ -135,7 +135,7 @@ function Landingpage() {
     console.log("mga data sa pag search", data);
     getRooms(data);
     setIsSearched(true);
-    navigateTo("/customer/roomsearch"); 
+    navigateTo("/customer/roomsearch");
   }
 
   const onContactSubmit = async (data) => {
@@ -354,9 +354,8 @@ function Landingpage() {
                     </Button>
                   </div>
 
-                  <ScrollArea className="w-full overflow-x-auto ">
-
-                    <div ref={scroll} className="flex flex-nowrap space-x-6 px-4 py-6">
+                  <ScrollArea className="w-full overflow-x-auto">
+                    <div ref={scroll} className="flex flex-nowrap space-x-4 px-4 py-6">
                       {rooms.filter((room) => room.status_id === 3).length === 0 ? (
                         <p>No rooms available</p>
                       ) : (
@@ -365,43 +364,32 @@ function Landingpage() {
                           .map((room, index) => (
                             <Card
                               key={index}
-                              className="w-[24rem] flex-shrink-0 gap-10  flex-1 bg-[#F0F0FF] rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300 h-[600px]"
+                              className="flex-shrink-0 w-1/6 bg-[#F0F0FF] rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out h-[600px] hover:scale-105"
                             >
-
                               {/* Image Section */}
-                              <div className="h-[30vh] w-full overflow-hidden ">
+                              <div className="h-[30vh] w-full overflow-hidden">
                                 <img src={room.image_url} alt="Room" className="w-full h-full object-cover" />
-
                               </div>
 
                               {/* Info Section */}
                               <div className="flex flex-col p-4 flex-1">
-                                <h5 className="text-4xl font-semibold mb-2">{room.roomtype_name}</h5>
-                                <Button
-                                  variant="link"
-                                  className="w-full justify-start"
-                                  onClick={() => handleNextPage(room)}
-                                >
-                                  View Room →
-                                </Button>
+                                <h5 className="text-2xl font-semibold mb-2">{room.roomtype_name}</h5>
                                 <p
                                   className="text-sm text-gray-600 mb-4 overflow-hidden"
                                   style={{
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3, // bilang sa lines na ipakita
-                                    WebkitBoxOrient: 'vertical',
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: "vertical",
                                   }}
                                 >
                                   {room.roomtype_description}
                                 </p>
+
                                 <div className="flex items-center justify-between mb-4">
-                                  {/* Price + Moon icon */}
                                   <h2 className="text-xl font-bold text-blue-600 flex items-center gap-1">
-                                    ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/night
+                                    ₱ {Number(room.roomtype_price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/night
                                     <Moon size={20} />
                                   </h2>
-
-                                  {/* Room Details in Badge Row */}
                                   <div className="flex gap-2">
                                     <Badge className="bg-transparent border-blue-500 text-blue-500">{room.room_sizes}</Badge>
                                     <Badge className="bg-transparent border-blue-500 text-blue-500">
@@ -415,25 +403,24 @@ function Landingpage() {
                                   </div>
                                 </div>
 
-
-
                                 <div className="mt-auto">
                                   <Button
-                                    className="w-auto px-4 py-2 text-sm"
-                                    disabled={room.status_id !== 3}
+                                    variant="link"
+                                    className="w-full justify-start"
+                                    onClick={() => handleNextPage(room)}
                                   >
-                                    Book Now
+                                    View Room →
                                   </Button>
                                 </div>
                               </div>
-
-
                             </Card>
                           ))
                       )}
                     </div>
                     <ScrollBar orientation="horizontal" />
                   </ScrollArea>
+
+
                 </div>
               </div>
             </section>

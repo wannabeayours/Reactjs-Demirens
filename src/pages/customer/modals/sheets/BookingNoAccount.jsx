@@ -118,6 +118,7 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
       }
     }
   }
+  
   useEffect(() => {
     if (!open) return
     const checkInStr = localStorage.getItem('checkIn')

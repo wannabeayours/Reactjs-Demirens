@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { BedDoubleIcon, MinusIcon, Moon, Plus, User } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
@@ -61,7 +61,11 @@ function RoomSearch() {
     return stored ? Number(stored) : 0;
   });
   const [rooms, setRooms] = useState([]);
-  const [isSearched, setIsSearched] = useState(false);
+  const [isSearched, setIsSearched] = useState(true);
+
+
+
+
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -71,24 +75,19 @@ function RoomSearch() {
     },
   })
 
-  // Update form values when localStorage changes
-  useEffect(() => {
-    const checkIn = localStorage.getItem("checkIn");
-    const checkOut = localStorage.getItem("checkOut");
 
-    if (checkIn) form.setValue("checkIn", checkIn);
-    if (checkOut) form.setValue("checkOut", checkOut);
-  }, [form]);
 
-  const getRooms = async (data) => {
+  const getRooms = useCallback(async (data) => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
       const finalAdultNumber = adultNumber < 1 ? 1 : adultNumber;
+      console.log("data", data)
       const jsonData = {
         "checkIn": data.checkIn,
         "checkOut": data.checkOut,
         "guestNumber": Number(finalAdultNumber) + Number(childrenNumber)
       }
+      console.log("jsonData", jsonData)
       const formData = new FormData();
       formData.append("operation", "getAvailableRoomsWithGuests");
       formData.append("json", JSON.stringify(jsonData));
@@ -100,7 +99,8 @@ function RoomSearch() {
       console.error(error);
 
     }
-  }
+  }, [adultNumber, childrenNumber])
+
 
 
   const handleClearData = () => {
@@ -131,6 +131,25 @@ function RoomSearch() {
     getRooms(data);
     setIsSearched(true);
   }
+
+  // Update form values when localStorage changes
+  useEffect(() => {
+    const checkIn = localStorage.getItem("checkIn");
+    const checkOut = localStorage.getItem("checkOut");
+    getRooms({
+      checkIn: checkIn,
+      checkOut: checkOut
+
+    })
+    if (checkIn) form.setValue("checkIn", checkIn);
+    if (checkOut) form.setValue("checkOut", checkOut);
+  }, [form, getRooms]);
+
+
+
+
+
+
 
 
 
@@ -247,7 +266,7 @@ function RoomSearch() {
                       </div>
                     </div>
                     <div className="flex items-end ">
-                      <Button className="w-full  ">Search</Button>
+                      <Button className="w-full  " type="submit">Search</Button>
                     </div>
                   </div>
                   {/* 

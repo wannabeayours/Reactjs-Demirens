@@ -10,6 +10,9 @@ function CustomerRoomView() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0);
+    
     const stored = sessionStorage.getItem('viewRoomDetails');
     if (stored) {
       setRoom(JSON.parse(stored));
@@ -200,8 +203,8 @@ function CustomerRoomView() {
         </div>
 
         <div className="mt-10 mb-10 w-[71%]  flex justify-start">
-          <Button className="px-8 py-4 text-lg rounded-xl">
-            BOOK
+          <Button className="px-8 py-4 text-lg rounded-md">
+            BACK
           </Button>
         </div>
 

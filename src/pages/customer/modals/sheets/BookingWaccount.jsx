@@ -32,29 +32,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
 
 
-  // Initialize Adults/Children from localStorage on mount so values show immediately
-  useEffect(() => {
-    const initAdult = parseInt(localStorage.getItem('adult'));
-    const initChildren = parseInt(localStorage.getItem('children'));
-    if (Number.isFinite(initAdult)) {
-      setAdultCounts(prev => ({ ...prev, default: Math.max(0, initAdult) }));
-    }
-    if (Number.isFinite(initChildren)) {
-      setChildrenCounts(prev => ({ ...prev, default: Math.max(0, initChildren) }));
-    }
-  }, []);
 
-  // Initialize Adults/Children from localStorage so values show immediately on first open
-  useEffect(() => {
-    const storedAdult = parseInt(localStorage.getItem('adult'));
-    const storedChildren = parseInt(localStorage.getItem('children'));
-    if (Number.isFinite(storedAdult)) {
-      setAdultCounts(prev => ({ ...prev, default: Math.max(0, storedAdult) }));
-    }
-    if (Number.isFinite(storedChildren)) {
-      setChildrenCounts(prev => ({ ...prev, default: Math.max(0, storedChildren) }));
-    }
-  }, []);
 
   const customerBookingWithAccount = async () => {
     try {
@@ -83,7 +61,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         const childrenCount = childrenCounts[room.room_type] || 0;
         console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}`)
         return {
-          roomTypeId: room.room_type, 
+          roomTypeId: room.room_type,
           guestCount: adultCount + childrenCount,
           adultCount: adultCount,
           childrenCount: childrenCount,
@@ -116,7 +94,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         // Set a flag to trigger refresh in CustomerViewBookings
         localStorage.setItem('refreshBookings', Date.now().toString());
       }
-      else{
+      else {
         toast.error("Booking error");
       }
 
@@ -137,25 +115,25 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const guestNum = parseInt(localStorage.getItem('guestNumber'));
       const storedAdult = parseInt(localStorage.getItem('adult')) || 1;
       const storedChildren = parseInt(localStorage.getItem('children'));
-  
+
       const checkInDate = new Date(checkInStr);
       const checkOutDate = new Date(checkOutStr);
-  
+
       // ✅ Normalize to midnight so we only compare dates (ignore time)
       checkInDate.setHours(0, 0, 0, 0);
       checkOutDate.setHours(0, 0, 0, 0);
-  
+
       setCheckIn(checkInDate);
       setCheckOut(checkOutDate);
-  
+
       // ✅ Get number of nights (at least 1 night)
       const diffTime = checkOutDate.getTime() - checkInDate.getTime();
       const diffDays = Math.max(1, diffTime / (1000 * 60 * 60 * 24));
       setNumberOfNights(diffDays);
-  
+
       setAllRooms(rooms);
       console.log("SELECTED ROOooooooooooM", selectedRoom);
-  
+
       const selected = {
         roomtype_name: selectedRoom.roomtype_name,
         roomtype_price: selectedRoom.roomtype_price,
@@ -163,7 +141,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         roomtype_description: selectedRoom.roomtype_description,
         room_capacity: selectedRoom.room_capacity,
       };
-  
+
       setSelectedRooms(prev => {
         const isAlreadySelected = prev.some(room => room.room_type === selected.room_type);
         if (isAlreadySelected) {
@@ -171,13 +149,13 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         }
         return [...prev, selected]; // Add new room
       });
-  
+
       // ✅ Clamp guest number to max_capacity
       const validGuestNum = Math.min(guestNum, selected.room_capacity);
       setGuestCounts({
         [selected.room_type]: validGuestNum
       });
-  
+
       // Initialize adults
       const initialAdult = Number.isFinite(storedAdult)
         ? Math.max(0, storedAdult)
@@ -186,18 +164,15 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         ...prev,
         [selected.room_type]: initialAdult
       }));
-  
-      // Initialize children
-      const initialChildren = Number.isFinite(storedChildren)
-        ? Math.max(0, storedChildren)
-        : (typeof childrenNumber === 'number' ? Math.max(0, childrenNumber) : 0);
-      setChildrenCounts(prev => ({
-        ...prev,
-        [selected.room_type]: initialChildren
-      }));
+
+      const initAdults = adultNumber || parseInt(storedAdult) || 1
+      const initChildren = childrenNumber || parseInt(storedChildren) || 0
+      setAdultCounts(initAdults)
+      setChildrenCounts(initChildren)
+
     }
   }, [open, rooms, selectedRoom, adultNumber, childrenNumber]);
-  
+
 
   useEffect(() => {
     setGuestCounts(prev => {
@@ -242,21 +217,21 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     });
   }, [selectedRooms]);
 
-  // Keep localStorage in sync when adults change
-  useEffect(() => {
-    const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
-    localStorage.setItem('adult', String(totalAdults));
-    const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
-    localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
-  }, [adultCounts]);
+  // // Keep localStorage in sync when adults change
+  // useEffect(() => {
+  //   const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
+  //   localStorage.setItem('adult', String(totalAdults));
+  //   const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
+  //   localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
+  // }, [adultCounts]);
 
-  // Keep localStorage in sync when children change
-  useEffect(() => {
-    const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
-    localStorage.setItem('children', String(totalChildren));
-    const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
-    localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
-  }, [childrenCounts]);
+  // // Keep localStorage in sync when children change
+  // useEffect(() => {
+  //   const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
+  //   localStorage.setItem('children', String(totalChildren));
+  //   const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
+  //   localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
+  // }, [childrenCounts]);
 
 
 
@@ -317,7 +292,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
                   <div className="text-xs text-gray-500">Check-in</div>
                   <div className="ml-auto text-sm font-medium">
-                    {checkIn.toLocaleString(undefined, { dateStyle: 'medium'})}
+                    {checkIn.toLocaleString(undefined, { dateStyle: 'medium' })}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">

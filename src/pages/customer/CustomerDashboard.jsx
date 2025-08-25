@@ -97,11 +97,14 @@ function CustomerDashboard() {
   }
 
   const onSubmit = async (data) => {
+    // Ensure at least 1 adult is always set
+    const finalAdultNumber = adultNumber < 1 ? 1 : adultNumber;
+
     localStorage.setItem("checkIn", data.checkIn);
     localStorage.setItem("checkOut", data.checkOut);
-    localStorage.setItem("adult", adultNumber);
     localStorage.setItem("children", childrenNumber);
-    localStorage.setItem("guestNumber", Number(adultNumber) + Number(childrenNumber));
+    localStorage.setItem("adult", finalAdultNumber);
+    localStorage.setItem("guestNumber", Number(finalAdultNumber) + Number(childrenNumber));
     console.log("mga data sa pag search", data);
     getRooms(data);
     setIsSearched(true);
