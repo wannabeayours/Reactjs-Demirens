@@ -1,20 +1,52 @@
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import React, { useEffect } from 'react'
 import { useState } from 'react'
-
-
 import { Book } from 'lucide-react';
 import RequestAmenities from './modals/sheets/RequestAmenities';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import ViewBookingSummary from './modals/sheets/ViewBookingSummary';
+
+
 function CustomerBookingSummary() {
-  const [fname, setFname] = useState();
-  const [lname, setLname] = useState();
+  const [fname, setFname] = useState("");
+  const [lname, setLname] = useState("");
+  const [data, setData] = useState([]);
+
+
   useEffect(() => {
     const fname = localStorage.getItem("fname");
     const lname = localStorage.getItem("lname");
-    setFname(fname || "WOW");
-    setLname(lname || "WOW");
+    setFname(fname);
+    setLname(lname);
   }, []);
+
+
+  const getBookingSummary = async () => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const CustomerId = localStorage.getItem("userId");
+      const jsonData = { booking_customer_id: CustomerId };
+      const formData = new FormData();
+      formData.append("operation", "getBookingSummary");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      setData(res.data);
+      console.log("res ni booking summary", res);
+    } catch (error) {
+      toast.error("Network Error");
+      console.log(error);
+
+    }
+  }
+
+  useEffect(() => {
+    getBookingSummary();
+  }, [])
+
 
 
 
@@ -28,52 +60,39 @@ function CustomerBookingSummary() {
           Booking Summary of {fname} {lname}
         </h1>
       </div>
-      <div className="flex items-center justify-center flex-col ">
-        <Card className={"px-10 mt-20 w-full md:w-1/2  shadow-xl"}>
-          <div className="text-black p-2">
-            <h1 className="text-lg font-semibold ">Booking Information</h1>
-            <h2>Room Type: </h2>
-            <h2>Check in date: </h2>
-            <h2>Check out date: </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+        {data.map((element, index) => (
+          <div key={index}>
+            <Card>
+              <CardContent>
+                <CardTitle className="text-2xl">Booking #{index + 1}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <Label>Check in :</Label>
+                  {element.booking_checkin_dateandtime}
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Check out :</Label>
+                  {element.booking_checkout_dateandtime}
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Guests :</Label>
+                  {element.guests_amnt}
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Booking Total Amount :</Label>
+                  ₱{element.booking_totalAmount}
+                </div>
+
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <ViewBookingSummary bookingData = {element}/>
+              </CardFooter>
+            </Card>
 
           </div>
-          <div >
-
-            <div className="flex justify-end">
+        ))}
 
 
-              <RequestAmenities />
-
-            </div>
-
-          </div>
-        </Card>
-        <Card className={"px-10 mt-6 w-full md:w-1/2 bg-transparent border-none "}>
-
-          <div className="text-black" >
-            <h1 className="text-lg font-semibold ">Charges:</h1>
-            <Table  >
-              <TableCaption>Your Current Bill.</TableCaption>
-              <TableHeader >
-                <TableRow>
-                  <TableHead className="text-black" >Date</TableHead>
-                  <TableHead className="text-black" >Room Type</TableHead>
-                  <TableHead className="w-[250px] text-black" >Description</TableHead>
-                  <TableHead className="text-black">Quantity</TableHead>
-                  <TableHead className="text-black">Price</TableHead>
-                  <TableHead className="text-black">Subtotal</TableHead>
-
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-
-                </TableRow>
-              </TableBody>
-            </Table>
-
-          </div>
-        </Card>
       </div>
 
     </div>

@@ -37,7 +37,7 @@ data table how to use-----------------------------------------------------------
   // Define columns
   const columns = [
     { header: 'ID', accessor: 'user_id', sortable: true },
-    { header: 'Name', accessor: 'user_name', className: (row) => row.user_name === "Kobid and Milo" ? "bg-red-500" : "" },
+    { header: 'Name', accessor: 'user_name', className: (row) => row.user_name === "Kobid and Milo and chan2x tiger zarah b1 happy bolantoy julia b2 ranger moddy ming2ultramax" ? "bg-red-500" : "" },
     { header: 'Age', accessor: 'user_age'},
     { header: 'Email', accessor: 'user_email', hiddenOnMobile: true},
     { 
