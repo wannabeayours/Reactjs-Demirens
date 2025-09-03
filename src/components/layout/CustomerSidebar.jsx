@@ -20,9 +20,11 @@ import {
   User
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
   const [open, setOpen] = useState(false);
+  const navigateTo = useNavigate();
 
   const SidebarLink = ({ icon, label, index }) => {
     const isActive = activeIndex === index;
@@ -55,6 +57,11 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
     { label: 'Archive', icon: <Archive className="w-4 h-4" /> },
   ];
 
+  const handleLogout = () => {
+    navigateTo("/");
+    localStorage.clear();
+  }
+
   const SidebarContent = () => (
     <div className="flex flex-col justify-between h-full bg-[#34699A] text-white w-64">
       <div>
@@ -78,7 +85,7 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
         <Button
           variant="destructive"
           className="w-full justify-start text-white"
-          onClick={() => console.log('Logout')}
+          onClick={handleLogout}
         >
           <LogOutIcon className="w-4 h-4 mr-2" />
           Logout
