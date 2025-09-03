@@ -25,6 +25,7 @@ const AddWalkIn = () => {
 
       try {
         const res = await axios.post(APIConn, reqNationals);
+        // expects [{nationality_id, nationality_name}]
         if (Array.isArray(res.data)) {
           setNationalities(res.data);
         } else {
@@ -46,6 +47,7 @@ const AddWalkIn = () => {
   const validateCustomerInfo = () => {
     const nextErrors = {};
 
+    // Match DB fields from tbl_booking and tbl_customers
     if (!walkInData.customers_fname || !walkInData.customers_fname.trim()) {
       nextErrors.customers_fname = "First name is required";
     }
@@ -91,7 +93,6 @@ const AddWalkIn = () => {
           <CardHeader>
             <CardTitle className="text-xl font-semibold">
               Walk-In — Step 2: Customer Information
-
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

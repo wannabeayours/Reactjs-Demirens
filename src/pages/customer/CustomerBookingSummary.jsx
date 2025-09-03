@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import React, { useEffect } from 'react'
 import { useState } from 'react'
-import { Book } from 'lucide-react';
+import { Book, SmileIcon } from 'lucide-react';
 import RequestAmenities from './modals/sheets/RequestAmenities';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -61,36 +61,43 @@ function CustomerBookingSummary() {
         </h1>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-        {data.map((element, index) => (
-          <div key={index}>
-            <Card>
-              <CardContent>
-                <CardTitle className="text-2xl">Booking #{index + 1}</CardTitle>
-                <div className="flex items-center justify-between">
-                  <Label>Check in :</Label>
-                  {element.booking_checkin_dateandtime}
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Check out :</Label>
-                  {element.booking_checkout_dateandtime}
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Guests :</Label>
-                  {element.guests_amnt}
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Booking Total Amount :</Label>
-                  ₱{element.booking_totalAmount}
-                </div>
+        {data.length === 0 ? (
+         <div className="col-span-full flex flex-row items-center justify-center text-center h-96 gap-2">
+         <SmileIcon className="w-10 h-10" />
+         <strong>No booking summary available</strong>
+       </div>
+        ) : (
+          data.map((element, index) => (
+            <div key={index}>
+              <Card>
+                <CardContent>
+                  <CardTitle className="text-2xl">Booking #{index + 1}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <Label>Check in :</Label>
+                    {element.booking_checkin_dateandtime}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Check out :</Label>
+                    {element.booking_checkout_dateandtime}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Guests :</Label>
+                    {element.guests_amnt}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Booking Total Amount :</Label>
+                    ₱{element.booking_totalAmount}
+                  </div>
 
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <ViewBookingSummary bookingData = {element}/>
-              </CardFooter>
-            </Card>
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                  <ViewBookingSummary bookingData = {element}/>
+                </CardFooter>
+              </Card>
 
-          </div>
-        ))}
+            </div>
+          ))
+        )}
 
 
       </div>

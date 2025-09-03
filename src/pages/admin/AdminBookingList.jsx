@@ -217,7 +217,6 @@ function AdminBookingList() {
                         <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Customer</TableHead>
                         <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Check-in</TableHead>
                         <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Check-out</TableHead>
-                        <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Room Types</TableHead>
                         <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Room Numbers</TableHead>
                         <TableHead className="font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Status</TableHead>
                       </TableRow>
@@ -236,9 +235,6 @@ function AdminBookingList() {
                           </TableCell>
                           <TableCell className="text-gray-700 dark:text-gray-300">
                             {b.booking_checkout_dateandtime}
-                          </TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">
-                            {renderOrPending(b.room_types)}
                           </TableCell>
                           <TableCell className="text-gray-700 dark:text-gray-300">
                             {renderOrPending(b.room_numbers)}

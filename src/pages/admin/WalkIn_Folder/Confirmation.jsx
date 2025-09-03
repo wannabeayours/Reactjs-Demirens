@@ -57,10 +57,11 @@ export default function Confirmation() {
     formData.append('method', 'finalizeBooking');
     formData.append('json', JSON.stringify(cleanedData));
 
+    console.log('FormData to be sent:', formData);
     try {
       const res = await axios.post(APIConn, formData);
       alert('Booking confirmed!');
-      navigate('/admin/add-walk-in');
+      navigate('/admin/choose-rooms');
     } catch (err) {
       console.error('Error confirming booking:', err);
       alert('Failed to confirm booking. Please try again.');

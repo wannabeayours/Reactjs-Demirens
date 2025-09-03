@@ -270,7 +270,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
   const closeConfirmModal = () => {
     setShowConfirmModal(false)
-   
+
   }
 
   const openConfirmModal = () => {
@@ -589,6 +589,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
               <div className="space-y-8 md:sticky md:top-4 h-fit">
 
+
                 <Card className="bg-white shadow-xl rounded-2xl">
                   <CardContent className="space-y-3 text-black">
                     <div className="flex justify-between items-center">
@@ -597,25 +598,34 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                         {selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''} Selected
                       </div>
                     </div>
-                    {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
-                      <div key={index}>
-                        <div >
-                          <div className="flex flex-row justify-between items-center  py-2">
-                            <h2 className="font-medium text-xl"> Room Type: {room.roomtype_name}</h2>
-                            <p className="font-semibold text-xl">
-                              {`${numberOfNights} Day(s) x ₱${room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            </p>
-                          </div>
-                          <p className="text-md text-right">
-                            = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
+                    <Card className="shadow-lg">
+
+                      <CardContent className="px-3 border-none">
+                        <ScrollArea className="h-48 rounded-md border-none p-2">
+                          {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
+                            <div key={index}>
+                              <div >
+                                <div className="flex flex-row justify-between items-center  py-2">
+                                  <h2 className="font-medium text-lg">{room.roomtype_name}</h2>
+                                  <p className="font-semibold text-xl">
+                                    {`${numberOfNights} Day(s) x ₱${room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                  </p>
+                                </div>
+                                <p className="text-md font-semibold text-right text-[#113F67]">
+                                  = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                              </div>
 
 
 
-                        <Separator className="w-full mt-4" />
-                      </div>
-                    ))}
+
+                            </div>
+
+                          ))}
+                        </ScrollArea>
+                      </CardContent>
+
+                    </Card>
                     {(() => {
                       const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
                       const vat = subtotal - (subtotal / 1.12);
@@ -625,7 +635,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                         <>
 
                           <div className="flex justify-between items-center py-2 ">
-                            <span className="font-medium">VAT (12%) included</span>
+                            <span className="font-medium">VAT (12%) included:</span>
                             <span>₱ {vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="flex justify-between items-center py-2">
@@ -691,7 +701,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <ConfirmBooking
                     open={openConfirmModal}
                     onClose={closeConfirmModal}
-                    handleClearData = { handleClearData}
+                    handleClearData={handleClearData}
                     // onOpenChange={setShowConfirmModal}
                     summary={summaryInfo}
                     onConfirmBooking={customerBookingWithAccount}

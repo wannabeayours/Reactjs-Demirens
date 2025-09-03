@@ -12,7 +12,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react"; // Add ChevronDown import
 
 const currency = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
@@ -118,10 +118,25 @@ export default function ApproveRooms() {
     navigate(`/admin/receipt/${bookingId}`);
   };
 
+  // Floating scroll-to-bottom handler
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
+
   return (
     <>
       <AdminHeader />
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-6xl mx-auto relative">
+        {/* Floating Button */}
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          className="fixed bottom-8 right-8 z-50 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center transition"
+          aria-label="Scroll to bottom"
+        >
+          <ChevronDown size={28} />
+        </button>
+
         <h1 className="text-2xl font-bold mb-2 text-foreground">
           Approve Booking #{bookingId} — Step 1: Choose Available Rooms
         </h1>

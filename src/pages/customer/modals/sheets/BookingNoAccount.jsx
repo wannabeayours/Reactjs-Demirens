@@ -118,7 +118,7 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
       }
     }
   }
-  
+
   useEffect(() => {
     if (!open) return
     const checkInStr = localStorage.getItem('checkIn')
@@ -186,27 +186,218 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
           <Button>Book Now</Button>
         </SheetTrigger>
         <SheetContent side="bottom" className="p-6 border-none rounded-t-3xl bg-white">
-          <ScrollArea className="h-[100vh] md:h-[calc(100vh-300px)]">
+
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+
+            <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
+              <div className="text-xs text-gray-500">Check-in</div>
+              <div className="ml-auto text-sm font-medium">
+                {checkIn.toLocaleString(undefined, { dateStyle: 'medium' })}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
+              <div className="text-xs text-gray-500">Check-out</div>
+              <div className="ml-auto text-sm font-medium">
+                {checkOut.toLocaleString(undefined, { dateStyle: 'medium' })}
+              </div>
+            </div>
+
+           
+
+              <Card className="bg-white shadow-xl">
+                <CardContent>
+                  <div className="flex items-center justify-between ">
+                    <h2 className="text-lg font-semibold">Selected Room</h2>
+                    <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
+                  </div>
+                  <ScrollArea className="h-[calc(100vh-320px)]">
+                    <div >
+                      {selectedRooms.length > 0 ? (
+                        <>
+                          {selectedRooms.map((room, index) => (
+                            <div key={index}>
+                              <div className="flex justify-end">
+                                <Trash2 className="cursor-pointer text-red-500"
+                                  onClick={() => handleRemoveRoom(index)}
+                                />
+
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+                                <div>
+                                  <h1 className="font-semibold text-2xl text-blue-600 font-playfair">{room.roomtype_name}</h1>
+                                  <p className="text-sm text-muted-foreground">{room.roomtype_description}</p>
+                                  <Link>
+                                    <div className="flex flex-row items-center gap-2 mt-3 mb-2 text-blue-600">
+                                      <Moreinfo room={room} />
+                                      <Info size={18} />
+                                    </div>
+                                  </Link>
+                                  <h1 className="font-semibold text-blue-600">₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
+
+                                  <div className="mt-4 space-y-3">
+                                    <div>
+                                      <Label className="mb-2">Adults</Label>
+                                      <div className="flex items-center justify-start gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => {
+                                            const val = Math.max(1, adultCount - 1)
+                                            setAdultCount(val)
+                                            localStorage.setItem('adultNumber', String(val))
+                                          }}
+                                          disabled={adultCount <= 1}
+                                        >
+                                          <MinusIcon size={16} />
+                                        </Button>
+                                        <div className="w-12 text-center font-medium">{adultCount}</div>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => {
+                                            if (!canIncrement) return toast.info(`Max capacity ${maxCapacity}`)
+                                            const val = adultCount + 1
+                                            setAdultCount(val)
+                                            localStorage.setItem('adultNumber', String(val))
+                                          }}
+                                          disabled={!canIncrement}
+                                        >
+                                          <Plus size={16} />
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <Label className="mb-2">Children</Label>
+                                      <div className="flex items-center justify-start gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => {
+                                            const val = Math.max(0, childrenCount - 1)
+                                            setChildrenCount(val)
+                                            localStorage.setItem('childrenNumber', String(val))
+                                          }}
+                                          disabled={childrenCount <= 0}
+                                        >
+                                          <MinusIcon size={16} />
+                                        </Button>
+                                        <div className="w-12 text-center font-medium">{childrenCount}</div>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => {
+                                            if (!canIncrement) return toast.info(`Max capacity ${maxCapacity}`)
+                                            const val = childrenCount + 1
+                                            setChildrenCount(val)
+                                            localStorage.setItem('childrenNumber', String(val))
+                                          }}
+                                          disabled={!canIncrement}
+                                        >
+                                          <Plus size={16} />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Max capacity: {maxCapacity} guests</p>
+                                  </div>
+                                </div>
+
+
+                                <div className="flex justify-center">
+                                  <Carousel className="w-full max-w-[280px]">
+                                    <CarouselContent>
+                                      {Array.from({ length: 5 }).map((_, index) => (
+                                        <CarouselItem key={index}>
+                                          <div className="p-1">
+                                            <Card>
+                                              <CardContent className="flex aspect-square items-center justify-center p-4">
+                                                <span className="text-2xl font-semibold">{index + 1}</span>
+                                              </CardContent>
+                                            </Card>
+                                          </div>
+                                        </CarouselItem>
+                                      ))}
+                                    </CarouselContent>
+                                    <CarouselPrevious className="left-1" />
+                                    <CarouselNext className="right-1" />
+                                  </Carousel>
+                                </div>
+
+
+
+                              </div>
+                              <div>
+                                <Card className="w-full mt-2">
+                                  <CardContent>
+                                    <div className="flex items-center justify-between w-full ">
+
+                                      <div className="flex flex-col">
+                                        <Label>Extra</Label>
+                                        <div className="flex items-center gap-2">
+                                          <BedIcon size={18} />
+                                          <span>Extra Bed</span>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex flex-col items-end">
+                                        <Label>Price</Label>
+                                        <h1 className="text-blue-500 whitespace-nowrap">₱ 500.00</h1>
+                                      </div>
+
+                                      <div className="flex flex-col items-center">
+                                        <Label>Quantity</Label>
+                                        <div className="flex items-center space-x-2 mt-2">
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                              const id = room.room_type || room.roomtype_id
+                                              const current = extraBedCounts[id] || 0
+                                              const next = Math.max(0, current - 1)
+                                              setExtraBedCounts({ ...extraBedCounts, [id]: next })
+                                            }}
+                                          >
+                                            <MinusIcon size={16} />
+                                          </Button>
+                                          <div className="w-12 text-center font-medium">{extraBedCounts[room.room_type || room.roomtype_id] || 0}</div>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                              const id = room.room_type || room.roomtype_id
+                                              const current = extraBedCounts[id] || 0
+                                              const next = current + 1
+                                              setExtraBedCounts({ ...extraBedCounts, [id]: next })
+                                            }}
+                                          >
+                                            <Plus size={16} />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </div>
+                              <Separator className="w-full mt-4" />
+                            </div>
+
+                          ))}
+                        </>
+                      ) : (
+                        <p>No rooms selected</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+         
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 mt-2 mb-2 p-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} >
+                <div className="grid grid-cols-1 gap-4  mb-2">
                   <Card className="bg-white shadow-xl">
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="mb-2">Check-in</Label>
-                          <Input value={checkIn.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} readOnly />
-                        </div>
-                        <div>
-                          <Label className="mb-2">Check-out</Label>
-                          <Input value={checkOut.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} readOnly />
-                        </div>
-
-
-
-
-
-
+                      <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
                         <div>
                           <FormField
                             control={form.control}
@@ -272,226 +463,55 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
                     </CardContent>
 
                   </Card>
+                  <div className="space-y-3 md:sticky md:top-4 ">
+                 
+                        <div className="flex justify-between items-center">
+                          <h1 className="font-semibold text-lg">Booking Summary</h1>
+                          <div className="text-sm text-blue-600 font-medium">
+                            {selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''} Selected
+                          </div>
+                        </div>
+                        <Card className="shadow-lg  bg-gray-50">
 
-
-
-
-
-
-                </div>
-
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-
-                  <Card className="bg-white shadow-xl">
-                    <CardContent>
-                      <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-lg font-semibold">Selected Room</h2>
-                        <RoomsList rooms={allRooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} />
-                      </div>
-                      <ScrollArea className="h-[calc(100vh-320px)]">
-                        <div >
-                          {selectedRooms.length > 0 ? (
-                            <>
-                              {selectedRooms.map((room, index) => (
-                                <div key={index}>
-                                  <div className="flex justify-end">
-                                    <Trash2 className="cursor-pointer text-red-500"
-                                      onClick={() => handleRemoveRoom(index)}
-                                    />
-
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-                                    <div>
-                                      <h1 className="font-semibold text-2xl text-blue-600 font-playfair">{room.roomtype_name}</h1>
-                                      <p className="text-sm text-muted-foreground">{room.roomtype_description}</p>
-                                      <Link>
-                                        <div className="flex flex-row items-center gap-2 mt-3 mb-2 text-blue-600">
-                                          <Moreinfo room={room} />
-                                          <Info size={18} />
-                                        </div>
-                                      </Link>
-                                      <h1 className="font-semibold text-blue-600">₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h1>
-                                    
-                                      <div className="mt-4 space-y-3">
-                                        <div>
-                                          <Label className="mb-2">Adults</Label>
-                                          <div className="flex items-center justify-start gap-2">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() => {
-                                                const val = Math.max(1, adultCount - 1)
-                                                setAdultCount(val)
-                                                localStorage.setItem('adultNumber', String(val))
-                                              }}
-                                              disabled={adultCount <= 1}
-                                            >
-                                              <MinusIcon size={16} />
-                                            </Button>
-                                            <div className="w-12 text-center font-medium">{adultCount}</div>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() => {
-                                                if (!canIncrement) return toast.info(`Max capacity ${maxCapacity}`)
-                                                const val = adultCount + 1
-                                                setAdultCount(val)
-                                                localStorage.setItem('adultNumber', String(val))
-                                              }}
-                                              disabled={!canIncrement}
-                                            >
-                                              <Plus size={16} />
-                                            </Button>
-                                          </div>
-                                        </div>
-
-                                        <div>
-                                          <Label className="mb-2">Children</Label>
-                                          <div className="flex items-center justify-start gap-2">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() => {
-                                                const val = Math.max(0, childrenCount - 1)
-                                                setChildrenCount(val)
-                                                localStorage.setItem('childrenNumber', String(val))
-                                              }}
-                                              disabled={childrenCount <= 0}
-                                            >
-                                              <MinusIcon size={16} />
-                                            </Button>
-                                            <div className="w-12 text-center font-medium">{childrenCount}</div>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              onClick={() => {
-                                                if (!canIncrement) return toast.info(`Max capacity ${maxCapacity}`)
-                                                const val = childrenCount + 1
-                                                setChildrenCount(val)
-                                                localStorage.setItem('childrenNumber', String(val))
-                                              }}
-                                              disabled={!canIncrement}
-                                            >
-                                              <Plus size={16} />
-                                            </Button>
-                                          </div>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">Max capacity: {maxCapacity} guests</p>
-                                      </div>
+                          <CardContent className="mb-2 ">
+                            <ScrollArea className="h-48  mb-2">
+                              {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
+                               <div key={index}>
+                                  <Card >
+                                    <CardContent>
+                                    <div className="flex flex-row justify-between items-center  py-2">
+                                      <h2 className="font-medium text-lg">{room.roomtype_name}</h2>
+                                      <p className="font-semibold text-xl">
+                                        {`${numberOfNights} Day(s) x ₱${room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                      </p>
                                     </div>
-
-
-                                    <div className="flex justify-center">
-                                      <Carousel className="w-full max-w-[280px]">
-                                        <CarouselContent>
-                                          {Array.from({ length: 5 }).map((_, index) => (
-                                            <CarouselItem key={index}>
-                                              <div className="p-1">
-                                                <Card>
-                                                  <CardContent className="flex aspect-square items-center justify-center p-4">
-                                                    <span className="text-2xl font-semibold">{index + 1}</span>
-                                                  </CardContent>
-                                                </Card>
-                                              </div>
-                                            </CarouselItem>
-                                          ))}
-                                        </CarouselContent>
-                                        <CarouselPrevious className="left-1" />
-                                        <CarouselNext className="right-1" />
-                                      </Carousel>
-                                    </div>
+                                    <p className="text-md font-semibold text-right text-[#113F67]">
+                                      = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
+                                                                      
+                                    </CardContent>
+                                  </Card>
 
 
 
-                                  </div>
-                                  <div>
-                                    <Card className="w-full mt-2">
-                                      <CardContent>
-                                        <div className="flex items-center justify-between w-full ">
 
-                                          <div className="flex flex-col">
-                                            <Label>Extra</Label>
-                                            <div className="flex items-center gap-2">
-                                              <BedIcon size={18} />
-                                              <span>Extra Bed</span>
-                                            </div>
-                                          </div>
-
-                                          <div className="flex flex-col items-end">
-                                            <Label>Price</Label>
-                                            <h1 className="text-blue-500 whitespace-nowrap">₱ 500.00</h1>
-                                          </div>
-
-                                          <div className="flex flex-col items-center">
-                                            <Label>Quantity</Label>
-                                            <div className="flex items-center space-x-2 mt-2">
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                  const id = room.room_type || room.roomtype_id
-                                                  const current = extraBedCounts[id] || 0
-                                                  const next = Math.max(0, current - 1)
-                                                  setExtraBedCounts({ ...extraBedCounts, [id]: next })
-                                                }}
-                                              >
-                                                <MinusIcon size={16} />
-                                              </Button>
-                                              <div className="w-12 text-center font-medium">{extraBedCounts[room.room_type || room.roomtype_id] || 0}</div>
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                  const id = room.room_type || room.roomtype_id
-                                                  const current = extraBedCounts[id] || 0
-                                                  const next = current + 1
-                                                  setExtraBedCounts({ ...extraBedCounts, [id]: next })
-                                                }}
-                                              >
-                                                <Plus size={16} />
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-                                  </div>
-                                  <Separator className="w-full mt-4" />
                                 </div>
 
                               ))}
-                            </>
-                          ) : (
-                            <p>No rooms selected</p>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                  <div className="space-y-3 md:sticky md:top-4 h-fit">
-                    <Card className="bg-white shadow-xl">
-                      <CardContent className="space-y-3 text-black">
-                        <h1 className="font-semibold text-lg">Booking Summary</h1>
-                        {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
-                          <div key={index}>
-                            <div className="flex justify-between items-center py-2">
-                              <h2 className="font-medium">Room Type: {room.roomtype_name}</h2>
-                              <p className="text-right font-semibold text-xl">{`${numberOfNights} Day(s) x ₱ ${(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
-                            </div>
-                            <Separator className="w-full mt-4" />
-                          </div>
-                        ))}
+                            </ScrollArea>
+                          </CardContent>
+
+                        </Card>
                         {(() => {
-                        const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
-                        const vat = subtotal - (subtotal / 1.12); 
+                          const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+                          const vat = subtotal - (subtotal / 1.12);
                           const total = subtotal
                           const down = total * 0.5
                           return (
                             <>
-                           
+
                               <div className="flex justify-between items-center py-2 ">
-                                <span className="font-medium">VAT (12%) included</span>
+                                <span className="font-medium">VAT (12%) included:</span>
                                 <span>₱ {vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               </div>
                               <div className="flex justify-between items-center py-2">
@@ -505,14 +525,16 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
                             </>
                           )
                         })()}
-                      </CardContent>
-                    </Card>
+               
+
+
                     <Card className="bg-white shadow-xl">
                       <CardContent className="space-y-2">
                         <h2 className="font-semibold">Payment Method</h2>
                         <p className="text-sm text-muted-foreground">You will receive payment instructions after confirming your booking.</p>
                       </CardContent>
                     </Card>
+
 
                     <Button
                       type="button"
@@ -577,8 +599,10 @@ function BookingNoAccount({ rooms, selectedRoom, guests, adultNumber, childrenNu
 
               </form>
             </Form>
+          </div>
 
-          </ScrollArea>
+
+
 
 
 

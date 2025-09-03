@@ -10,7 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Search } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react'; // Add ChevronDown import
 
 const ChooseRooms = () => {
   const APIConn = `${localStorage.url}admin.php`;
@@ -96,10 +96,25 @@ const ChooseRooms = () => {
     room.roomtype_description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Scroll to bottom handler
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
   return (
     <>
       <AdminHeader />
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="p-6 max-w-5xl mx-auto relative">
+        {/* Floating Button */}
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          className="fixed bottom-8 right-8 z-50 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center transition"
+          aria-label="Scroll to bottom"
+        >
+          <ChevronDown size={28} />
+        </button>
+
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
           Walk-In — Step 1: Choose Room
         </h1>

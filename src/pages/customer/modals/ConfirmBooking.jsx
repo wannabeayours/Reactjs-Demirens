@@ -1,19 +1,18 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Card, CardContent } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
-function ConfirmBooking({ open, onClose, summary, onConfirmBooking ,  handleClearData }) {
+function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearData }) {
   if (!open || !summary) return null;
   const {
     rooms = [],
     numberOfNights = 0,
     checkIn,
     checkOut,
-    adult,
-    children,
   } = summary;
 
   const subtotalRaw = rooms.reduce((total, room) => {
@@ -37,142 +36,104 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking ,  handleClea
       toast.error('Booking function is not available.');
     }
   };
-  
+
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-      <div className="bg-white w-[90vw] max-w-[1100px] h-[700px] p-8 rounded-3xl overflow-y-auto shadow-xl relative">
-        <Button onClick={() => onClose()} className="absolute top-4 right-4 text-xl font-bold">×</Button>
 
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+      <div className="bg-white w-[90vw] max-w-[1100px] h-[850px] p-8 rounded-md shadow-xl relative flex flex-col">
+        <Button onClick={() => onClose()} className="absolute top-4 right-4 text-xl font-bold" variant="ghost">×</Button>
+
+        {/* Header */}
         <div>
-          <h1 className="text-4xl font-semibold leading-none tracking-tight font-playfair ">Confirm Booking</h1>
+          <h1 className="text-4xl font-semibold leading-none tracking-tight font-playfair">Confirm Booking</h1>
           <p className="text-gray-500 mt-1">
             This can no longer be canceled after 24 hours. Please review your booking details below :
           </p>
         </div>
 
-        <div className="space-y-2 text-sm mt-6 overflow-y-auto max-h-[400px] pr-2">
-          {/* <div className="flex  gap-8">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Check In:</span>
-              <span>{new Date(checkIn).toLocaleDateString()}</span>
-            </div>
-            <div>
-              <ArrowRight className="w-6 h-6" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Check Out:</span>
-              <span>{new Date(checkOut).toLocaleDateString()}</span>
-            </div>
-          </div> */}
-
-          <Separator className="my-2" />
-
-          {rooms.length > 0 ? (
-            rooms.map((room, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mb-4">
-                <div className="m-8">
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      <CarouselItem>
-                        <img src="/images/room1.jpg" alt="Room image" className="rounded-md" />
-                      </CarouselItem>
-                      <CarouselItem>
-                        <img src="/images/room2.jpg" alt="Room image" className="rounded-md" />
-                      </CarouselItem>
-                    </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
-                  </Carousel>
-                </div>
-
-
-
-                <div className="space-y-1 ">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-2xl">{room.roomtype_name}</span>
-                    <span className="text-md">Total Amount: ₱ {Number(total).toLocaleString()}</span>
-                    {/* <span className="text-sm text-gray-600">Room Capacity: {room.room_capacity || 'N/A'} guests</span> */}
-                  </div>
-                  <div className="flex gap-4 ">
-                  <div className="flex items-center gap-2 ">
-                    <span className="font-medium">Check In:</span>
-                    <span>{new Date(checkIn).toLocaleDateString()}</span>
-                  </div>
-                  <div>
-                    <ArrowRight className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-2  ">
-                    <span className="font-medium">Check Out:</span>
-                    <span>{new Date(checkOut).toLocaleDateString()}</span>
-                  </div>
-                  </div>
-                  <div className="flex gap-4  ">
-                  <div className="flex items-center gap-2">
-                    <span>Adults:</span>
-                    <span>{room.adultCount || 0}</span>
-                  </div>
-                  <div className="h-5 w-px bg-black" />
-                  <div className="flex items-center gap-2">
-                    <span>Children:</span>
-                    <span>{room.childrenCount || 0}</span>
-                  </div>
-               </div>
-               {/* <div className="flex items-center gap-2 mt-2">
-                 <span className="font-medium">Total Guests:</span>
-                 <span className="font-semibold text-blue-600">{(room.adultCount || 0) + (room.childrenCount || 0)}</span>
-               </div> */}
-               {room.extraBeds > 0 && (
-                 <div className="flex items-center gap-2 mt-1">
-                   <span className="text-sm text-gray-600">Extra Beds:</span>
-                   <span className="text-sm font-medium">{room.extraBeds}</span>
-                 </div>
-               )}
-
-
-
-                  {/* <div className="flex justify-between items-center py-2 text-md">
-                    <span>₱ {Number(room.roomtype_price).toLocaleString()} × {numberOfNights}/nights</span>
-                    <span className="text-blue-500 font-medium text-xl">
-                      ₱ {(Number(room.roomtype_price) * numberOfNights).toLocaleString()}
-                    </span>
-                  </div> */}
-                </div>
-
-                <div className="col-span-full">
-                  <Separator className="my-2" />
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm italic text-gray-500">No rooms selected</p>
-          )}
-
-          {/* <div className="flex justify-between items-center py-2 text-md">
-            <span className="font-medium text-xl">Total Guests:</span>
-            <span className="items-center py-2 text-xl text-blue-600">
-              {rooms.reduce((total, room) => total + (room.adultCount || 0) + (room.childrenCount || 0), 0)} guests
-            </span>
-          </div> */}
-          <div className="flex justify-between items-center py-2 text-md">
-            <span className="font-medium text-xl">VAT (12%):</span>
-            <span className="items-center py-2 text-xl">₱ {Number(vat).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between font-semibold">
-            <span className="items-center py-2 text-xl">Total:</span>
-            <span className="items-center py-2 text-xl">₱ {Number(total).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between font-semibold ">
-            <span className="items-center py-2 text-xl">Downpayment (50%):</span>
-            <span className="items-center py-2 text-xl text-blue-500">₱ {Number(downpayment).toLocaleString()}</span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+          <p><span className="font-semibold">Check-in:</span> {new Date(checkIn).toLocaleDateString()}</p>
+          <p><span className="font-semibold">Check-out:</span> {new Date(checkOut).toLocaleDateString()}</p>
         </div>
 
-        <div className="flex justify-end gap-2 mt-24 items-end ">
+        {/* Rooms scrollable section */}
+        <div className="mt-6 flex-1 flex flex-col ">
+          <h3 className="text-lg font-semibold mb-2 text-[#113F67]">Rooms</h3>
+          <ScrollArea className="h-[300px] border rounded-md bg-gray-50">
+            <div className="p-3 space-y-3">
+              {rooms.length > 0 ? (
+                rooms.map((room, index) => (
+                  <Card
+                    key={index}
+                    className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <CardContent className="px-4 py-3">
+                      <div className="flex items-start justify-between">
+                        <div className="pr-3">
+                          <p className="font-semibold text-[#113F67]">{room.roomtype_name}</p>
+                          <p className="text-xs mt-1 text-muted-foreground max-w-[56ch]">
+                            {room.roomtype_description}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Per day</p>
+                          <p className="font-semibold text-lg">
+                            ₱ {Number(room.roomtype_price).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">x {numberOfNights} night(s)</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-3" />
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="text-xs">Adults: {room.adultCount || 0}</Badge>
+                        <Badge variant="outline" className="text-xs">Children: {room.childrenCount || 0}</Badge>
+                        {room.extraBeds > 0 && (
+                          <Badge variant="secondary" className="text-xs">Extra Beds: {room.extraBeds}</Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No selected rooms found</p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Fixed totals (not scrolling) */}
+        <div className="mt-6">
+          <Card className="bg-white border rounded-lg shadow-sm">
+            <CardContent className="py-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">VAT (12%) included</span>
+                  <span className="font-medium">₱ {Number(vat).toLocaleString()}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total</span>
+                  <span className="text-lg font-semibold">₱ {Number(total).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Downpayment (50%)</span>
+                  <span className="text-lg font-semibold text-[#113F67]">₱ {Number(downpayment).toLocaleString()}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Buttons at the very bottom */}
+        <div className="flex justify-end gap-2 mt-auto pt-6">
           <Button variant="outline" onClick={() => onClose()}>Cancel</Button>
           <Button onClick={handleConfirm}>Confirm Booking</Button>
         </div>
       </div>
+
     </div>
   );
 }

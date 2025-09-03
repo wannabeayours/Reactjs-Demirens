@@ -51,7 +51,6 @@ export default function ApprovalReceipt() {
     }
 
     if (!window.confirm("Finalize approval and write to database?")) return;
-
     try {
       const fd = new FormData();
       fd.append("method", "approveCustomerBooking");

@@ -24,8 +24,8 @@ import Landingpage from './pages/Landingpage';
 // import FrontHeader from './components/layout/FrontHeader';
 import LandingHeader from './components/layout/LandingHeader';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
+
+
 import CustomerAbout from './pages/customer/CustomerAbout';
 import CustomerBooking from './pages/customer/CustomerBooking';
 import CustomerRooms from './pages/customer/CustomerRooms';
@@ -55,6 +55,9 @@ import Invoice from './pages/admin/Invoice';
 import OnlineReqList from './pages/admin/OnlineReqList';
 import ApproveRooms from './pages/admin/Online_Folder/ApproveRooms';
 import ApprovalReceipt from './pages/admin/Online_Folder/ApprovalReceipt';
+import Login from './pages/UserAuth_Folder/Login';
+import Register from './pages/UserAuth_Folder/Register';
+import OTP_Auth from './pages/UserAuth_Folder/OTP_Auth';
 
 function App() {
 
@@ -65,16 +68,16 @@ function App() {
 
     // localStorage.setItem("userId", 2);
     // localStorage.setItem("customerOnlineId", 1);
-    
+
   }, []);
 
 
 
   return (
     <>
-    <div className="w-full ">
+      <div className="w-full ">
 
-    </div>
+      </div>
       <Toaster
         position='top-center'
         richColors
@@ -99,32 +102,33 @@ function App() {
           <Routes>
             {/* Admin Pages */}
             <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<Landingpage />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/profile" element={<AdminProfile />} />
-                <Route path="/admin/roomslist" element={<AdminRoomsList />} />
-                <Route path="/admin/bookinglist" element={<AdminBookingList />} />
-                <Route path="/admin/newbook" element={<AdminNewBook />} />
-                <Route path="/admin/calendar" element={<AdminCalendar />} />
-                <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
-                <Route path="/admin/payments" element={<AdminPayments />} />
-                <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
-                <Route path="/admin/reviews" element={<AdminReviews />} />
-                <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
-                <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
-                <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
-                <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
-                <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
-                <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
-                <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
-                <Route path="/admin/billings" element={<Billings />} />
-                <Route path="/admin/invoice" element={<Invoice />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/" element={<Landingpage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/profile" element={<AdminProfile />} />
+            <Route path="/admin/roomslist" element={<AdminRoomsList />} />
+            <Route path="/admin/bookinglist" element={<AdminBookingList />} />
+            <Route path="/admin/newbook" element={<AdminNewBook />} />
+            <Route path="/admin/calendar" element={<AdminCalendar />} />
+            <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/requestedamenities" element={<AdminRequestedAmenities />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
+            <Route path="/admin/transactionhistory" element={<AdminTransactionHis />} />
+            <Route path="/admin/visitorslog" element={<AdminVisitorsLog />} />
+            <Route path="/admin/amenitymaster" element={<AdminAmenityMaster />} />
+            <Route path="/admin/chargescategory" element={<AdminChargesCategory />} />
+            <Route path="/admin/chargemaster" element={<AdminChargeMaster />} />
+            <Route path="/admin/discountmaster" element={<AdminDiscountMaster />} />
+            <Route path="/admin/roomtypemaster" element={<AdminRoomtype />} />
+            <Route path="/admin/billings" element={<Billings />} />
+            <Route path="/admin/invoice" element={<Invoice />} />
+            <Route path="/verify" element={<OTP_Auth />} />
 
-                {/* Online Pages */}
-                <Route path="/admin/online" element={<OnlineReqList />} />
-                <Route path="/admin/approve/:bookingId" element={<ApproveRooms />} />
-                <Route path="/admin/receipt/:bookingId" element={<ApprovalReceipt />} />
+            {/* Online Pages */}
+            <Route path="/admin/online" element={<OnlineReqList />} />
+            <Route path="/admin/approve/:bookingId" element={<ApproveRooms />} />
+            <Route path="/admin/receipt/:bookingId" element={<ApprovalReceipt />} />
 
             {/* Frontdesk */}
             {/* <Route path="/frontdesk/login" element={<FrontdeskLogin />} />
@@ -132,13 +136,13 @@ function App() {
             <Route path="/frontdesk/walkin" element={<FrontdeskWalkin />} />
             <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
             {/* <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
-            <Route path="/BookingChargesMaster" element={<BookingChargesMaster/>} />
-          <Route path="/BookingRequestList" element={<BookingRequestList/>} />
-          <Route path="/BookingChargesList" element={<BookingChargesList />} />
-          <Route path="/BookingCreateInvoice" element={<BookingCreateInvoice />} />
-          <Route path="/BookingDisplayInvoiceSample" element={<BookingDisplayInvoiceSample />} />
+            <Route path="/BookingChargesMaster" element={<BookingChargesMaster />} />
+            <Route path="/BookingRequestList" element={<BookingRequestList />} />
+            <Route path="/BookingChargesList" element={<BookingChargesList />} />
+            <Route path="/BookingCreateInvoice" element={<BookingCreateInvoice />} />
+            <Route path="/BookingDisplayInvoiceSample" element={<BookingDisplayInvoiceSample />} />
             {/* Customer Route */}
-            
+
             <Route path="/customer/about" element={<CustomerAbout />} />
             <Route path="/customer/bookings" element={<CustomerBooking />} />
             <Route path="/customer/rooms" element={<CustomerRooms />} />
@@ -147,7 +151,7 @@ function App() {
             <Route path="/customer/roomsearch" element={<RoomSearch />} />
             <Route path="/customer/roomview" element={<CustomerRoomView />} />
             <Route path="/customer" element={<CustomerMain />} />
-            
+
 
 
 
@@ -156,7 +160,7 @@ function App() {
         {/* <Footer /> */}
 
       </Router>
-      
+
     </>
   );
 
