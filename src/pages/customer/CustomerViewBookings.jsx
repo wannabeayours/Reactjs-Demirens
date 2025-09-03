@@ -208,8 +208,7 @@ function CustomerViewBookings() {
                           {room.roomtype_description}
                         </p>
                         <div className="grid grid-cols-2 gap-2 text-sm text-black">
-                          <span><strong>Room Number:</strong> {room.roomnumber_id}</span>
-                          <span><strong>Floor:</strong> {room.roomfloor}</span>
+                        
                           <span><strong>Size:</strong> {room.room_sizes}</span>
                           <span><strong>Beds:</strong> {room.room_beds}</span>
                           <span><strong>Capacity:</strong> {room.max_capacity}</span>

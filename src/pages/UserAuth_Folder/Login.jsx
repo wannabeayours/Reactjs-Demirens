@@ -77,6 +77,10 @@ function Login() {
 
     const onSubmit = async (values) => {
         try {
+            if (isCaptchaValid === false){
+                toast.error("Invalid CAPTCHA");
+                return;
+            }
             const url = localStorage.getItem('url') + "customer.php";
             const jsonData = { username: values.email, password: values.password };
             const formData = new FormData();

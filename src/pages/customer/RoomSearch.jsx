@@ -341,13 +341,13 @@ function RoomSearch() {
 
                       {/* Room Details in Badge Row */}
                       <div className="flex gap-2">
-                        <Badge className="bg-transparent border-blue-500 text-blue-500">{room.room_sizes}</Badge>
+                        <Badge className="bg-transparent border-blue-500 text-blue-500">{room.roomtype_sizes}</Badge>
                         <Badge className="bg-transparent border-blue-500 text-blue-500">
-                          {room.room_capacity}
+                          {room.roomtype_capacity}
                           <User size={20} className="ml-1" />
                         </Badge>
                         <Badge className="bg-transparent border-blue-500 text-blue-500">
-                          {room.room_beds}
+                          {room.roomtype_beds}
                           <BedDoubleIcon size={20} className="ml-1" />
                         </Badge>
                       </div>

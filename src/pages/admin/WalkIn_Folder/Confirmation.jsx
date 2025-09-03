@@ -106,9 +106,16 @@ export default function Confirmation() {
           <span className="font-medium">Check-Out:</span> {walkInData.checkOut}
         </p>
         <p className="text-gray-800 dark:text-gray-300">
-          <span className="font-medium">Guests:</span> {walkInData.guests}
+          <span className="font-medium">Adults:</span> {walkInData.adult || 0}
+        </p>
+        <p className="text-gray-800 dark:text-gray-300">
+          <span className="font-medium">Children:</span> {walkInData.children || 0}
+        </p>
+        <p className="text-gray-800 dark:text-gray-300">
+          <span className="font-medium">Total Guests:</span> {(walkInData.adult || 0) + (walkInData.children || 0)}
         </p>
       </section>
+
 
       {/* Selected Rooms */}
       <section className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">

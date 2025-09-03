@@ -47,28 +47,24 @@ function ViewBookingSummary({ bookingData }) {
                 <Label>Check out :</Label>
                 {data.booking_checkout_dateandtime}
               </div>
-              <div className="flex items-center justify-between">
-                <Label>Guests :</Label>
-                {data.guests_amnt}
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>Booking Total Amount :</Label>
-                ₱{data.booking_totalAmount}
-              </div>
+              
+            
             </CardContent>
           </Card>
 
         </div>
-        <div className='grid grid-cols-1 gap-8 mx-3'>
+        <div className='grid grid-cols-2 gap-8 mx-3'>
           {roomsList.map((room, index) => (
             <Card key={index} className={"shadow-md"}>
               <CardContent>
                 <CardTitle>{room.roomtype_name}</CardTitle>
                 <CardDescription>{room.roomtype_description}</CardDescription>
+                <p></p>
                 <DataTable
                   columns={columns}
                   data={room.charges}
                   hideSearch
+                  showNoData={false}
                   headerAction={
                     <div className="mt-3">
                       <RequestAmenities />

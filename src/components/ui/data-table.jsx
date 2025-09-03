@@ -22,7 +22,8 @@ const DataTable = ({
   selectedData,
   limitNumberWords = true,
   hideHeader = false,
-  headerClassName
+  headerClassName,
+  showNoData = true,
   //additionalAccessor
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -361,9 +362,13 @@ const DataTable = ({
           )}
         </>
       ) : (
-        <div className="text-center py-4">No data found
-          {/* {String(JSON.stringify(data))} */}
-        </div>
+        <>
+          {showNoData === true &&
+            <div className="text-center py-4">No data found
+              {/* {String(JSON.stringify(data))} */}
+            </div>
+          }
+        </>
       )}
     </div>
   );

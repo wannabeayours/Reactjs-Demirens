@@ -10,7 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Search, ChevronDown } from 'lucide-react'; // Add ChevronDown import
+import { Search, ChevronDown } from 'lucide-react';
 
 const ChooseRooms = () => {
   const APIConn = `${localStorage.url}admin.php`;
@@ -25,10 +25,14 @@ const ChooseRooms = () => {
   // Booking details state
   const [checkIn, setCheckIn] = useState(walkInData.checkIn || '');
   const [checkOut, setCheckOut] = useState(walkInData.checkOut || '');
-  const [guests, setGuests] = useState(walkInData.guests || 1);
+  const [adult, setAdult] = useState(walkInData.adult || 1);
+  const [children, setChildren] = useState(walkInData.children || 0);
 
   // Multiple rooms selected
   const [selectedRooms, setSelectedRooms] = useState(walkInData.selectedRooms || []);
+
+  // Extra filter state
+  const [floor, setFloor] = useState('');
 
   const getRooms = async () => {
     const roomReq = new FormData();
@@ -83,18 +87,36 @@ const ChooseRooms = () => {
       ...walkInData,
       checkIn,
       checkOut,
-      guests,
+      adult,
+      children,
       selectedRooms,
     });
 
     navigate('/admin/add-walk-in');
   };
 
-  // Filter rooms by search term
-  const filteredRooms = rooms.filter(room =>
-    room.roomtype_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.roomtype_description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFloor('');
+    setAdult(1);
+    setChildren(0);
+  };
+
+  // Total guests
+  const totalGuests = adult + children;
+
+  // Filter rooms by search + guest count + floor
+  const filteredRooms = rooms.filter(room => {
+    const matchesSearch =
+      room.roomtype_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room.roomtype_description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesGuests = totalGuests ? room.room_capacity >= totalGuests : true;
+    const matchesFloor = floor ? room.roomfloor === Number(floor) : true;
+
+    return matchesSearch && matchesGuests && matchesFloor;
+  });
 
   // Scroll to bottom handler
   const scrollToBottom = () => {
@@ -120,7 +142,7 @@ const ChooseRooms = () => {
         </h1>
 
         {/* Booking Details Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Check-In</label>
             <input
@@ -140,12 +162,22 @@ const ChooseRooms = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Guests</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Adults</label>
             <input
               type="number"
               min="1"
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
+              value={adult}
+              onChange={(e) => setAdult(Number(e.target.value))}
+              className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Children</label>
+            <input
+              type="number"
+              min="0"
+              value={children}
+              onChange={(e) => setChildren(Number(e.target.value))}
               className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
             />
           </div>
@@ -163,6 +195,31 @@ const ChooseRooms = () => {
                        text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 
                        focus:outline-none focus:ring-2 focus:ring-green-500"
           />
+        </div>
+
+        {/* Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Floor</label>
+            <select
+              value={floor}
+              onChange={(e) => setFloor(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="">All Floors</option>
+              {[...new Set(rooms.map(r => r.roomfloor))].map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={clearFilters}
+              className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -234,8 +291,6 @@ const ChooseRooms = () => {
                       {isRoomSelected(room) ? 'Selected' : 'Select Room'}
                     </button>
                   </div>
-
-
                 </div>
               );
             })}

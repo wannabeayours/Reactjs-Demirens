@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
@@ -24,7 +24,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   const [numberOfNights, setNumberOfNights] = useState(1)
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [summaryInfo, setSummaryInfo] = useState(null);
-  const [extraBedCounts, setExtraBedCounts] = useState({});
+  // const [extraBedCounts, setExtraBedCounts] = useState({});
   const [guestCounts, setGuestCounts] = useState({});
   const [adultCounts, setAdultCounts] = useState({});
   const [childrenCounts, setChildrenCounts] = useState({});
@@ -88,7 +88,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         setSelectedRooms([]);
         setAdultCounts({});
         setChildrenCounts({});
-        setExtraBedCounts({});
+        // setExtraBedCounts({});
         setGuestCounts({});
         handleClearData();
         // Set a flag to trigger refresh in CustomerViewBookings
@@ -253,11 +253,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         delete updated[roomToRemove.room_type];
         return updated;
       });
-      setExtraBedCounts(prev => {
-        const updated = { ...prev };
-        delete updated[roomToRemove.room_type];
-        return updated;
-      });
+      // setExtraBedCounts(prev => {
+      //   const updated = { ...prev };
+      //   delete updated[roomToRemove.room_type];
+      //   return updated;
+      // });
     }
 
     if (updatedRooms.length === 0) {
@@ -285,7 +285,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           <Button >Book Now</Button>
         </SheetTrigger>
         <SheetContent side="bottom" className="text-black p-6 border-none rounded-t-3xl bg-white">
-          <ScrollArea className="h-[100vh] md:h-[calc(100vh-100px)]" >
+          <div className="h-[100vh] md:h-[calc(100vh-100px)] md:overflow-y-hidden overflow-y-auto" >
 
 
             <div className="p-4">
@@ -302,14 +302,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                     {checkOut.toLocaleString(undefined, { dateStyle: 'medium' })}
                   </div>
                 </div>
-                {/* <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                  <span className="text-xs text-gray-500">Adults</span>
-                  <div className="ml-auto text-sm font-semibold">{adultNum}</div>
-                </div>
-                <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                  <span className="text-xs text-gray-500">Children</span>
-                  <div className="ml-auto text-sm font-semibold">{childrenNum}</div>
-                </div> */}
+             
               </div>
             </div>
 
@@ -319,6 +312,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
               <Card className="bg-white shadow-xl text-black w-[97%]">
                 <CardContent>
+
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-600">
@@ -330,255 +324,209 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                     </div>
 
                   </div>
-                  <ScrollArea className="h-[calc(100vh-300px)]">
-                    <div >
-                      {selectedRooms.length > 0 ? (
-                        <>
-                          {selectedRooms.map((room, index) => (
-                            <div key={index}>
-                              <div className="flex justify-end">
-                                <Trash2 className="cursor-pointer text-red-500"
-                                  onClick={() => handleRemoveRoom(index)}
-                                />
+                  <Card className="bg-gray-100">
+                    <ScrollArea className="h-[calc(100vh-300px)]">
+                      <div >
+                        {selectedRooms.length > 0 ? (
+                          <div >
+                            {selectedRooms.map((room, index) => (
+                              <Card key={index} className="mb-3 m-3">
+                                <CardContent>
+                                  <div className="flex justify-end">
+                                    <Trash2 className="cursor-pointer text-red-500"
+                                      onClick={() => handleRemoveRoom(index)}
+                                    />
 
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-                                <div>
-                                  <h1 className="font-semibold text-2xl font-playfair text-blue-500">{room.roomtype_name}</h1>
-                                  <h1>{room.roomtype_description}</h1>
-                                  <Link >
-                                    <div className="flex flex-row space-x-2 mt-4 mb-2 ">
-                                      <div>
-                                        <Moreinfo room={room} />
-                                      </div>
-                                      <div>
-                                        <Info />
-                                      </div>
-
-                                    </div>
-                                  </Link>
-                                  <h1 className="flex items-center gap-2 font-semibold text-blue-500">
-                                    <BedDouble size={20} />
-                                    ₱ {Number(room.roomtype_price).toLocaleString('en-PH', {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}/day
-                                  </h1>
-                                  <div className="mt-4 grid grid-cols-2 gap-4">
-                                    <div className="rounded-2xl border-none p-4">
-                                      <div className="flex items-center ">
-                                        <Label className="mb-2">Adults</Label>
-                                        {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="rounded-full"
-                                          onClick={() => {
-                                            const current = adultCounts[room.room_type] || 0;
-                                            setAdultCounts(prev => ({
-                                              ...prev,
-                                              [room.room_type]: Math.max(0, current - 1)
-                                            }));
-                                          }}
-                                          disabled={(adultCounts[room.room_type] || 0) <= 0}
-                                        >
-                                          <MinusIcon />
-                                        </Button>
-                                        <Input
-                                          className="w-24 text-center"
-                                          type="number"
-                                          min={0}
-                                          value={adultCounts[room.room_type] || 0}
-                                          onChange={(e) => {
-                                            const next = Number(e.target.value);
-                                            const cap = room.room_capacity || Number.MAX_SAFE_INTEGER;
-                                            const currentChildren = childrenCounts[room.room_type] || 0;
-                                            const allowed = Math.max(0, cap - currentChildren);
-                                            setAdultCounts(prev => ({
-                                              ...prev,
-                                              [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
-                                            }));
-                                          }}
-                                        />
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="rounded-full"
-                                          onClick={() => {
-                                            const current = adultCounts[room.room_type] || 0;
-                                            const currentChildren = childrenCounts[room.room_type] || 0;
-                                            if ((current + currentChildren) < (room.room_capacity || Number.MAX_SAFE_INTEGER)) {
-                                              setAdultCounts(prev => ({
-                                                ...prev,
-                                                [room.room_type]: current + 1
-                                              }));
-                                            }
-                                          }}
-                                          disabled={((adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)) >= (room.room_capacity || Number.MAX_SAFE_INTEGER)}
-                                        >
-                                          <Plus />
-                                        </Button>
-                                      </div>
-                                      {/* <div className="mt-2 text-right text-xs text-gray-500">
-                                        Remaining: {Math.max(0, (room.room_capacity || 0) - (adultNum + childrenNum))}
-                                      </div> */}
-                                    </div>
-
-                                    <div className="rounded-2xl border-none p-4">
-                                      <div className="flex items-center">
-                                        <Label className="mb-2">Children</Label>
-                                        {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="rounded-full"
-                                          onClick={() => {
-                                            const current = childrenCounts[room.room_type] || 0;
-                                            setChildrenCounts(prev => ({
-                                              ...prev,
-                                              [room.room_type]: Math.max(0, current - 1)
-                                            }));
-                                          }}
-                                          disabled={(childrenCounts[room.room_type] || 0) <= 0}
-                                        >
-                                          <MinusIcon />
-                                        </Button>
-                                        <Input
-                                          className="w-24 text-center"
-                                          type="number"
-                                          min={0}
-                                          value={childrenCounts[room.room_type] || 0}
-                                          onChange={(e) => {
-                                            const next = Number(e.target.value);
-                                            const cap = room.room_capacity || Number.MAX_SAFE_INTEGER;
-                                            const currentAdults = adultCounts[room.room_type] || 0;
-                                            const allowed = Math.max(0, cap - currentAdults);
-                                            setChildrenCounts(prev => ({
-                                              ...prev,
-                                              [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
-                                            }));
-                                          }}
-                                        />
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="rounded-full"
-                                          onClick={() => {
-                                            const current = childrenCounts[room.room_type] || 0;
-                                            const currentAdults = adultCounts[room.room_type] || 0;
-                                            if ((currentAdults + current) < (room.room_capacity || Number.MAX_SAFE_INTEGER)) {
-                                              setChildrenCounts(prev => ({
-                                                ...prev,
-                                                [room.room_type]: current + 1
-                                              }));
-                                            }
-                                          }}
-                                          disabled={((adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)) >= (room.room_capacity || Number.MAX_SAFE_INTEGER)}
-                                        >
-                                          <Plus />
-                                        </Button>
-                                      </div>
-                                      {/* <div className="mt-2 text-right text-xs text-gray-500">
-                                        Remaining: {Math.max(0, (room.room_capacity || 0) - (adultNum + childrenNum))}
-                                      </div> */}
-                                    </div>
                                   </div>
-
-                                  <div className="mt-3 text-sm text-gray-700">
-                                    Total guests: <span className="font-semibold">{(adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)}</span>
-                                  </div>
-
-
-
-                                </div>
-
-                                <div className="flex justify-center">
-                                  <Carousel className="w-full max-w-[295px]">
-                                    <CarouselContent>
-                                      {Array.from({ length: 5 }).map((_, index) => (
-                                        <CarouselItem key={index}>
-                                          <div className="p-1">
-                                            <Card>
-                                              <CardContent className="flex aspect-square items-center justify-center p-4">
-                                                <span className="text-2xl font-semibold">{index + 1}</span>
-                                              </CardContent>
-                                            </Card>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+                                    <div>
+                                      <h1 className="font-semibold text-2xl font-playfair text-blue-500">{room.roomtype_name}</h1>
+                                      <h1>{room.roomtype_description}</h1>
+                                      <Link >
+                                        <div className="flex flex-row space-x-2 mt-4 mb-2 ">
+                                          <div>
+                                            <Moreinfo room={room} />
                                           </div>
-                                        </CarouselItem>
-                                      ))}
-                                    </CarouselContent>
-                                    <CarouselPrevious className="left-1" />
-                                    <CarouselNext className="right-1" />
-                                  </Carousel>
-                                </div>
+                                          <div>
+                                            <Info />
+                                          </div>
 
-                              </div>
-                              <div>
-                                <Card className="w-full mt-2">
-                                  <CardContent>
-                                    <div className="flex items-center justify-between w-full ">
+                                        </div>
+                                      </Link>
+                                      <h1 className="flex items-center gap-2 font-semibold text-blue-500">
+                                        <BedDouble size={20} />
+                                        ₱ {Number(room.roomtype_price).toLocaleString('en-PH', {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
+                                        })}/day
+                                      </h1>
+                                      <div className="mt-4 grid grid-cols-2 gap-4">
+                                        <div className="rounded-2xl border-none p-4">
+                                          <div className="flex items-center ">
+                                            <Label className="mb-2">Adults</Label>
+                                            {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              className="rounded-full"
+                                              onClick={() => {
+                                                const current = adultCounts[room.room_type] || 0;
+                                                setAdultCounts(prev => ({
+                                                  ...prev,
+                                                  [room.room_type]: Math.max(0, current - 1)
+                                                }));
+                                              }}
+                                              disabled={(adultCounts[room.room_type] || 0) <= 0}
+                                            >
+                                              <MinusIcon />
+                                            </Button>
+                                            <Input
+                                              className="w-24 text-center"
+                                              type="number"
+                                              min={0}
+                                              value={adultCounts[room.room_type] || 0}
+                                              onChange={(e) => {
+                                                const next = Number(e.target.value);
+                                                const cap = room.room_capacity || Number.MAX_SAFE_INTEGER;
+                                                const currentChildren = childrenCounts[room.room_type] || 0;
+                                                const allowed = Math.max(0, cap - currentChildren);
+                                                setAdultCounts(prev => ({
+                                                  ...prev,
+                                                  [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
+                                                }));
+                                              }}
+                                            />
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              className="rounded-full"
+                                              onClick={() => {
+                                                const current = adultCounts[room.room_type] || 0;
+                                                const currentChildren = childrenCounts[room.room_type] || 0;
+                                                if ((current + currentChildren) < (room.room_capacity || Number.MAX_SAFE_INTEGER)) {
+                                                  setAdultCounts(prev => ({
+                                                    ...prev,
+                                                    [room.room_type]: current + 1
+                                                  }));
+                                                }
+                                              }}
+                                              disabled={((adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)) >= (room.room_capacity || Number.MAX_SAFE_INTEGER)}
+                                            >
+                                              <Plus />
+                                            </Button>
+                                          </div>
+                                          {/* <div className="mt-2 text-right text-xs text-gray-500">
+                                          Remaining: {Math.max(0, (room.room_capacity || 0) - (adultNum + childrenNum))}
+                                        </div> */}
+                                        </div>
 
-                                      <div className="flex flex-col">
-                                        <Label>Extra</Label>
-                                        <div className="flex items-center gap-2">
-                                          <BedIcon size={18} />
-                                          <span>Extra Bed</span>
+                                        <div className="rounded-2xl border-none p-4">
+                                          <div className="flex items-center">
+                                            <Label className="mb-2">Children</Label>
+                                            {/* <span className="text-xs text-gray-500">Cap: {room.room_capacity || 0}</span> */}
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              className="rounded-full"
+                                              onClick={() => {
+                                                const current = childrenCounts[room.room_type] || 0;
+                                                setChildrenCounts(prev => ({
+                                                  ...prev,
+                                                  [room.room_type]: Math.max(0, current - 1)
+                                                }));
+                                              }}
+                                              disabled={(childrenCounts[room.room_type] || 0) <= 0}
+                                            >
+                                              <MinusIcon />
+                                            </Button>
+                                            <Input
+                                              className="w-24 text-center"
+                                              type="number"
+                                              min={0}
+                                              value={childrenCounts[room.room_type] || 0}
+                                              onChange={(e) => {
+                                                const next = Number(e.target.value);
+                                                const cap = room.room_capacity || Number.MAX_SAFE_INTEGER;
+                                                const currentAdults = adultCounts[room.room_type] || 0;
+                                                const allowed = Math.max(0, cap - currentAdults);
+                                                setChildrenCounts(prev => ({
+                                                  ...prev,
+                                                  [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
+                                                }));
+                                              }}
+                                            />
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              className="rounded-full"
+                                              onClick={() => {
+                                                const current = childrenCounts[room.room_type] || 0;
+                                                const currentAdults = adultCounts[room.room_type] || 0;
+                                                if ((currentAdults + current) < (room.room_capacity || Number.MAX_SAFE_INTEGER)) {
+                                                  setChildrenCounts(prev => ({
+                                                    ...prev,
+                                                    [room.room_type]: current + 1
+                                                  }));
+                                                }
+                                              }}
+                                              disabled={((adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)) >= (room.room_capacity || Number.MAX_SAFE_INTEGER)}
+                                            >
+                                              <Plus />
+                                            </Button>
+                                          </div>
+                                          {/* <div className="mt-2 text-right text-xs text-gray-500">
+                                          Remaining: {Math.max(0, (room.room_capacity || 0) - (adultNum + childrenNum))}
+                                        </div> */}
                                         </div>
                                       </div>
 
-                                      <div className="flex flex-col items-end">
-                                        <Label>Price</Label>
-                                        <h1 className="text-blue-500 whitespace-nowrap">₱ 500.00</h1>
+                                      <div className="mt-3 text-sm text-gray-700">
+                                        Total guests: <span className="font-semibold">{(adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0)}</span>
                                       </div>
 
-                                      <div className="flex flex-col items-center">
-                                        <Label>Quantity</Label>
-                                        <div className="flex items-center space-x-2 mt-2">
-                                          <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                              const id = room.room_type || room.roomtype_id
-                                              const current = extraBedCounts[id] || 0
-                                              const next = Math.max(0, current - 1)
-                                              setExtraBedCounts({ ...extraBedCounts, [id]: next })
-                                            }}
-                                          >
-                                            <MinusIcon size={16} />
-                                          </Button>
-                                          <div className="w-12 text-center font-medium">{extraBedCounts[room.room_type || room.roomtype_id] || 0}</div>
-                                          <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                              const id = room.room_type || room.roomtype_id
-                                              const current = extraBedCounts[id] || 0
-                                              const next = current + 1
-                                              setExtraBedCounts({ ...extraBedCounts, [id]: next })
-                                            }}
-                                          >
-                                            <Plus size={16} />
-                                          </Button>
-                                        </div>
-                                      </div>
+
+
                                     </div>
-                                  </CardContent>
-                                </Card>
-                              </div>
-                              <Separator className="w-full mt-4" />
-                            </div>
 
-                          ))}
-                        </>
-                      ) : (
-                        <p>No rooms selected</p>
-                      )}
-                    </div>
-                  </ScrollArea>
+                                    <div className="flex justify-center">
+                                      <Carousel className="w-full max-w-[295px]">
+                                        <CarouselContent>
+                                          {Array.from({ length: 5 }).map((_, index) => (
+                                            <CarouselItem key={index}>
+                                              <div className="p-1">
+                                                <Card>
+                                                  <CardContent className="flex aspect-square items-center justify-center p-4">
+                                                    <span className="text-2xl font-semibold">{index + 1}</span>
+                                                  </CardContent>
+                                                </Card>
+                                              </div>
+                                            </CarouselItem>
+                                          ))}
+                                        </CarouselContent>
+                                        <CarouselPrevious className="left-1" />
+                                        <CarouselNext className="right-1" />
+                                      </Carousel>
+                                    </div>
+
+                                  </div>
+                                </CardContent>
+
+                                {/* <Separator className="w-full mt-4" /> */}
+                              </Card>
+
+                            ))}
+                          </div>
+                        ) : (
+                          <p>No rooms selected</p>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </Card>
+
 
 
 
@@ -589,24 +537,27 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
               <div className="space-y-8 md:sticky md:top-4 h-fit">
 
-
-                <Card className="bg-white shadow-xl rounded-2xl">
+                <Card className="bg-white shadow-md rounded-2xl ">
                   <CardContent className="space-y-3 text-black">
+
                     <div className="flex justify-between items-center">
                       <h1 className="font-semibold text-lg">Booking Summary</h1>
+
                       <div className="text-sm text-blue-600 font-medium">
+
                         {selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''} Selected
                       </div>
                     </div>
-                    <Card className="shadow-lg">
-
-                      <CardContent className="px-3 border-none">
-                        <ScrollArea className="h-48 rounded-md border-none p-2">
+                    <Card className="bg-gray-50 border rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                      <div className="p-2">
+                        <ScrollArea className="h-52 ">
                           {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
-                            <div key={index}>
-                              <div >
+                            <Card key={index} className="mb-3 shadow-md rounded-sm">
+                              <CardContent >
+                                <CardTitle >Room {index + 1}</CardTitle>
                                 <div className="flex flex-row justify-between items-center  py-2">
                                   <h2 className="font-medium text-lg">{room.roomtype_name}</h2>
+
                                   <p className="font-semibold text-xl">
                                     {`${numberOfNights} Day(s) x ₱${room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                   </p>
@@ -614,17 +565,16 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                 <p className="text-md font-semibold text-right text-[#113F67]">
                                   = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
-                              </div>
+                              </CardContent>
 
 
 
 
-                            </div>
+                            </Card>
 
                           ))}
                         </ScrollArea>
-                      </CardContent>
-
+                      </div>
                     </Card>
                     {(() => {
                       const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
@@ -653,6 +603,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
                 </Card>
 
+
                 <Card className="bg-white shadow-2xl rounded-2xl">
                   <CardContent className="space-y-2 text-black">
                     <h2 className="font-semibold">Payment Method</h2>
@@ -680,7 +631,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                         guestCount: (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0),
                         adultCount: adultCounts[room.room_type] || 0,
                         childrenCount: childrenCounts[room.room_type] || 0,
-                        extraBeds: extraBedCounts[room.room_type] || 0,
+                        // extraBeds: extraBedCounts[room.room_type] || 0,
                       })),
 
                       checkIn,
@@ -711,7 +662,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </div>
 
             </div>
-          </ScrollArea>
+          </div>
 
 
 
