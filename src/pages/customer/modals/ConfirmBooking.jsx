@@ -41,7 +41,7 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearD
   return (
 
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-      <div className="bg-white w-[90vw] max-w-[1100px] h-[850px] p-8 rounded-md shadow-xl relative flex flex-col">
+      <div className="bg-white w-[90vw] max-w-[1100px] h-auto p-4 rounded-md shadow-xl relative flex flex-col">
         <Button onClick={() => onClose()} className="absolute top-4 right-4 text-xl font-bold" variant="ghost">×</Button>
 
         {/* Header */}
@@ -79,9 +79,9 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearD
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">Per day</p>
                           <p className="font-semibold text-lg">
-                            ₱ {Number(room.roomtype_price).toLocaleString()}
+                             ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
-                          <p className="text-xs text-muted-foreground">x {numberOfNights} night(s)</p>
+                          <p className="text-xs text-muted-foreground">x {numberOfNights} day(s)</p>
                         </div>
                       </div>
 
@@ -111,16 +111,16 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearD
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">VAT (12%) included</span>
-                  <span className="font-medium">₱ {Number(vat).toLocaleString()}</span>
+                  <span className="font-medium">₱ {vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-lg font-semibold">₱ {Number(total).toLocaleString()}</span>
+                  <span className="text-lg font-semibold">₱ {total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Downpayment (50%)</span>
-                  <span className="text-lg font-semibold text-[#113F67]">₱ {Number(downpayment).toLocaleString()}</span>
+                  <span className="text-lg font-semibold text-[#113F67]">₱ {downpayment.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </CardContent>

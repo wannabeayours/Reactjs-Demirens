@@ -31,20 +31,19 @@ import CustomerBooking from './pages/customer/CustomerBooking';
 import CustomerRooms from './pages/customer/CustomerRooms';
 import CustomerGallery from './pages/customer/CustomerGallery';
 import CustomerRestaurant from './pages/customer/CustomerRestaurant';
-import Footer from './components/layout/Footer';
+import CustomerPayment from './pages/customer/CustomerPayment';
+import RoomSearch from './pages/customer/RoomSearch';
 import { useEffect } from 'react';
 import CustomerHeader from './components/layout/CustomerHeader';
 import CustomerMain from './pages/customer/CustomerMain';
 import { Toaster } from 'sonner';
-import { Check, CheckCircle2Icon, XCircleIcon } from 'lucide-react';
+import { CheckCircle2Icon, XCircleIcon } from 'lucide-react';
 
 // Frontdesk Side
 import FrontdeskLogin from './pages/frontdesk/FrontdeskLogin';
 import FrontdeskDashboard from './pages/frontdesk/FrontdeskDashboard';
 import FrontdeskWalkin from './pages/frontdesk/FrontdeskWalkin';
 import FrontdeskReservation from './pages/frontdesk/FrontdeskResvation';
-import CustomerRoomView from './pages/customer/CustomerRoomView';
-import RoomSearch from './pages/customer/RoomSearch';
 import BookingChargesMaster from './pages/frontdesk/BookingChargesMaster';
 import BookingRequestList from './pages/frontdesk/BookingListRequest';
 import BookingChargesList from './pages/frontdesk/BookingChargesList';
@@ -64,6 +63,7 @@ import Confirmation from './pages/admin/WalkIn_Folder/Confirmation';
 import { WalkInProvider } from './pages/admin/WalkIn_Folder/WalkInContext';
 import { ApprovalProvider } from './pages/admin/Online_Folder/ApprovalContext';
 import OnlineReqList from './pages/admin/Online_Folder/OnlineReqList';
+import CustomerRoomView from './pages/customer/CustomerRoomView';
 
 function App() {
 
@@ -169,6 +169,7 @@ function App() {
                 <Route path="/customer/rooms" element={<CustomerRooms />} />
                 <Route path="/customer/gallery" element={<CustomerGallery />} />
                 <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
+                <Route path="/customer/payment" element={<CustomerPayment />} />
                 <Route path="/customer/roomsearch" element={<RoomSearch />} />
                 <Route path="/customer/roomview" element={<CustomerRoomView />} />
                 <Route path="/customer" element={<CustomerMain />} />

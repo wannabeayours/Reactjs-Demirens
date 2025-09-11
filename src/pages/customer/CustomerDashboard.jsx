@@ -218,14 +218,14 @@ function CustomerDashboard() {
           </p>
         ) : (
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
             {rooms.map((room, index) => (
 
 
-              <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
+              <Card key={index} className="flex flex-col h-full   rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
 
                 {/* Image Section */}
-                <div className="h-[30vh] w-full overflow-hidden ">
+                <div className="h-[20vh] w-full overflow-hidden ">
                   <img src={room.image_url} alt="Room" className="w-full h-full object-cover" />
 
                 </div>
@@ -236,7 +236,6 @@ function CustomerDashboard() {
                   {/* <Button
                     variant="link"
                     className="w-full justify-start"
-
                   >
                     View Room →
                   </Button> */}
@@ -258,7 +257,7 @@ function CustomerDashboard() {
                     </h2>
 
                     {/* Room Details in Badge Row */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <Badge className="bg-transparent border-blue-500 text-blue-500">{room.roomtype_sizes}</Badge>
                       <Badge className="bg-transparent border-blue-500 text-blue-500">
                         {room.roomtype_capacity}

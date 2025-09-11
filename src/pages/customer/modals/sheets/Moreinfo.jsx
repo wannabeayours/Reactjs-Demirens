@@ -14,9 +14,9 @@ function Moreinfo({ room }) {
    <SheetTrigger asChild>
     <span className="underline  cursor-pointer">More Info</span>
   </SheetTrigger>
-   <SheetContent side="top">
+  <SheetContent side="top" className="h-auto overflow-y-auto rounded-b-3xl">
     <ScrollArea className="h-[100vh] md:h-[calc(100vh-350px)]" >
-     <div className="flex justify-center w-full">
+     <div className="flex justify-center  w-full">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 w-full">
        {/* Left Column: Carousel */}
        <div className="flex justify-center w-full">

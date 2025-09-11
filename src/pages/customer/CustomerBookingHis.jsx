@@ -54,13 +54,13 @@ function CustomerBookingHis() {
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
-      if(res.data !== 0){
+      if (res.data !== 0) {
         setHistory(res.data);
       }
-      else{
+      else {
         setHistory([]);
       }
-      
+
 
     } catch (error) {
       toast.error("Something went wrong");
@@ -94,11 +94,13 @@ function CustomerBookingHis() {
           className={
             row.booking_status === "Approved"
               ? "bg-green-500"
-              : row.booking_status === "Cancelled"
-                ? "bg-orange-500"
-                : row.booking_status === "Checked-Out"
-                  ? "bg-secondary text-black"
-                  : "bg-red-500"
+              : row.booking_status === "Pending"
+                ? "bg-gray-500"
+                : row.booking_status === "Cancelled"
+                  ? "bg-orange-500"
+                  : row.booking_status === "Checked-Out"
+                    ? "bg-secondary text-black"
+                    : "bg-red-500"
           }
         >
           {row.booking_status}

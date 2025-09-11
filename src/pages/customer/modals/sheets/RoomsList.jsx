@@ -5,7 +5,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import axios from 'axios'
 import React, { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
  const [open, setOpen] = useState(false)
@@ -14,20 +16,58 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
 
  const handleBookedRoom = (room) => {
   setSelectedRooms([...selectedRooms, {
-   room_capacity: room.room_capacity,
+   roomtype_capacity: room.roomtype_capacity,
    room_type: room.roomtype_id,
    roomtype_price: room.roomtype_price,
    roomtype_description: room.roomtype_description,
    roomtype_name: room.roomtype_name
   }]);
+
+  console.log("selected roooom", room)
   setOpen(false);
  }
 
+ const getRooms = async () => {
+  try {
+   const url = localStorage.getItem('url') + "customer.php";
+   const adultNumber = localStorage.getItem("adult");
+   const childrenNumber = localStorage.getItem("children");
+   const checkIn = localStorage.getItem("checkIn");
+   const checkOut = localStorage.getItem("checkOut");
+   const jsonData = {
+    "checkIn": checkIn,
+    "checkOut": checkOut,
+    "guestNumber": Number(adultNumber) + Number(childrenNumber)
+   }
+   const formData = new FormData();
+   formData.append("operation", "getAvailableRoomsWithGuests");
+   formData.append("json", JSON.stringify(jsonData));
+   const response = await axios.post(url, formData);
+   const res = response.data;
+   console.log("res ni get rooms mo to", res);
+   if (res !== 0) {
+    const filteredRooms = res.filter((room) => room.status_id === 3);
+    setAvailableRooms(filteredRooms);
+   }else{
+    setAvailableRooms([]);
+   }
+
+   console.log("res ni getRooms", res);
+  } catch (error) {
+   toast.error("Something went wrong");
+   console.error("error", error);
+
+  }
+ }
+
  useEffect(() => {
-  const filteredRooms = rooms.filter((room) => room.status_id === 3);
-  setAvailableRooms(filteredRooms || []);
-  console.log("filtered rooms", filteredRooms);
- }, [rooms, selectedRooms, setSelectedRooms])
+  // const filteredRooms = rooms.filter((room) => room.status_id === 3);
+  // setAvailableRooms(filteredRooms || []);
+  // console.log("filtered rooms", filteredRooms);
+  if (open) {
+   getRooms();
+  }
+ }, [open])
 
 
  return (
