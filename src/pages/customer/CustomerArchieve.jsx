@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table'
 import ShowAlert from '@/components/ui/show-alert';
 import axios from 'axios';
-import { Archive, ArchiveRestore } from 'lucide-react'
+import { Archive, ArchiveIcon, ArchiveRestore } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { SelectedBooking } from './modals/SelectedBooking';
@@ -64,22 +64,47 @@ function CustomerArchieve() {
     }
   }
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName: "text-black" },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true, headerClassName: "text-black" },
-    { header: 'Total Payment', accessor: 'booking_total', sortable: true, headerClassName: "text-black" },
+    {
+      header: 'Check In',
+      accessor: 'booking_checkin_dateandtime',
+      sortable: true,
+      headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
+      cellClassName: "py-2 text-xs sm:text-sm"
+    },
+    {
+      header: 'Check Out',
+      accessor: 'booking_checkout_dateandtime',
+      sortable: true,
+      headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
+      cellClassName: "py-2 text-xs sm:text-sm"
+    },
+    {
+      header: 'Total Payment',
+      accessor: 'booking_total',
+      sortable: true,
+      headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
+      cellClassName: "py-2 text-xs sm:text-sm font-medium",
+      cell: (row) => (
+        <span>₱{parseFloat(row.booking_total).toLocaleString('en-PH', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}</span>
+      )
+    },
     {
       header: 'Status',
-      headerClassName: "text-black",
+      headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
+      cellClassName: "py-2",
       cell: (row) => (
         <Badge
           className={
             row.booking_status === "Approved"
-              ? "bg-green-500"
+              ? "bg-green-500 text-xs sm:text-sm px-2 py-1"
               : row.booking_status === "Cancelled"
-                ? "bg-orange-500"
+                ? "bg-orange-500 text-xs sm:text-sm px-2 py-1"
                 : row.booking_status === "Checked-Out"
-                  ? "bg-secondary text-black"
-                  : "bg-red-500"
+                  ? "bg-secondary text-black text-xs sm:text-sm px-2 py-1"
+                  : "bg-red-500 text-xs sm:text-sm px-2 py-1"
           }
         >
           {row.booking_status}
@@ -87,11 +112,13 @@ function CustomerArchieve() {
       )
     },
     {
-      header: 'Actions', headerClassName: "text-black",
+      header: 'Actions',
+      headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
+      cellClassName: "py-2",
       cell: (row) => (
-        <div className="flex gap-4">
+        <div className="flex gap-2 sm:gap-4 justify-center">
           <SelectedBooking selectedData={row} />
-          <ArchiveRestore className="cursor-pointer hover:text-[#34699A] text-black"
+          <ArchiveRestore className="cursor-pointer hover:text-[#34699A] text-black w-4 h-4 sm:w-5 sm:h-5"
             onClick={() => handleShowAlert(row)} />
         </div>
       )
@@ -119,22 +146,35 @@ function CustomerArchieve() {
 
 
   return (
-    <div className="flex  flex-col ">
-
-      <div className="flex items-center pl-4">
-        <h1 className="text-4xl font-bold flex items-center gap-2">
-          <Archive className="w-6 h-6" />
+    <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="flex items-center justify-between py-4 mb-2 border-b border-gray-200">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 text-[#113f67]">
+          <ArchiveIcon className="w-5 h-5 sm:w-6 sm:h-6" />
           Archive
         </h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm sm:text-base text-gray-500 hidden sm:block">
+            Manage your Booking Archive
+          </div>
+        </div>
       </div>
 
 
 
 
-      <Card className={"px-10 mt-20 w-full bg-transparent shadow-xl  "}>
-        <div >
 
-          <DataTable columns={col} data={archivedBookings} itemsPerPage={10} />
+      <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
+        <div className="overflow-x-auto py-4">
+          <div className="mb-4 text-lg font-medium text-[#113f67]">Archived Booking Records</div>
+          {archivedBookings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <Archive className="w-12 h-12 text-gray-300 mb-2" />
+              <p className="text-gray-500 text-sm sm:text-base">No archived bookings found</p>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">Archived bookings will appear here</p>
+            </div>
+          ) : (
+            <DataTable columns={col} data={archivedBookings} itemsPerPage={10} />
+          )}
 
         </div>
       </Card>

@@ -382,7 +382,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                               >
                                                 <MinusIcon />
                                               </Button>
-                                              <Input
+                                              {adultCounts[room.room_type] || 0}
+                                              {/* <Input
                                                 className="w-24 text-center"
                                                 type="number"
                                                 min={0}
@@ -397,7 +398,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                     [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
                                                   }));
                                                 }}
-                                              />
+                                              /> */}
                                               <Button
                                                 type="button"
                                                 variant="outline"
@@ -443,7 +444,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                               >
                                                 <MinusIcon />
                                               </Button>
-                                              <Input
+                                              {childrenCounts[room.room_type] || 0}
+                                              {/* <Input
                                                 className="w-24 text-center"
                                                 type="number"
                                                 min={0}
@@ -458,7 +460,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                     [room.room_type]: Number.isFinite(next) ? Math.min(allowed, Math.max(0, next)) : 0
                                                   }));
                                                 }}
-                                              />
+                                              /> */}
                                               <Button
                                                 type="button"
                                                 variant="outline"

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import ShowAlert from '@/components/ui/show-alert';
 import { Badge } from '@/components/ui/badge';
-import { Book, SmileIcon, Trash2, X } from 'lucide-react';
+import { Book, BookA, SmileIcon, Trash2, X } from 'lucide-react';
 
 function CustomerViewBookings() {
   const [viewBook, setViewBook] = useState([]);
@@ -118,74 +118,72 @@ function CustomerViewBookings() {
   }, []);
 
   return (
-    <div className="flex  flex-col ">
-
-      <div className="">
-        <h1 className="text-4xl font-bold flex items-center gap-2">
-          <Book className="w-6 h-6" />
+    <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="flex items-center justify-between py-4 mb-2 border-b border-gray-200">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 text-[#113f67]">
+          <Book className="w-5 h-5 sm:w-6 sm:h-6" />
           View Bookings
         </h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm sm:text-base text-gray-500 hidden sm:block">
+            View your booking here
+          </div>
+        </div>
       </div>
-      <div className={`grid grid-cols-1 ${viewBook.length === 1 ? "md:grid-cols-1 xl:w-1/2" : "md:grid-cols-1"} gap-3`}>
+      <div className="w-full grid grid-cols-1 gap-2 md:gap-3 mt-10">
         {errorMessage ? (
-          <div className="col-span-full flex flex-row items-center justify-center text-center h-96 gap-2">
-            <SmileIcon className="w-10 h-10" />
-            <strong>{errorMessage}</strong>
+          <div className="col-span-full flex flex-row items-center justify-center text-center h-64 sm:h-96 gap-2 p-4">
+            <SmileIcon className="w-8 h-8 sm:w-10 sm:h-10" />
+            <strong className="text-sm sm:text-base">{errorMessage}</strong>
           </div>
         ) : viewBook.length === 0 ? (
-          <div className="col-span-full text-center text-black">
-            No booking details available
+          <div className="col-span-full text-center text-black p-4 h-32 flex items-center justify-center">
+            <span className="text-sm sm:text-base">No booking details available</span>
           </div>
         ) : (
-          <div
-            className={`grid grid-cols-1 ${viewBook.length === 1
-              ? "md:grid-cols-1"
-              : "md:grid-cols-2"
-              } gap-3 items-stretch`}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 items-stretch w-full">
             {viewBook.map((item, index) => (
               <Card
                 key={index}
-                className="px-10 mt-10 shadow-xl flex flex-col h-full"
-              >
+                className="px-2 sm:px-3 md:px-4 py-2 shadow-md flex flex-col">
                 {/* Card Header */}
-                <div className="flex justify-between items-center w-full text-black mb-4">
-                  <h2 className="text-2xl font-bold text-[#113F67]">
+                <div className="flex flex-wrap justify-between items-center w-full text-black mb-1">
+                  <h2 className="text-lg sm:text-xl font-bold text-[#113F67] break-words">
                     Booking #{item.booking_id}
                   </h2>
-                  <Badge className="text-md font-semibold text-white bg-orange-500">
+                  <Badge className="text-xs sm:text-sm font-semibold text-white bg-orange-500 mt-1 sm:mt-0">
                     Pending
                   </Badge>
                 </div>
 
                 {/* Booking Info */}
-                <div className="mb-2 flex justify-between text-black">
-                  <span className="font-semibold">Check-in:</span>
-                  <span>{item.booking_checkin_dateandtime}</span>
+                <div className="mb-1 flex flex-wrap justify-between text-black">
+                  <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Check-in:</span>
+                  <span className="text-right break-words text-xs sm:text-sm">{item.booking_checkin_dateandtime}</span>
                 </div>
-                <div className="mb-4 flex justify-between text-black">
-                  <span className="font-semibold">Check-out:</span>
-                  <span>{item.booking_checkout_dateandtime}</span>
+                <div className="mb-1 flex flex-wrap justify-between text-black">
+                  <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Check-out:</span>
+                  <span className="text-right break-words text-xs sm:text-sm">{item.booking_checkout_dateandtime}</span>
                 </div>
-                <div className="mb-4 flex justify-between text-black">
-                  <span className="font-semibold">Down Payment:</span>
-                  <span>₱ {item.booking_downpayment}</span>
+                <div className="mb-1 flex flex-wrap justify-between text-black">
+                  <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Down Payment:</span>
+                  <span className="text-right text-xs sm:text-sm">₱ {item.booking_downpayment}</span>
                 </div>
-                <div className="mb-4 flex justify-between text-black">
-                  <span className="font-semibold">Total Payment:</span>
-                  <span>₱ {item.booking_totalAmount}</span>
+                <div className="mb-2 flex flex-wrap justify-between text-black">
+                  <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Total Payment:</span>
+                  <span className="text-right text-xs sm:text-sm">₱ {item.booking_totalAmount}</span>
                 </div>
 
                 {/* Rooms List */}
-                <div className="mt-6 flex-1">
-                  <h3 className="text-lg font-semibold mb-2 text-[#113F67]">
+                <div className="mt-2 flex-1">
+                  <h3 className="text-sm font-semibold mb-1 text-[#113F67]">
                     Rooms:
                   </h3>
-                  <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {item.roomsList.map((room, roomIndex) => (
                       <div
                         key={roomIndex}
-                        className="border rounded-lg p-4 bg-gray-50 shadow-sm relative"
+                        className="border rounded-lg p-2 bg-gray-50 shadow-sm relative"
                       >
                         {/* Delete button */}
                         <button
@@ -196,19 +194,18 @@ function CustomerViewBookings() {
                               item
                             )
                           }
-                          className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                          className="absolute top-1 right-1 text-red-500 hover:text-red-700"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={14} />
                         </button>
 
-                        <h4 className="text-xl font-semibold text-gray-800">
+                        <h4 className="text-sm font-semibold text-gray-800 pr-5">
                           {room.roomtype_name}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-xs text-gray-600 mb-1 line-clamp-1">
                           {room.roomtype_description}
                         </p>
-                        <div className="grid grid-cols-2 gap-2 text-sm text-black">
-                        
+                        <div className="grid grid-cols-2 gap-1 text-xs text-black">
                           <span><strong>Size:</strong> {room.room_sizes}</span>
                           <span><strong>Beds:</strong> {room.room_beds}</span>
                           <span><strong>Capacity:</strong> {room.max_capacity}</span>
@@ -220,9 +217,9 @@ function CustomerViewBookings() {
                 </div>
 
                 {/* Cancel Button */}
-                <div className="mt-6">
+                <div className="mt-2">
                   <Button
-                    className="w-full"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
                     onClick={() => handleShowAlert(item.booking_id)}
                   >
                     Cancel Booking

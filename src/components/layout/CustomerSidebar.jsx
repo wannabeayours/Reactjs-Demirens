@@ -31,30 +31,34 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
     return (
       <Button
         variant="ghost"
-        className={`w-full justify-start gap-2 p-4 ${
-          isActive ? 'bg-white text-black font-semibold' : 'hover:bg-[#58A0C8]'
+        className={`w-full justify-start gap-3 p-4 transition-all duration-300 ${
+          isActive 
+            ? 'bg-gradient-to-r from-white to-white/90 text-blue-900 font-semibold rounded-lg shadow-md transform scale-105' 
+            : 'hover:bg-[#58A0C8]/30 hover:translate-x-1 text-white/90 hover:text-white'
         }`}
         onClick={() => {
           handleViewChange(index);
           setOpen(false); // close sheet on mobile
         }}
       >
-        {icon}
-        {label}
+        <div className={`${isActive ? 'text-blue-700' : 'text-white/70'} transition-colors duration-300`}>
+          {icon}
+        </div>
+        <span className="font-medium">{label}</span>
       </Button>
     );
   };
 
   const sidebarList = [
-    { label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
-    { label: 'Profile', icon: <User className="w-4 h-4" /> },
-    { label: 'Booking Summary', icon: <Book className="w-4 h-4" /> },
-    { label: 'Booking History', icon: <History className="w-4 h-4" /> },
-    { label: 'Requested Amenities', icon: <Send className="w-4 h-4" /> },
-    { label: 'View Booking', icon: <Book className="w-4 h-4" /> },
-    { label: 'Invoice', icon: <ReceiptText className="w-4 h-4" /> },
-    { label: 'Password and Security', icon: <Shield className="w-4 h-4" /> },
-    { label: 'Archive', icon: <Archive className="w-4 h-4" /> },
+    { label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
+    { label: 'Profile', icon: <User className="w-5 h-5" /> },
+    { label: 'Booking Summary', icon: <Book className="w-5 h-5" /> },
+    { label: 'Booking History', icon: <History className="w-5 h-5" /> },
+    { label: 'Requested Amenities', icon: <Send className="w-5 h-5" /> },
+    { label: 'View Booking', icon: <Book className="w-5 h-5" /> },
+    { label: 'Invoice', icon: <ReceiptText className="w-5 h-5" /> },
+    { label: 'Password and Security', icon: <Shield className="w-5 h-5" /> },
+    { label: 'Archive', icon: <Archive className="w-5 h-5" /> },
   ];
 
   const handleLogout = () => {
@@ -63,13 +67,14 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
   }
 
   const SidebarContent = () => (
-    <div className="flex flex-col justify-between h-full bg-[#34699A] text-white w-64">
+    <div className="flex flex-col justify-between h-full bg-gradient-to-b from-[#113f67] via-[#34699A] to-[#226597] text-white w-72 shadow-xl">
       <div>
-        <div className="p-4 border-b border-[#58A0C8]">
-          <h2 className="text-lg font-bold">Hotel Demiren and Restaurant</h2>
+        <div className="p-6 border-b border-[#58A0C8]/30 bg-gradient-to-r from-[#113f67] to-[#226597]">
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">Hotel Demiren</h2>
+          <p className="text-sm text-blue-200/80 mt-1">Luxury & Comfort</p>
         </div>
-        <ScrollArea className="h-[calc(100vh-150px)] p-2">
-          <div className="space-y-6">
+        <ScrollArea className="h-[calc(100vh-200px)] p-3">
+          <div className="space-y-2">
             {sidebarList.map((link, i) => (
               <SidebarLink
                 key={i}
@@ -81,14 +86,14 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
           </div>
         </ScrollArea>
       </div>
-      <div className="p-4 border-t border-[#58A0C8]">
+      <div className="p-4 border-t border-[#58A0C8]/30 bg-[#113f67]/40">
         <Button
           variant="destructive"
-          className="w-full justify-start text-white"
+          className="w-full justify-start text-white gap-3 p-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:shadow-lg group"
           onClick={handleLogout}
         >
-          <LogOutIcon className="w-4 h-4 mr-2" />
-          Logout
+          <LogOutIcon className="w-5 h-5 mr-2 group-hover:translate-x-[-2px] transition-transform duration-300" />
+          <span className="font-medium">Logout</span>
         </Button>
       </div>
     </div>
@@ -96,17 +101,17 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
 
   return (
     <>
-      <aside className="hidden md:block fixed top-0 left-0 bottom-0 z-50">
+      <aside className="hidden md:block fixed top-0 left-0 bottom-0 z-50 animate-fadeIn">
         <SidebarContent />
       </aside>
       <div className="md:hidden p-4">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button className={"bg-[#113f67"}>
+            <Button className="bg-gradient-to-r from-[#113f67] to-[#226597] hover:shadow-lg transition-all duration-300 p-3">
               <MenuSquareIcon className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
+          <SheetContent side="left" className="p-0 w-72 border-r-[#58A0C8]">
             <SidebarContent />
           </SheetContent>
         </Sheet>

@@ -4,10 +4,11 @@ import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table';
 import ShowAlert from '@/components/ui/show-alert';
 import axios from 'axios';
-import { ArchiveIcon, Eye, HistoryIcon } from 'lucide-react';
+import { ArchiveIcon, Book, Eye, HistoryIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { SelectedBooking } from './modals/SelectedBooking';
+// import { useIsMobile } from '../../../hooks/use-mobile';
 
 
 function CustomerBookingHis() {
@@ -15,6 +16,7 @@ function CustomerBookingHis() {
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(0);
+  // const isMobile = useIsMobile();
 
 
 
@@ -83,9 +85,41 @@ function CustomerBookingHis() {
   };
 
   const col = [
-    { header: 'Check In', accessor: 'booking_checkin_dateandtime', sortable: true, headerClassName: "text-black" },
-    { header: 'Check Out', accessor: 'booking_checkout_dateandtime', sortable: true, headerClassName: "text-black" },
-    { header: 'Total Payment', accessor: 'booking_total', sortable: true, headerClassName: "text-black" },
+    {
+      header: 'Check In',
+      accessor: 'booking_checkin_dateandtime',
+      sortable: true,
+      headerClassName: "text-black",
+      hiddenOnMobile: false,
+      cell: (row) => {
+        const date = new Date(row.booking_checkin_dateandtime);
+        return <span className="whitespace-nowrap">{date.toLocaleDateString()}</span>;
+      }
+    },
+    {
+      header: 'Check Out',
+      accessor: 'booking_checkout_dateandtime',
+      sortable: true,
+      headerClassName: "text-black",
+      hiddenOnMobile: false,
+      cell: (row) => {
+        const date = new Date(row.booking_checkout_dateandtime);
+        return <span className="whitespace-nowrap">{date.toLocaleDateString()}</span>;
+      }
+    },
+    {
+      header: 'Total',
+      accessor: 'booking_total',
+      sortable: true,
+      
+      headerClassName: "text-black",
+      cell: (row) => (
+        <span>₱{parseFloat(row.booking_total).toLocaleString('en-PH', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}</span>
+      )
+    },
     {
       header: 'Status',
       headerClassName: "text-black",
@@ -108,12 +142,15 @@ function CustomerBookingHis() {
       )
     },
     {
-      header: 'Actions', headerClassName: "text-black",
+      header: 'Actions',
+      headerClassName: "text-black",
       cell: (row) => (
-        <div className="flex gap-4">
+        <div className="flex gap-2 md:gap-4 justify-start">
           <SelectedBooking selectedData={row} />
-          <ArchiveIcon className="cursor-pointer hover:text-red-600"
-            onClick={() => handleShowAlert(row)} />
+          <ArchiveIcon
+            className="cursor-pointer hover:text-red-600 w-5 h-5"
+            onClick={() => handleShowAlert(row)}
+          />
         </div>
       )
     },
@@ -126,26 +163,27 @@ function CustomerBookingHis() {
   }, [])
 
   return (
-
-
-
-    <div className="flex flex-col">
-      {/* Header */}
-      <div className="flex items-center pl-2 sm:pl-4">
-        <h1 className="text-2xl sm:text-4xl font-bold flex items-center gap-1 sm:gap-2">
-          <HistoryIcon className="w-6 h-6" />
+    <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="flex items-center justify-between py-4 mb-2 border-b border-gray-200">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 text-[#113f67]">
+          <Book className="w-5 h-5 sm:w-6 sm:h-6" />
           Booking Management
         </h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm sm:text-base text-gray-500 hidden sm:block">
+            Manage your Booking History
+          </div>
+        </div>
       </div>
-
-
-
-
-      <Card className="px-4 sm:px-10 mt-10 sm:mt-20 w-full bg-transparent shadow-xl">
-        <div className="text-black overflow-x-auto">
-
-          <DataTable columns={col} data={history} itemsPerPage={10} />
-
+      <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
+        <div className="text-black overflow-x-auto w-full">
+          <DataTable
+            columns={col}
+            data={history}
+            // itemsPerPage={isMobile ? 5 : 10} 
+            // hideSearch={isMobile}
+            showNoData={true}
+          />
         </div>
       </Card>
       <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={1} />

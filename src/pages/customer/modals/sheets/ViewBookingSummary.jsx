@@ -6,25 +6,38 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react'
 import RequestAmenities from './RequestAmenities';
 
-function ViewBookingSummary({ bookingData }) {
+function ViewBookingSummary({ getBookingSummary, bookingData }) {
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState([]);
   const [roomsList, setRoomsList] = useState([]);
+  const [bookingId, setBookingId] = useState('');
   // const [charges, setCharges] = useState
 
   const columns = [
     { header: 'Charges category', accessor: 'charges_category_name', sortable: true },
     { header: 'Description', accessor: 'charges_master_name', sortable: true },
     { header: 'Quantity', accessor: 'booking_charges_quantity' },
-    { header: 'Price', accessor: 'charges_master_price', sortable: true },
-    { header: 'Total', accessor: 'total', sortable: true },
+    { header: 'Price', accessor: 
+      (row) => `${row.booking_charges_price === 0 ? "Free" : "₱" + parseFloat(row.booking_charges_price).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      sortable: true },
+    { header: 'Total', accessor: 
+      (row) => `₱${parseFloat(row.total).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      sortable: true },
   ];
 
   useEffect(() => {
     if (isOpen === true) {
       setData(bookingData);
       setRoomsList(bookingData.roomsList)
+      setBookingId(bookingData.booking_id);
       console.log("bookingData", bookingData)
+      console.log("RoomsList", bookingData.roomsList)
     }
   }, [bookingData, isOpen])
 
@@ -67,7 +80,7 @@ function ViewBookingSummary({ bookingData }) {
                   showNoData={false}
                   headerAction={
                     <div className="mt-3">
-                      <RequestAmenities />
+                      <RequestAmenities bookingRoomId={room.booking_room_id} bookingId={bookingId} getBookingSummary={getBookingSummary} roomId={room.room_id} />
                     </div>
                   }
                 />

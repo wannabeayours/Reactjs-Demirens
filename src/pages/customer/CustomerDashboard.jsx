@@ -88,9 +88,9 @@ function CustomerDashboard() {
     }
   }
   const handleClearData = () => {
-    form.reset({checkIn:"", checkOut: ""})
-    setAdultNumber (0);
-    setChildrenNumber (0);
+    form.reset({ checkIn: "", checkOut: "" })
+    setAdultNumber(0);
+    setChildrenNumber(0);
     localStorage.removeItem("checkIn");
     localStorage.removeItem("checkOut");
     localStorage.removeItem("guestNumber");
@@ -159,16 +159,19 @@ function CustomerDashboard() {
                   />
 
                   <div>
-                    <Label className={"mb-2 "}>Adults</Label>
-                    <div className="flex items-center justify-start space-x-2">
+                    <Label className={"mb-2 items-center justify-center"}>Adults</Label>
+                    <div className="flex items-center justify-center space-x-2">
 
                       <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber - 1)} disabled={adultNumber === 0}><MinusIcon /></Button>
-                      <Input
+                      <div>
+                        {adultNumber}
+                      </div>
+                      {/* <Input
                         className="w-1/4"
                         type="number"
                         readOnly
                         value={adultNumber}
-                      />
+                      /> */}
                       <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber + 1)}><Plus /></Button>
 
                     </div>
@@ -179,12 +182,16 @@ function CustomerDashboard() {
                     <div className="flex items-center justify-start space-x-2">
 
                       <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber - 1)} disabled={childrenNumber === 0}><MinusIcon /></Button>
-                      <Input
+                      <div>
+                        {childrenNumber}
+                      </div>
+
+                      {/* <Input
                         className="w-1/4"
                         type="number"
                         readOnly
                         value={childrenNumber}
-                      />
+                      /> */}
                       <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber + 1)}><Plus /></Button>
                     </div>
                   </div>
@@ -218,10 +225,8 @@ function CustomerDashboard() {
           </p>
         ) : (
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full">
             {rooms.map((room, index) => (
-
-
               <Card key={index} className="flex flex-col h-full   rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
 
                 {/* Image Section */}
