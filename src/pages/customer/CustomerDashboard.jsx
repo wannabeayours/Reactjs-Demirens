@@ -260,7 +260,7 @@ function CustomerDashboard() {
                   
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                     {/* Price + Bed icon */}
-                    <h2 className="flex-col text-md font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
+                    <h2 className="flex-col text-sm font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
                       ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
                      
                     </h2>

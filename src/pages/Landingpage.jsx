@@ -292,7 +292,7 @@ function Landingpage() {
                 <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800">ABOUT US</h2>
                 <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto"></div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 {/* Left Column */}
                 <div className="flex flex-col space-y-8 animate-slideInLeft" style={{ animationDelay: '100ms' }}>
@@ -309,7 +309,7 @@ function Landingpage() {
                       <p className="text-white/90 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 opacity-0 group-hover:opacity-100">Experience the perfect blend of elegance and comfort</p>
                     </div>
                   </div>
-                  
+
                   {/* Text block */}
                   <div className="bg-blue-50 p-8 rounded-3xl shadow-lg transform hover:shadow-xl transition-all duration-300 hover:bg-blue-100/70">
                     <h3 className="text-2xl font-semibold text-blue-800 mb-4">Our Promise</h3>
@@ -338,7 +338,7 @@ function Landingpage() {
                       <Badge className="bg-white/20 hover:bg-white/30 transition-colors duration-300 text-white px-4 py-2">Premium Comfort</Badge>
                     </div>
                   </div>
-                  
+
                   {/* Image with overlay */}
                   <div className="relative rounded-3xl overflow-hidden shadow-2xl group h-[60vh] transform transition-transform duration-700 hover:scale-[1.02]">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10 opacity-70 group-hover:opacity-50 transition-opacity duration-500"></div>
@@ -405,11 +405,11 @@ function Landingpage() {
                               {/* Image Section */}
                               <div className="h-[30vh] w-full overflow-hidden rounded-t-2xl relative">
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                                <img 
-                                 src="assets/images/dems1.png"
+                                <img
+                                  src={localStorage.getItem("url") + "images/" + room.roomtype_image}
                                   // src={room.image_url} 
-                                  alt="Room" 
-                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                  alt="Room"
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="absolute top-2 right-2 z-20">
                                   <Badge className="bg-blue-600 text-white font-semibold px-3 py-1 shadow-lg">
@@ -482,14 +482,14 @@ function Landingpage() {
                 <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800">CONTACT US</h2>
                 <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto"></div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 {/* Left Column - Contact Form */}
                 <div className="flex flex-col space-y-6 animate-slideInLeft" style={{ animationDelay: '100ms' }}>
                   <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500">
                     <h3 className="text-3xl font-playfair mb-6 text-blue-800">Have Questions?</h3>
                     <h4 className="text-2xl font-playfair mb-8 text-purple-700">We've Got Answers!</h4>
-                    
+
                     <Form {...contactform}>
                       <form onSubmit={contactform.handleSubmit(onContactSubmit)} className="space-y-6">
                         <FormField
@@ -500,10 +500,10 @@ function Landingpage() {
                               <FormLabel className="text-blue-700 font-medium">Name</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <Input 
-                                    placeholder="Enter your name" 
-                                    {...field} 
-                                    className="pl-10 border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200" 
+                                  <Input
+                                    placeholder="Enter your name"
+                                    {...field}
+                                    className="pl-10 border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200"
                                   />
                                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 group-focus-within:text-blue-600 transition-colors duration-300" size={18} />
                                 </div>
@@ -520,12 +520,12 @@ function Landingpage() {
                               <FormLabel className="text-blue-700 font-medium">Email</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <Input 
-                                    placeholder="Enter your email" 
-                                    {...field} 
-                                    className="pl-10 border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200" 
+                                  <Input
+                                    placeholder="Enter your email"
+                                    {...field}
+                                    className="pl-10 border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200"
                                   />
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 group-focus-within:text-blue-600 transition-colors duration-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 group-focus-within:text-blue-600 transition-colors duration-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
                                 </div>
                               </FormControl>
                               <FormMessage className="text-red-500" />
@@ -540,20 +540,20 @@ function Landingpage() {
                               <FormLabel className="text-blue-700 font-medium">Message</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <textarea 
-                                    placeholder="Enter your message" 
-                                    {...field} 
-                                    className="w-full min-h-[160px] pl-10 border border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200" 
+                                  <textarea
+                                    placeholder="Enter your message"
+                                    {...field}
+                                    className="w-full min-h-[160px] pl-10 border border-blue-200 focus:border-blue-500 rounded-lg py-3 transition-all duration-300 focus:ring-2 focus:ring-blue-200"
                                   />
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-8 text-blue-400 group-focus-within:text-blue-600 transition-colors duration-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-8 text-blue-400 group-focus-within:text-blue-600 transition-colors duration-300" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                                 </div>
                               </FormControl>
                               <FormMessage className="text-red-500" />
                             </FormItem>
                           )}
                         />
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
                         >
                           <span className="group-hover:mr-2 transition-all duration-300">Send Message</span>
@@ -563,7 +563,7 @@ function Landingpage() {
                     </Form>
                   </div>
                 </div>
-                
+
                 {/* Right Column - Image and Text */}
                 <div className="flex flex-col space-y-8 animate-slideInRight" style={{ animationDelay: '200ms' }}>
                   <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 rounded-3xl shadow-lg text-white transform hover:shadow-xl transition-all duration-300">
@@ -575,25 +575,25 @@ function Landingpage() {
                     <div className="mt-8 space-y-4">
                       <div className="flex items-center space-x-4">
                         <div className="bg-white/20 p-3 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                         </div>
                         <span>+63 123 456 7890</span>
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="bg-white/20 p-3 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                         </div>
                         <span>info@demirenhotel.com</span>
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="bg-white/20 p-3 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
                         </div>
                         <span>123 Hotel Street, City, Country</span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="relative rounded-3xl overflow-hidden shadow-2xl group h-[50vh] transform transition-transform duration-700 hover:scale-[1.02]">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10 opacity-70 group-hover:opacity-50 transition-opacity duration-500"></div>
                     <img
