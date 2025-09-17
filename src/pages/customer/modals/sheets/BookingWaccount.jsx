@@ -83,7 +83,10 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
-      if (res.data === 1) {
+      if(res.data === -1){
+        toast.error("The room is not available anymore");
+      }
+      else if (res.data === 1) {
         toast.success("Booking successful");
         setOpen(false);
         localStorage.removeItem('checkIn')

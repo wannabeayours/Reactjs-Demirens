@@ -12,11 +12,11 @@ import AdminTransactionHis from './AdminTransactionHis'
 import AdminVisitorsLog from './AdminVisitorsLog'
 import AdminBookingList from './AdminBookingList'
 import AdminNewBook from './WalkIn_Folder/AddWalkIn'
-import AdminAmenityMaster from './AdminAmenityMaster'
-import AdminChargesCategory from './AdminChargesCategory'
-import AdminChargeMaster from './AdminChargeMaster'
-import AdminDiscountMaster from './AdminDiscountMaster'
-import AdminRoomtype from './AdminRoomtype'
+import AdminAmenityMaster from './Master_Files/AmenityMaster'
+import AdminChargesCategory from './Master_Files/ChargesCategory'
+import AdminChargeMaster from './Master_Files/ChargeMaster'
+import AdminDiscountMaster from './Master_Files/DiscountMaster'
+import AdminRoomtype from './Master_Files/RoomTypeMaster'
 
 export const AdminMain = () => {
 

@@ -35,7 +35,6 @@ const Register = () => {
       try {
         const url = localStorage.getItem("url") + "customer.php";
         const res = await axios.post(url, formData);
-        console.log("res ni allNationalities", res);
 
         if (res.data !== 0 ) {
           setGetNationalities(res.data);

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useForm } from "react-hook-form"
+import { useCallback } from 'react';
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,6 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Link, useNavigate } from 'react-router-dom';
-import ThemeToggle from '@/components/layout/ThemeToggle';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -24,12 +24,12 @@ function Login() {
     const [userInput, setUserInput] = useState("");
     const navigateTo = useNavigate();
 
+    const getRandomColor = () => {
+        const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+        return colors[Math.floor(Math.random() * colors.length)];
+    };
 
-    useEffect(() => {
-        generateCaptchaCharacters();
-    }, []);
-
-    const generateCaptchaCharacters = () => {
+    const generateCaptchaCharacters = useCallback(() => {
         const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*";
         const newCaptcha = [];
         for (let i = 0; i < 5; i++) {
@@ -41,12 +41,11 @@ function Login() {
         setCaptchaCharacters(newCaptcha);
         setUserInput(""); // Reset input field
         setIsCaptchaValid(false);
-    };
+    }, []);
 
-    const getRandomColor = () => {
-        const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
-        return colors[Math.floor(Math.random() * colors.length)];
-    };
+    useEffect(() => {
+        generateCaptchaCharacters();
+    }, [generateCaptchaCharacters]);
 
     const handleInputChange = (e) => {
         setUserInput(e.target.value);
@@ -83,31 +82,46 @@ function Login() {
             }
             const url = localStorage.getItem('url') + "customer.php";
             const jsonData = { username: values.email, password: values.password };
+            console.log("Sending login data:", jsonData);
+            console.log("API URL:", url);
             const formData = new FormData();
             formData.append("operation", "login");
             formData.append("json", JSON.stringify(jsonData));
             const res = await axios.post(url, formData);
-            console.log("res", res);
+            console.log("Full API Response:", res);
+            console.log("Response Data (raw):", res.data);
+            console.log("Response Status:", res.status);
+            
+            // Parse the JSON string response
+            const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+            console.log("Response Data (parsed):", responseData);
+            console.log("Success check:", responseData.success);
+            console.log("User check:", responseData.user);
 
-            if (res.data !== 0) {
+            if (responseData && responseData.success && responseData.user) {
                 toast.success("Successfully log in");
-                localStorage.setItem("userId", res.data.customers_id);
-                localStorage.setItem("customerOnlineId", res.data.customers_online_id);
-                localStorage.setItem("fname", res.data.customers_fname);
-                localStorage.setItem("lname", res.data.customers_lname);
+                const user = responseData.user;
+                localStorage.setItem("userId", user.customers_id);
+                localStorage.setItem("customerOnlineId", user.customers_online_id);
+                localStorage.setItem("fname", user.customers_fname);
+                localStorage.setItem("lname", user.customers_lname);
                 setTimeout(() => {
                     navigateTo("/customer");
                 }, 1500);
             }
             else {
-                toast.error("Invalid username or password");
+                console.log("Login failed - Response structure:", responseData);
+                console.log("Why login failed - success:", responseData?.success, "user:", responseData?.user);
+                if (responseData && responseData.message) {
+                    toast.error(responseData.message);
+                } else {
+                    toast.error("Invalid username or password");
+                }
             }
 
         } catch (error) {
             toast.error("Network error");
             console.log(error);
-
-
         }
     }
 
@@ -165,7 +179,9 @@ function Login() {
                                                         <Input type="password" placeholder="Enter Password" {...field} />
                                                     </FormControl>
                                                     <div className="flex justify-end">
-                                                        <Button variant="link" >Forgot Password?</Button>
+                                                        <Button variant="link" asChild>
+                                                            <Link to="/forgot-password">Forgot Password?</Link>
+                                                        </Button>
                                                     </div>
 
                                                     <FormMessage />

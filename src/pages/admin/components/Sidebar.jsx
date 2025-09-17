@@ -21,11 +21,12 @@ import {
 } from "@/components/ui/collapsible"
 import { Link } from 'react-router-dom'
 
-function Sidebar() {
+function Sidebar({ onCollapse }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [openMasters, setOpenMasters] = useState(false)
   const [openPayments, setOpenPayments] = useState(false)
   const [openBookings, setOpenBookings] = useState(false) // New state for bookings
+  const [isOpen, setIsOpen] = useState(false)
 
   const mainLinks = [
     { path: "/admin/dashboard", icon: <Home className="w-4 h-4" />, label: "Dashboard" },
@@ -58,12 +59,19 @@ const paymentLinks = [
     { path: "/admin/discountmaster", icon: <Percent className="w-4 h-4" />, label: "Discount" },
   ]
 
+  const handleOpenChange = (open) => {
+    setIsOpen(open);
+    if (onCollapse) {
+      onCollapse(open);
+    }
+  };
+
   return (
     <div>
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>
-          <Button>
-            <MenuSquareIcon className="w-4 h-4 text-black" />
+          <Button variant="outline" size="sm" className="shadow-sm">
+            <MenuSquareIcon className="w-4 h-4" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left">

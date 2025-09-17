@@ -32,14 +32,15 @@ export default function ApprovalReceipt() {
   );
   const vat = useMemo(() => subtotal * 0.12, [subtotal]);
   const grandTotal = useMemo(() => subtotal + vat, [subtotal, vat]);
+  const downpayment = useMemo(() => grandTotal * 0.5, [grandTotal]);
 
   // store totals (so you can access them later if needed)
   useState(() => {
     setState((prev) => ({
       ...prev,
-      totals: { subtotal, vat, grandTotal },
+      totals: { subtotal, vat, grandTotal, downpayment },
     }));
-  }, [subtotal, vat, grandTotal, setState]);
+  }, [subtotal, vat, grandTotal, downpayment, setState]);
 
   const confirmApproval = async () => {
     if (!bookingId || !state.adminId || !state.selectedRooms?.length) {
@@ -60,12 +61,16 @@ export default function ApprovalReceipt() {
           booking_id: bookingId,
           admin_id: state.adminId,
           room_ids: state.selectedRooms.map((r) => r.id),
+          booking_totalAmount: grandTotal,
+          booking_downpayment: downpayment,
         })
       );
 
       console.log("Booking Id: ", bookingId);
       console.log("Admin Id: ", state.adminId);
       console.log("Rooms: ", state.selectedRooms.map((r) => r.id));
+      console.log("Total Amount: ", grandTotal);
+      console.log("Downpayment: ", downpayment);
 
       const res = await axios.post(APIConn, fd);
       if (res.data?.success) {
@@ -134,6 +139,18 @@ export default function ApprovalReceipt() {
                   Grand Total
                 </td>
                 <td className="p-3 text-right font-bold">{currency(grandTotal)}</td>
+              </tr>
+              <tr>
+                <td colSpan={3} className="p-3 text-right font-medium">
+                  Downpayment (50%)
+                </td>
+                <td className="p-3 text-right font-medium text-blue-600">{currency(downpayment)}</td>
+              </tr>
+              <tr>
+                <td colSpan={3} className="p-3 text-right font-medium">
+                  Balance (50%)
+                </td>
+                <td className="p-3 text-right font-medium text-green-600">{currency(grandTotal - downpayment)}</td>
               </tr>
             </tfoot>
           </table>

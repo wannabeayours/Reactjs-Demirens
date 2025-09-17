@@ -4,7 +4,14 @@ const WalkInContext = createContext();
 
 export const WalkInProvider = ({ children }) => {
   const [walkInData, setWalkInData] = useState({
-    // Step 1: Customer Info
+    // Step 1: Booking Details
+    checkIn: '',
+    checkOut: '',
+    adult: 1,
+    children: 0,
+    selectedRooms: [], // Array of selected rooms
+
+    // Step 2: Customer Info
     nationality_id: '',
     identification_id: null,
     customers_fname: '',
@@ -14,15 +21,21 @@ export const WalkInProvider = ({ children }) => {
     customers_date_of_birth: '',
     customers_address: '',
 
-    // Step 2: Selected Room
-    selectedRoom: null, // will store the full room object
-
     // Step 3: Payment Info
     payment: {
       method: '',     // cash, card, gcash, etc.
       amountPaid: 0,
       discount: 0,
       referenceNumber: '' // for digital payments
+    },
+
+    // Step 4: Billing Info
+    billing: {
+      roomRate: 0,
+      subtotal: 0,
+      vat: 0,
+      total: 0,
+      nights: 0
     }
   });
 

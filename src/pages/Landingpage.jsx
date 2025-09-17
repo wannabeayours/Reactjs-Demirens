@@ -288,7 +288,7 @@ function Landingpage() {
           {/* Section 2 */}
           <section id="about" className="py-20 px-6 rounded overflow-hidden">
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16 animate-fadeIn">
+              <div className="text-center mb-16 animate-fadeIn mt-14">
                 <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800">ABOUT US</h2>
                 <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto"></div>
               </div>
@@ -478,7 +478,7 @@ function Landingpage() {
 
           <section id="contact" className="py-20 px-6 rounded overflow-hidden bg-gradient-to-b from-white to-blue-50">
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16 animate-fadeIn">
+              <div className="text-center mb-16 animate-fadeIn mt-14">
                 <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800">CONTACT US</h2>
                 <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto"></div>
               </div>

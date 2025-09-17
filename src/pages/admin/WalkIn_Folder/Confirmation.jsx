@@ -44,9 +44,16 @@ export default function Confirmation() {
         total
       },
       selectedRooms: walkInData.selectedRooms.map((room) => ({
-        roomnumber_id: room.id, // rename 'id' to 'roomnumber_id'
-        floor: room.floor,
-        roomtype_name: room.roomtype_name || room.name || 'Room'
+        roomnumber_id: room.roomnumber_id || room.id,
+        roomtype_id: room.roomtype_id,
+        roomtype_name: room.roomtype_name || room.name || 'Room',
+        roomtype_price: room.roomtype_price || room.price,
+        roomfloor: room.roomfloor || room.floor,
+        roomtype_capacity: room.roomtype_capacity || room.capacity,
+        roomtype_beds: room.roomtype_beds || room.beds,
+        roomtype_sizes: room.roomtype_sizes || room.size,
+        roomtype_description: room.roomtype_description || room.description,
+        status_name: room.status_name
       }))
     };
 
@@ -126,7 +133,10 @@ export default function Confirmation() {
           <ul className="list-disc list-inside space-y-1 text-gray-800 dark:text-gray-300">
             {walkInData.selectedRooms.map((room, index) => (
               <li key={index}>
-                <span className="font-medium">Room #{room.id}</span> (Floor {room.floor}) - {room.roomtype_name || room.name || 'Room'}
+                <span className="font-medium">Room #{room.roomnumber_id || room.id}</span> 
+                (Floor {room.roomfloor || room.floor}) - 
+                {room.roomtype_name || room.name || 'Room'} - 
+                ₱{(room.roomtype_price || room.price || 0).toLocaleString()}
               </li>
             ))}
           </ul>

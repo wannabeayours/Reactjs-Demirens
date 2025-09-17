@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "../components/AdminHeader";
 import { useApproval } from "./ApprovalContext";
+import { formatDateOnly } from '@/lib/utils';
 
 export default function OnlineReqList() {
   const APIConn = `${localStorage.url}admin.php`;
@@ -180,13 +181,9 @@ export default function OnlineReqList() {
                             : "-"}
                         </td>
                         <td className="border border-border p-2">
-                          {new Date(booking.booking_checkin_dateandtime).toLocaleDateString("en-US", {
-                            month: "short", day: "numeric", year: "numeric",
-                          })}
+                          {formatDateOnly(booking.booking_checkin_dateandtime)}
                           {" → "}
-                          {new Date(booking.booking_checkout_dateandtime).toLocaleDateString("en-US", {
-                            month: "short", day: "numeric", year: "numeric",
-                          })}
+                          {formatDateOnly(booking.booking_checkout_dateandtime)}
                         </td>
                         <td className="border border-border p-2">
                           ₱{Number(booking.booking_downpayment || 0).toLocaleString()}

@@ -18,6 +18,7 @@ import BookingWaccount from './modals/sheets/BookingWaccount'
 import DatePicker from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from 'react-router-dom'
+import Moreinfo from './modals/sheets/Moreinfo';
 
 
 
@@ -231,10 +232,10 @@ function CustomerDashboard() {
 
                 {/* Image Section */}
                 <div className="w-full h-56 overflow-hidden relative">
-                  <img 
-                    src={localStorage.getItem("url") +"images/"+ room.roomtype_image} 
-                    alt="Room" 
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                  <img
+                    src={localStorage.getItem("url") + "images/" + room.roomtype_image}
+                    alt="Room"
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                   <div className="absolute top-0 right-0 m-2">
                     <Badge className="bg-blue-600 text-white font-medium px-3 py-1">
@@ -246,7 +247,7 @@ function CustomerDashboard() {
                 {/* Info Section */}
                 <div className="flex flex-col p-5 flex-1">
                   <h5 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-900 tracking-tight">{room.roomtype_name}</h5>
-                  
+
                   <p
                     className="text-sm md:text-base text-gray-700 mb-4 overflow-hidden leading-relaxed font-light"
                     style={{
@@ -257,12 +258,12 @@ function CustomerDashboard() {
                   >
                     {room.roomtype_description}
                   </p>
-                  
+
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                     {/* Price + Bed icon */}
                     <h2 className="flex-col text-sm font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
                       ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
-                     
+
                     </h2>
 
                     {/* Room Details in Badge Row */}
@@ -279,7 +280,8 @@ function CustomerDashboard() {
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-3 border-t border-blue-100">
+                  <div className="flex mt-auto pt-3 border-t border-blue-100 gap-2">
+                     <Moreinfo room={room} />
                     {room.status_id === 3 ? (
                       <BookingWaccount
                         rooms={rooms}
@@ -293,6 +295,8 @@ function CustomerDashboard() {
                     )}
                   </div>
                 </div>
+
+
 
 
               </Card>

@@ -56,8 +56,8 @@ const PaymentMethod = () => {
 
   // Calculate total room rate from multiple selected rooms or single room
   const roomRate = walkInData.selectedRooms
-    ? walkInData.selectedRooms.reduce((sum, room) => sum + (room.price || 0), 0)
-    : walkInData.selectedRoom?.price || 0;
+    ? walkInData.selectedRooms.reduce((sum, room) => sum + (room.roomtype_price || room.price || 0), 0)
+    : walkInData.selectedRoom?.roomtype_price || walkInData.selectedRoom?.price || 0;
 
   const subtotal = roomRate * nights;
   const vat = subtotal * 0.12;
@@ -215,13 +215,13 @@ const PaymentMethod = () => {
             {walkInData.selectedRooms?.length > 0
               ? walkInData.selectedRooms.map((room, idx) => (
                   <li key={idx}>
-                    Room #{room.id} (Floor {room.floor}) - {room.roomtype_name || room.name || 'Room'} - ₱{room.price?.toLocaleString()}
+                    Room #{room.roomnumber_id || room.id} (Floor {room.roomfloor || room.floor}) - {room.roomtype_name || room.name || 'Room'} - ₱{(room.roomtype_price || room.price || 0).toLocaleString()}
                   </li>
                 ))
               : walkInData.selectedRoom
               ? (
                 <li>
-                  Room #{walkInData.selectedRoom.id} - {walkInData.selectedRoom.name} - ₱{walkInData.selectedRoom.price?.toLocaleString()}
+                  Room #{walkInData.selectedRoom.roomnumber_id || walkInData.selectedRoom.id} - {walkInData.selectedRoom.roomtype_name || walkInData.selectedRoom.name} - ₱{(walkInData.selectedRoom.roomtype_price || walkInData.selectedRoom.price || 0).toLocaleString()}
                 </li>
               )
               : <li>No rooms selected</li>}

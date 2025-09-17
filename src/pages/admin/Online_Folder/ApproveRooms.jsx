@@ -25,6 +25,8 @@ export default function ApproveRooms() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [checkIn, setCheckIn] = useState(state.checkIn || "");
+  const [checkOut, setCheckOut] = useState(state.checkOut || "");
 
   const bookingId = state.bookingId || Number(bookingIdParam);
 
@@ -43,7 +45,7 @@ export default function ApproveRooms() {
       const fd = new FormData();
       // If your API supports filtering by types, send JSON here:
       // fd.append("json", JSON.stringify({ roomtype_ids: state.requestedRoomTypes.map(t => t.id) }));
-      fd.append("method", "view_rooms");
+      fd.append("method", "viewRooms");
       const res = await axios.post(APIConn, fd);
       const data = Array.isArray(res.data) ? res.data : [];
 
@@ -61,31 +63,82 @@ export default function ApproveRooms() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filter: only room types requested for this booking
+  // Filter: only requested types (if provided) and date-available; ignore status
   const requestedTypeNames = useMemo(
     () => new Set((state.requestedRoomTypes || []).map((t) => (t?.name || "").toLowerCase())),
     [state.requestedRoomTypes]
   );
 
-  const filteredByType = useMemo(
-    () =>
-      rooms.filter((room) =>
+  const finalList = useMemo(() => {
+    const q = search.toLowerCase();
+    return rooms
+      .filter((room) =>
         requestedTypeNames.size
           ? requestedTypeNames.has((room.roomtype_name || "").toLowerCase())
           : true
-      ),
-    [rooms, requestedTypeNames]
-  );
+      )
+      .filter((room) =>
+        room.roomtype_name?.toLowerCase().includes(q) ||
+        room.roomtype_description?.toLowerCase().includes(q)
+      )
+      .filter((room) => isAvailable(room, checkIn, checkOut));
+  }, [rooms, requestedTypeNames, search, checkIn, checkOut]);
 
-  const finalList = useMemo(
-    () =>
-      filteredByType.filter(
-        (room) =>
-          room.roomtype_name?.toLowerCase().includes(search.toLowerCase()) ||
-          room.roomtype_description?.toLowerCase().includes(search.toLowerCase())
-      ),
-    [filteredByType, search]
-  );
+  // Availability helpers
+  const parseDate = (str) => (str ? new Date(str + "T00:00:00") : null);
+  const rangesOverlap = (startA, endA, startB, endB) => startA < endB && endA > startB; // half-open
+  const addDays = (date, days) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+  };
+  const fmt = (date) => (date ? date.toISOString().slice(0, 10) : "");
+  const tomorrow = fmt(addDays(new Date(), 1));
+  const isAvailable = (room, startStr, endStr) => {
+    const start = parseDate(startStr);
+    const end = parseDate(endStr);
+    if (!start || !end) return true;
+    const bookings = Array.isArray(room.bookings) ? room.bookings : [];
+    for (const b of bookings) {
+      const bStart = parseDate(b.checkin_date);
+      const bEnd = parseDate(b.checkout_date);
+      if (!bStart || !bEnd) continue;
+      if (rangesOverlap(start, end, bStart, bEnd)) return false;
+    }
+    return true;
+  };
+
+  // Date input handlers with validation
+  const handleCheckInChange = (value) => {
+    const inDate = parseDate(value);
+    const outDate = parseDate(checkOut);
+    // enforce earliest check-in as tomorrow
+    if (value && value < tomorrow) {
+      const t = parseDate(tomorrow);
+      const next = addDays(t, 1);
+      setCheckIn(tomorrow);
+      if (!outDate || t >= outDate) setCheckOut(fmt(next));
+      return;
+    }
+    if (inDate && outDate && inDate >= outDate) {
+      const next = addDays(inDate, 1);
+      setCheckIn(value);
+      setCheckOut(fmt(next));
+    } else {
+      setCheckIn(value);
+    }
+  };
+
+  const handleCheckOutChange = (value) => {
+    const inDate = parseDate(checkIn);
+    const outDate = parseDate(value);
+    if (inDate && outDate && outDate <= inDate) {
+      const next = addDays(inDate, 1);
+      setCheckOut(fmt(next));
+    } else {
+      setCheckOut(value);
+    }
+  };
 
   // Selected rooms (limit: requestedRoomCount)
   const [selected, setSelected] = useState(state.selectedRooms || []);
@@ -93,6 +146,8 @@ export default function ApproveRooms() {
   const remaining = Math.max(0, maxSelect - selected.length);
 
   const toggle = (room) => {
+    // prevent selecting rooms that conflict with dates
+    if (!isAvailable(room, checkIn, checkOut)) return;
     const exists = selected.some((r) => r.id === room.roomnumber_id);
     if (exists) {
       setSelected((prev) => prev.filter((r) => r.id !== room.roomnumber_id));
@@ -110,11 +165,15 @@ export default function ApproveRooms() {
   };
 
   const proceed = () => {
+    if (!checkIn || !checkOut) {
+      alert("Please set both Check-In and Check-Out.");
+      return;
+    }
     if (selected.length !== maxSelect) {
       alert(`Please select exactly ${maxSelect} room(s).`);
       return;
     }
-    setState((prev) => ({ ...prev, selectedRooms: selected }));
+    setState((prev) => ({ ...prev, selectedRooms: selected, checkIn, checkOut }));
     navigate(`/admin/receipt/${bookingId}`);
   };
 
@@ -146,6 +205,30 @@ export default function ApproveRooms() {
           <span className="font-medium">{state.checkOut}</span> • Nights:{" "}
           <span className="font-medium">{state.nights}</span>
         </p>
+
+        {/* Date controls (allow override) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-foreground">Check-In</label>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => handleCheckInChange(e.target.value)}
+              min={tomorrow}
+              className="w-full border rounded-lg px-3 py-2 bg-background text-foreground"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground">Check-Out</label>
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => handleCheckOutChange(e.target.value)}
+              min={checkIn ? fmt(addDays(parseDate(checkIn), 1)) : fmt(new Date())}
+              className="w-full border rounded-lg px-3 py-2 bg-background text-foreground"
+            />
+          </div>
+        </div>
 
         {/* Requested Summary */}
         <div className="mb-6 flex flex-wrap gap-2">
@@ -182,6 +265,7 @@ export default function ApproveRooms() {
             {finalList.map((room, i) => {
               const imgs = room.images ? room.images.split(",").map((s) => s.trim()) : [];
               const isPicked = selected.some((r) => r.id === room.roomnumber_id);
+              const available = isAvailable(room, checkIn, checkOut);
 
               return (
                 <div
@@ -227,19 +311,24 @@ export default function ApproveRooms() {
                       {room.roomtype_description}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Capacity: {room.room_capacity}
+                      Capacity: {room.roomtype_capacity}
                     </p>
+
+                    {/* Availability indicator */}
+                    {checkIn && checkOut && (
+                      <div className="mt-2">
+                        {available ? (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Available</span>
+                        ) : (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Conflict on selected dates</span>
+                        )}
+                      </div>
+                    )}
 
                     <button
                       onClick={() => toggle(room)}
-                      className={`mt-3 px-4 py-2 rounded text-white ${
-                        isPicked
-                          ? "bg-green-600 hover:bg-green-700"
-                          : selected.length >= maxSelect
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-primary hover:bg-primary/90"
-                      }`}
-                      disabled={!isPicked && selected.length >= maxSelect}
+                      className={`mt-3 px-4 py-2 rounded text-white ${isPicked ? "bg-green-600 hover:bg-green-700" : !available ? "bg-gray-400 cursor-not-allowed" : selected.length >= maxSelect ? "bg-gray-400 cursor-not-allowed" : "bg-primary hover:bg-primary/90"}`}
+                      disabled={!available || (!isPicked && selected.length >= maxSelect)}
                     >
                       {isPicked ? "Selected" : "Select Room"}
                     </button>

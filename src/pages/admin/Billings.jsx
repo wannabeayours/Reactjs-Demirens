@@ -12,6 +12,7 @@ import {
  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from 'sonner'
+import { formatDateOnly } from '@/lib/utils'
 
 const Billings = () => {
  const APIConn = `${localStorage.url}admin.php`
@@ -49,15 +50,7 @@ const Billings = () => {
   })
  }, [bookings, searchName, statusType])
 
- const formatDate = (dateString) => {
-  if (!dateString || dateString.startsWith("1970")) return "N/A"
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-   year: 'numeric',
-   month: 'short',
-   day: 'numeric',
-  })
- }
+ // Using formatDateOnly from utils instead of custom formatDate function
 
  const formatCurrency = (amount) => {
   return Number(amount).toLocaleString('en-PH', {
@@ -86,19 +79,19 @@ const Billings = () => {
   },
   {
    header: 'Check-In',
-   accessor: (row) => formatDate(row.booking_checkin_dateandtime),
+   accessor: (row) => formatDateOnly(row.booking_checkin_dateandtime),
   },
   {
    header: 'Check-Out',
-   accessor: (row) => formatDate(row.booking_checkout_dateandtime),
+   accessor: (row) => formatDateOnly(row.booking_checkout_dateandtime),
   },
   {
    header: 'Created At',
-   accessor: (row) => formatDate(row.booking_created_at),
+   accessor: (row) => formatDateOnly(row.booking_created_at),
   },
   {
    header: 'Updated At',
-   accessor: (row) => row.updated_at ? formatDate(row.updated_at) : 'Not Updated',
+   accessor: (row) => row.updated_at ? formatDateOnly(row.updated_at) : 'Not Updated',
   },
   {
    header: 'Actions',

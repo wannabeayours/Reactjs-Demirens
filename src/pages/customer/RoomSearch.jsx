@@ -308,7 +308,8 @@ function RoomSearch() {
 
                   {/* Image Section */}
                   <div className="h-[30vh] w-full overflow-hidden ">
-                    <img src={room.image_url} alt="Room" className="w-full h-full object-cover" />
+                    <img
+                      src={localStorage.getItem("url") + "images/" + room.roomtype_image} alt="Room" className="w-full h-full object-cover" />
 
                   </div>
 
@@ -352,7 +353,8 @@ function RoomSearch() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="mt-auto">
+                    <div className="flex mt-auto gap-2">
+
                       {room.status_id === 3 ? (
                         <BookingNoAccount
                           rooms={rooms}
@@ -364,6 +366,7 @@ function RoomSearch() {
                       ) : (
                         <Button disabled className="w-full">Book Now</Button>
                       )}
+                      <Button >View Details</Button>
                     </div>
                   </div>
 

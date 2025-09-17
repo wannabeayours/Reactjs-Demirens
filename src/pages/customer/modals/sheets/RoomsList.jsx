@@ -37,7 +37,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
    const jsonData = {
     "checkIn": checkIn,
     "checkOut": checkOut,
-    "guestNumber": Number(adultNumber) + Number(childrenNumber)
+    "guestNumber": 0
    }
    const formData = new FormData();
    formData.append("operation", "getAvailableRoomsWithGuests");

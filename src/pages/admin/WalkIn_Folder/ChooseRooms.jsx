@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminHeader from '../components/AdminHeader';
 import { useNavigate } from 'react-router-dom';
 import { useWalkIn } from './WalkInContext';
@@ -34,9 +34,71 @@ const ChooseRooms = () => {
   // Extra filter state
   const [floor, setFloor] = useState('');
 
-  const getRooms = async () => {
+  // Availability helpers
+  const parseDate = (str) => (str ? new Date(str + 'T00:00:00') : null);
+  const addDays = (date, days) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+  };
+  const fmt = (date) => (date ? date.toISOString().slice(0, 10) : '');
+  const tomorrow = fmt(addDays(new Date(), 1));
+  const rangesOverlap = (startA, endA, startB, endB) => {
+    // Treat as half-open interval [start, end)
+    return startA < endB && endA > startB;
+  };
+  const isRoomAvailableForRange = (room, startStr, endStr) => {
+    const start = parseDate(startStr);
+    const end = parseDate(endStr);
+    if (!start || !end) return true; // no dates selected yet
+    const bookings = Array.isArray(room.bookings) ? room.bookings : [];
+    for (const b of bookings) {
+      const bStart = parseDate(b.checkin_date);
+      const bEnd = parseDate(b.checkout_date);
+      if (!bStart || !bEnd) continue;
+      if (rangesOverlap(start, end, bStart, bEnd)) return false;
+    }
+    return true;
+  };
+
+  // Date input handlers with validation
+  const handleCheckInChange = (value) => {
+    const newIn = value;
+    const inDate = parseDate(newIn);
+    const outDate = parseDate(checkOut);
+    // enforce earliest check-in as tomorrow
+    if (newIn && newIn < tomorrow) {
+      const t = parseDate(tomorrow);
+      const next = addDays(t, 1);
+      setCheckIn(tomorrow);
+      if (!outDate || t >= outDate) setCheckOut(fmt(next));
+      return;
+    }
+    if (inDate && outDate && inDate >= outDate) {
+      // auto-move checkout to next day
+      const next = addDays(inDate, 1);
+      setCheckIn(newIn);
+      setCheckOut(fmt(next));
+    } else {
+      setCheckIn(newIn);
+    }
+  };
+
+  const handleCheckOutChange = (value) => {
+    const inDate = parseDate(checkIn);
+    const outDate = parseDate(value);
+    if (inDate && outDate && outDate <= inDate) {
+      // force at least one night
+      const next = addDays(inDate, 1);
+      setCheckOut(fmt(next));
+    } else {
+      setCheckOut(value);
+    }
+  };
+
+  const getRooms = useCallback(async () => {
     const roomReq = new FormData();
-    roomReq.append('method', 'view_rooms');
+    roomReq.append('method', 'viewRooms');
 
     try {
       const res = await axios.post(APIConn, roomReq);
@@ -47,12 +109,12 @@ const ChooseRooms = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [APIConn]);
 
   useEffect(() => {
     setLoading(true);
     getRooms();
-  }, []);
+  }, [getRooms]);
 
   // Toggle selection of a room
   const toggleRoomSelection = (room) => {
@@ -62,8 +124,23 @@ const ChooseRooms = () => {
     } else {
       setSelectedRooms(prev => [...prev, {
         id: room.roomnumber_id,
+        roomnumber_id: room.roomnumber_id,
+        roomtype_id: room.roomtype_id,
         name: room.roomtype_name,
+        roomtype_name: room.roomtype_name,
         price: Number(room.roomtype_price),
+        roomtype_price: Number(room.roomtype_price),
+        floor: room.roomfloor,
+        roomfloor: room.roomfloor,
+        capacity: room.roomtype_capacity,
+        roomtype_capacity: room.roomtype_capacity,
+        beds: room.roomtype_beds,
+        roomtype_beds: room.roomtype_beds,
+        size: room.roomtype_sizes,
+        roomtype_sizes: room.roomtype_sizes,
+        description: room.roomtype_description,
+        roomtype_description: room.roomtype_description,
+        status_name: room.status_name
       }]);
     }
   };
@@ -106,16 +183,18 @@ const ChooseRooms = () => {
   // Total guests
   const totalGuests = adult + children;
 
-  // Filter rooms by search + guest count + floor
+  // Filter rooms by dates + search + guest count + floor (status ignored)
   const filteredRooms = rooms.filter(room => {
     const matchesSearch =
       room.roomtype_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       room.roomtype_description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesGuests = totalGuests ? room.room_capacity >= totalGuests : true;
+    const matchesGuests = totalGuests ? room.roomtype_capacity >= totalGuests : true;
     const matchesFloor = floor ? room.roomfloor === Number(floor) : true;
 
-    return matchesSearch && matchesGuests && matchesFloor;
+    const availableOnDates = isRoomAvailableForRange(room, checkIn, checkOut);
+
+    return matchesSearch && matchesGuests && matchesFloor && availableOnDates;
   });
 
   // Scroll to bottom handler
@@ -148,7 +227,8 @@ const ChooseRooms = () => {
             <input
               type="date"
               value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
+              onChange={(e) => handleCheckInChange(e.target.value)}
+              min={tomorrow}
               className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
             />
           </div>
@@ -157,7 +237,8 @@ const ChooseRooms = () => {
             <input
               type="date"
               value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
+              onChange={(e) => handleCheckOutChange(e.target.value)}
+              min={checkIn ? fmt(addDays(parseDate(checkIn), 1)) : fmt(new Date())}
               className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
             />
           </div>
@@ -280,8 +361,23 @@ const ChooseRooms = () => {
                       {room.roomtype_description}
                     </p>
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      Capacity: {room.room_capacity}
+                      Capacity: {room.roomtype_capacity}
                     </p>
+
+                    {/* Availability/Conflict badge */}
+                    {checkIn && checkOut && (
+                      <div className="mt-2">
+                        {isRoomAvailableForRange(room, checkIn, checkOut) ? (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                            Available on selected dates
+                          </span>
+                        ) : (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">
+                            Conflict with existing booking
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <button
                       onClick={() => toggleRoomSelection(room)}
