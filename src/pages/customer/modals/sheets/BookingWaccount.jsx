@@ -83,7 +83,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
       console.log("noOOo", res);
-      if(res.data === -1){
+      if (res.data === -1) {
         toast.error("The room is not available anymore");
       }
       else if (res.data === 1) {
@@ -148,80 +148,88 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         roomtype_capacity: selectedRoom.roomtype_capacity,
       };
 
+      // Check if room is already selected to avoid duplicates
       setSelectedRooms(prev => {
         const isAlreadySelected = prev.some(room => room.room_type === selected.room_type);
         if (isAlreadySelected) {
           return prev; // Don't add duplicate
         }
-        return [...prev, selected]; // Add new room
+        
+        // Add new room and initialize its counts
+        const newRooms = [...prev, selected];
+        
+        // Initialize counts for this specific room only
+        const roomTypeId = selected.room_type;
+        
+        // Set guest count for this room
+        const validGuestNum = Math.min(guestNum || 1, selected.roomtype_capacity || 1);
+        setGuestCounts(prevCounts => ({
+          ...prevCounts,
+          [roomTypeId]: validGuestNum
+        }));
+        
+        // Set adult count for this room only
+        const initAdults = adultNumber || parseInt(storedAdult) || 1;
+        setAdultCounts(prevCounts => ({
+          ...prevCounts,
+          [roomTypeId]: initAdults
+        }));
+        
+        // Set children count for this room only
+        const initChildren = childrenNumber || parseInt(storedChildren) || 0;
+        setChildrenCounts(prevCounts => ({
+          ...prevCounts,
+          [roomTypeId]: initChildren
+        }));
+        
+        return newRooms;
       });
-
-      // ✅ Clamp guest number to max_capacity
-      const validGuestNum = Math.min(guestNum, selected.roomtype_capacity);
-      setGuestCounts({
-        [selected.room_type]: validGuestNum
-      });
-
-      // Initialize adults
-      const initialAdult = Number.isFinite(storedAdult)
-        ? Math.max(0, storedAdult)
-        : (typeof adultNumber === 'number' ? Math.max(0, adultNumber) : 0);
-      setAdultCounts(prev => ({
-        ...prev,
-        [selected.room_type]: initialAdult
-      }));
-
-      const initAdults = adultNumber || parseInt(storedAdult) || 1
-      const initChildren = childrenNumber || parseInt(storedChildren) || 0
-      setAdultCounts(initAdults)
-      setChildrenCounts(initChildren)
-
     }
-  }, [open, rooms, selectedRoom, adultNumber, childrenNumber]);
+  }, [adultNumber, childrenNumber, open, rooms, selectedRoom]);
 
 
+  // This effect only initializes counts for newly added rooms
   useEffect(() => {
-    setGuestCounts(prev => {
-      const updated = { ...prev };
-      selectedRooms.forEach(room => {
-        if (!updated[room.room_type]) {
-          updated[room.room_type] = Math.min(
+    // For each room in selectedRooms, ensure it has counts initialized
+    selectedRooms.forEach(room => {
+      const roomTypeId = room.room_type;
+      
+      // Only initialize if this room doesn't have counts yet
+      if (guestCounts[roomTypeId] === undefined) {
+        // Initialize guest count
+        setGuestCounts(prev => ({
+          ...prev,
+          [roomTypeId]: Math.min(
             parseInt(localStorage.getItem('guestNumber')) || 1,
             room.roomtype_capacity || 1
-          );
-        }
-      });
-      return updated;
-    });
-
-    // Initialize adult and children counts for new rooms
-    setAdultCounts(prev => {
-      const updated = { ...prev };
-      selectedRooms.forEach(room => {
-        if (!updated[room.room_type]) {
-          const storedAdult = parseInt(localStorage.getItem('adult')) || 1;
-          updated[room.room_type] = Math.min(
-            Math.max(0, storedAdult),
+          )
+        }));
+      }
+      
+      // Only initialize adult count if not already set
+      if (adultCounts[roomTypeId] === undefined) {
+        setAdultCounts(prev => ({
+          ...prev,
+          [roomTypeId]: Math.min(
+            Math.max(0, parseInt(localStorage.getItem('adult')) || 1),
             room.roomtype_capacity || Number.MAX_SAFE_INTEGER
-          );
-        }
-      });
-      return updated;
+          )
+        }));
+      }
+      
+      // Only initialize children count if not already set
+      if (childrenCounts[roomTypeId] === undefined) {
+        const storedChildren = parseInt(localStorage.getItem('children')) || 0;
+        const currentAdults = adultCounts[roomTypeId] || 0;
+        const remainingCapacity = Math.max(0, (room.roomtype_capacity || Number.MAX_SAFE_INTEGER) - currentAdults);
+        
+        setChildrenCounts(prev => ({
+          ...prev,
+          [roomTypeId]: Math.min(storedChildren, remainingCapacity)
+        }));
+      }
     });
-
-    setChildrenCounts(prev => {
-      const updated = { ...prev };
-      selectedRooms.forEach(room => {
-        if (!updated[room.room_type]) {
-          const storedChildren = parseInt(localStorage.getItem('children')) || 0;
-          const currentAdults = updated[room.room_type] || 0;
-          const remainingCapacity = Math.max(0, (room.roomtype_capacity || Number.MAX_SAFE_INTEGER) - currentAdults);
-          updated[room.room_type] = Math.min(storedChildren, remainingCapacity);
-        }
-      });
-      return updated;
-    });
-  }, [selectedRooms]);
+  }, [selectedRooms, guestCounts, adultCounts, childrenCounts]);
 
   // // Keep localStorage in sync when adults change
   // useEffect(() => {
@@ -290,7 +298,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         <SheetTrigger asChild>
           <Button >Book Now</Button>
         </SheetTrigger>
-       <SheetContent side="bottom" className="h-auto max-h-[97vh] overflow-y-auto rounded-t-3xl ">
+        <SheetContent side="bottom" className="h-auto max-h-[97vh] overflow-y-auto rounded-t-3xl ">
           <div  >
             <div className="p-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
@@ -375,10 +383,14 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                 variant="outline"
                                                 className="rounded-full"
                                                 onClick={() => {
-                                                  const current = adultCounts[room.room_type] || 0;
+                                                  // Get the current count for THIS specific room only
+                                                  const roomTypeId = room.room_type;
+                                                  const current = adultCounts[roomTypeId] || 0;
+                                                  
+                                                  // Update only THIS room's count
                                                   setAdultCounts(prev => ({
                                                     ...prev,
-                                                    [room.room_type]: Math.max(0, current - 1)
+                                                    [roomTypeId]: Math.max(0, current - 1)
                                                   }));
                                                 }}
                                                 disabled={(adultCounts[room.room_type] || 0) <= 1}
@@ -407,12 +419,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                 variant="outline"
                                                 className="rounded-full"
                                                 onClick={() => {
-                                                  const current = adultCounts[room.room_type] || 0;
-                                                  const currentChildren = childrenCounts[room.room_type] || 0;
+                                                  // Get the current counts for THIS specific room only
+                                                  const roomTypeId = room.room_type;
+                                                  const current = adultCounts[roomTypeId] || 0;
+                                                  const currentChildren = childrenCounts[roomTypeId] || 0;
+                                                  
+                                                  // Check capacity for THIS room only
                                                   if ((current + currentChildren) < (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)) {
+                                                    // Update only THIS room's count
                                                     setAdultCounts(prev => ({
                                                       ...prev,
-                                                      [room.room_type]: current + 1
+                                                      [roomTypeId]: current + 1
                                                     }));
                                                   }
                                                 }}
@@ -437,10 +454,14 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                 variant="outline"
                                                 className="rounded-full"
                                                 onClick={() => {
-                                                  const current = childrenCounts[room.room_type] || 0;
+                                                  // Get the current count for THIS specific room only
+                                                  const roomTypeId = room.room_type;
+                                                  const current = childrenCounts[roomTypeId] || 0;
+                                                  
+                                                  // Update only THIS room's count
                                                   setChildrenCounts(prev => ({
                                                     ...prev,
-                                                    [room.room_type]: Math.max(0, current - 1)
+                                                    [roomTypeId]: Math.max(0, current - 1)
                                                   }));
                                                 }}
                                                 disabled={(childrenCounts[room.room_type] || 0) <= 0}
@@ -469,12 +490,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                                                 variant="outline"
                                                 className="rounded-full"
                                                 onClick={() => {
-                                                  const current = childrenCounts[room.room_type] || 0;
-                                                  const currentAdults = adultCounts[room.room_type] || 0;
+                                                  // Get the current counts for THIS specific room only
+                                                  const roomTypeId = room.room_type;
+                                                  const current = childrenCounts[roomTypeId] || 0;
+                                                  const currentAdults = adultCounts[roomTypeId] || 0;
+                                                  
+                                                  // Check capacity for THIS room only
                                                   if ((currentAdults + current) < (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)) {
+                                                    // Update only THIS room's count
                                                     setChildrenCounts(prev => ({
                                                       ...prev,
-                                                      [room.room_type]: current + 1
+                                                      [roomTypeId]: current + 1
                                                     }));
                                                   }
                                                 }}
@@ -644,7 +670,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 >
                   Confirm Booking
                 </Button> */}
-                 <Button
+                <Button
 
 
                   onClick={() => {

@@ -59,7 +59,7 @@ function Login() {
 
 
     const schema = z.object({
-        email: z.string().min(1,{ message: "Please enter username" }),
+        email: z.string().min(1, { message: "Please enter username" }),
         password: z.string().min(1, { message: "Password is required" }),
         // captcha: z.string().min(1, { message: "Captcha is required" })
         //     .refine((val) => parseInt(val) === sum, { message: "Incorrect Captcha" })
@@ -76,7 +76,7 @@ function Login() {
 
     const onSubmit = async (values) => {
         try {
-            if (isCaptchaValid === false){
+            if (isCaptchaValid === false) {
                 toast.error("Invalid CAPTCHA");
                 return;
             }
@@ -91,7 +91,7 @@ function Login() {
             console.log("Full API Response:", res);
             console.log("Response Data (raw):", res.data);
             console.log("Response Status:", res.status);
-            
+
             // Parse the JSON string response
             const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
             console.log("Response Data (parsed):", responseData);
@@ -127,134 +127,157 @@ function Login() {
 
 
     return (
-        <>
+        <div className="min-h-screen flex flex-col md:flex-row bg-[#F7FBFC]">
+            {/* Left side - Hidden on mobile */}
+            <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#113f67] via-[#34699A] to-[#226597]344rd p-6 sm:p-8 md:p-10 flex-col justify-center items-center text-white">
+                <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Welcome to Demirens Hotel</h1>
+                    <p className="text-base sm:text-lg md:text-xl opacity-90">Login to access your account and manage your bookings.</p>
 
-            <div className="h-screen flex justify-center items-center px-4">
-                <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-                    <div className="grid grid-cols-1 md:grid-cols-2 h-full">
-
-                        {/* Left side - Blue */}
-           
-
-                        {/* Right side - Form */}
-                        <div className="flex justify-center items-center p-8">
-                            <div className="w-full max-w-md">
-                                {/* Title */}
-                                <h2 className="text-3xl md:text-4xl font-bold text-[#769FCD] font-playfair text-center">
-                                    DEMIREN HOTEL
-                                </h2>
-                                <p className="text-muted-foreground text-lg text-center mb-6">
-                                    Login to your account
-                                </p>
-
-                                {/* Form */}
-                                <Form {...form}>
-                                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                        {/* Email */}
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Username</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Enter username" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Password */}
-                                        <FormField
-                                            control={form.control}
-                                            name="password"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <div className="flex justify-between items-center">
-                                                        <FormLabel>Password</FormLabel>
-
-                                                    </div>
-                                                    <FormControl>
-                                                        <Input type="password" placeholder="Enter Password" {...field} />
-                                                    </FormControl>
-                                                    <div className="flex justify-end">
-                                                        <Button variant="link" asChild>
-                                                            <Link to="/forgot-password">Forgot Password?</Link>
-                                                        </Button>
-                                                    </div>
-
-                                                    <FormMessage />
-
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Captcha */}
-                                        <div className="text-center">
-                                            <h2 className="text-lg font-semibold mb-2">Security CAPTCHA</h2>
-                                            <div className="flex justify-center items-center gap-3">
-                                                {captchaCharacters.map((c, index) => (
-                                                    <span
-                                                        key={index}
-                                                        style={{ color: c.color, fontSize: "28px", fontWeight: "bold" }}
-                                                    >
-                                                        {c.char}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            <Input
-                                                type="text"
-                                                value={userInput}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter CAPTCHA characters"
-                                                className="border p-2 w-full rounded mt-3 text-center"
-                                            />
-
-                                            <div className="flex justify-center mt-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="link"
-                                                    onClick={generateCaptchaCharacters}
-                                                    className="text-blue-500 text-sm underline"
-                                                >
-                                                    Refresh CAPTCHA
-                                                </Button>
-                                            </div>
-
-                                            {!isCaptchaValid && userInput.length > 0 && (
-                                                <p className="text-red-500 text-sm mt-1">
-                                                    Incorrect CAPTCHA, try again.
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Login button */}
-                                        {isCaptchaValid && (
-                                            <Button className="w-full mt-4 text-lg py-6">Login</Button>
-                                        )}
-
-                                        {/* Sign up link */}
-                                        <div className="text-center">
-                                            <p className="text-sm text-muted-foreground">
-                                                Don't have an account?{" "}
-                                                <Link to="/register" className="text-primary underline">
-                                                    Sign Up
-                                                </Link>
-                                            </p>
-                                        </div>
-                                    </form>
-                                </Form>
-                            </div>
-                        </div>
+                    {/* SVG Icon */}
+                    <div className="flex justify-center mt-6 sm:mt-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
                     </div>
                 </div>
             </div>
 
+            {/* Right side - Form */}
+            <div className="w-full md:w-1/2 px-4 py-6 sm:px-6 sm:py-8 md:p-10 flex items-center justify-center">
+                <div className="w-full max-w-md space-y-4 sm:space-y-6">
+                    <div className="text-center mb-4 sm:mb-6">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold  text-[#769FCD] ">Login to Your Account</h2>
+                        <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1 sm:mt-2">Enter your credentials to access your account</p>
+                    </div>
 
+                    {/* Form */}
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+                            {/* Email */}
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1.5">
+                                        <FormLabel className="text-sm sm:text-base font-medium">Username</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Enter username"
+                                                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs sm:text-sm" />
+                                    </FormItem>
+                                )}
+                            />
 
-        </>
+                            {/* Password */}
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <FormLabel className="text-sm sm:text-base font-medium">Password</FormLabel>
+                                        </div>
+                                        <FormControl>
+                                            <Input
+                                                type="password"
+                                                placeholder="Enter Password"
+                                                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <div className="flex justify-end">
+                                            <Button variant="link" asChild className="h-auto p-0 text-xs sm:text-sm text-[#769FCD]">
+                                                <Link to="/forgot-password">Forgot Password?</Link>
+                                            </Button>
+                                        </div>
+                                        <FormMessage className="text-xs sm:text-sm" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Captcha */}
+                            <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg mt-2 sm:mt-3">
+                                <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-700">Security CAPTCHA</h2>
+                                <div className="flex justify-center items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-md">
+                                    {captchaCharacters.map((c, index) => (
+                                        <span
+                                            key={index}
+                                            style={{
+                                                color: c.color,
+                                                fontSize: "clamp(20px, 4vw, 28px)",
+                                                fontWeight: "bold",
+                                                textShadow: "1px 1px 2px rgba(0,0,0,0.1)"
+                                            }}
+                                        >
+                                            {c.char}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <Input
+                                    type="text"
+                                    value={userInput}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter CAPTCHA characters"
+                                    className="border p-2 w-full rounded-lg mt-3 text-center h-9 sm:h-10 text-sm sm:text-base"
+                                />
+
+                                <div className="flex justify-center mt-2">
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        onClick={generateCaptchaCharacters}
+                                        className="text-[#769FCD] text-xs sm:text-sm underline h-auto p-0"
+                                    >
+                                        Refresh CAPTCHA
+                                    </Button>
+                                </div>
+
+                                {!isCaptchaValid && userInput.length > 0 && (
+                                    <p className="text-red-500 text-xs sm:text-sm mt-1">
+                                        Incorrect CAPTCHA, try again.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Login button */}
+                            {isCaptchaValid ? (
+                                <Button
+                                    className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-[#769FCD] hover:bg-[#5885AF] text-white font-medium rounded-lg transition-all duration-200"
+                                >
+                                    Login
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed opacity-70"
+                                    disabled
+                                >
+                                    Complete CAPTCHA to Login
+                                </Button>
+                            )}
+
+                            {/* Sign up link */}
+                            <div className="text-center pt-2">
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                    Don't have an account?{" "}
+                                    <Link to="/register" className="text-[#769FCD] font-medium hover:underline transition-all">
+                                        Sign Up
+                                    </Link>
+                                </p>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
+            </div>
+        </div>
+        
     )
 }
 

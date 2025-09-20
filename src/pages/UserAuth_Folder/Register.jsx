@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import { useForm } from "react-hook-form";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -22,11 +21,11 @@ const Register = () => {
     email: "",
     nationality: "",
     dob: "",
+    phone: "",  // ✅ Added phone field
     password: "",
     confirmPassword: "",
   });
 
-  // ✅ Fetch nationalities on mount
   useEffect(() => {
     const allNationalities = async () => {
       const formData = new FormData();
@@ -36,7 +35,7 @@ const Register = () => {
         const url = localStorage.getItem("url") + "customer.php";
         const res = await axios.post(url, formData);
 
-        if (res.data !== 0 ) {
+        if (res.data !== 0) {
           setGetNationalities(res.data);
         } else {
           toast.error("Failed to load nationalities");
@@ -50,7 +49,6 @@ const Register = () => {
     allNationalities();
   }, []);
 
-  // simple handler
   const handleChange = (name, value) => {
     setFormData({
       ...formData,
@@ -58,7 +56,6 @@ const Register = () => {
     });
   };
 
-  // simple validation
   const validateForm = () => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       toast.error("First and last name are required");
@@ -78,6 +75,10 @@ const Register = () => {
     }
     if (!formData.dob) {
       toast.error("Date of birth is required");
+      return false;
+    }
+    if (!formData.phone.trim()) {
+      toast.error("Phone number is required");
       return false;
     }
     if (formData.password.length < 6) {
@@ -101,13 +102,12 @@ const Register = () => {
       const otpForm = new FormData();
       otpForm.append("operation", "checkAndSendOTP");
       otpForm.append("json", JSON.stringify({ guest_email: formData.email }));
-      console.log(otpForm)
+      console.log(otpForm);
 
       const res = await axios.post(url, otpForm);
 
       if (res.data?.success) {
         toast.success("OTP sent to your email!");
-        // Pass full registration details to OTP page
         navigate("/verify", { state: { customer: formData } });
       } else {
         toast.error(res.data?.message || "Failed to send OTP");
@@ -121,168 +121,189 @@ const Register = () => {
   };
 
   return (
-      <div className="flex h-screen bg-gradient-to-br from-[#f7fbfc] to-[#eaf0f6]">
-    {/* Left side (placeholder / image / gradient) */}
-    <div className="hidden md:flex w-1/2 items-center justify-center bg-[#769FCD]">
-      <h1 className="text-4xl font-bold text-white">Welcome!</h1>
-    </div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-[#f7fbfc] to-[#eaf0f6]">
+      {/* Left side - Hidden on mobile */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#113f67] via-[#34699A] to-[#226597]344rd p-6 md:p-8 lg:p-10 flex-col justify-center items-center text-white">
+        <div className="max-w-md mx-auto space-y-4 md:space-y-6">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center">Welcome to Demirens Hotel</h1>
+          <p className="text-base md:text-lg lg:text-xl opacity-90 text-center">Create your account to enjoy exclusive benefits and seamless booking experience.</p>
 
-    {/* Right side - form */}
-    <div className="flex w-full md:w-1/2 items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 rounded-2xl shadow-xl bg-white">
-        <CardTitle className="text-2xl font-bold text-[#769FCD] mb-6 text-center">
-          Register
-        </CardTitle>
+          {/* SVG Icon */}
+          <div className="flex justify-center mt-6 md:mt-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-28 md:w-32 lg:w-36 h-28 md:h-32 lg:h-36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+      </div>
 
-        {/* Your form stays the same here */}
-        <form onSubmit={onSubmit} className="space-y-4">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* First Name */}
-            <div>
-              <label className="block text-sm font-medium">First Name</label>
+      {/* Right side */}
+      <div className="flex w-full md:w-1/2 items-center justify-center px-4 py-6 sm:px-6 md:px-8 lg:px-10 md:py-8">
+        <div className="w-full max-w-md p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl ">
+          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#769FCD] mb-3 sm:mb-4 md:mb-6 text-center">
+            Create Your Account
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="block text-sm sm:text-base font-medium text-gray-700">First Name</label>
+                <Input
+                  placeholder="First name"
+                  value={formData.firstName}
+                  onChange={(e) => handleChange("firstName", e.target.value)}
+                  className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+                />
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="block text-sm sm:text-base font-medium text-gray-700">Last Name</label>
+                <Input
+                  placeholder="Last name"
+                  value={formData.lastName}
+                  onChange={(e) => handleChange("lastName", e.target.value)}
+                  className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+                />
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="block text-sm sm:text-base font-medium text-gray-700">Email</label>
+                <Input
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="block text-sm sm:text-base font-medium text-gray-700">Nationality</label>
+                <select
+                  value={formData.nationality}
+                  onChange={(e) => handleChange("nationality", e.target.value)}
+                  className="w-full h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+                  required
+                >
+                  <option value="">Select Nationality</option>
+                  {getNationalities.length > 0 ? (
+                    getNationalities.map((nat) => (
+                      <option key={nat.nationality_id} value={nat.nationality_id}>
+                        {nat.nationality_name}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Loading...</option>
+                  )}
+                </select>
+              </div>
+                      <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700">Date of Birth</label>
               <Input
-                placeholder="First name"
-                value={formData.firstName}
-                onChange={(e) => handleChange("firstName", e.target.value)}
+                type="date"
+                name="dob"
+                value={formData.dob}
+                onChange={(e) => handleChange("dob", e.target.value)}
+                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
               />
             </div>
 
-            {/* Last Name */}
-            <div>
-              <label className="block text-sm font-medium">Last Name</label>
+            {/* Phone Number */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700">Phone Number</label>
               <Input
-                placeholder="Last name"
-                value={formData.lastName}
-                onChange={(e) => handleChange("lastName", e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium">Email</label>
-            <Input
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-          </div>
-
-          {/* Username */}
-          <div>
-            <label className="block text-sm font-medium">Username</label>
-            <Input
-              placeholder="Username"
-              value={formData.username}
-              onChange={(e) => handleChange("username", e.target.value)}
-            />
-          </div>
-
-          {/* Nationality */}
-          <div>
-            <label className="block text-sm font-medium">Nationality</label>
-            <select
-              value={formData.nationality}
-              onChange={(e) => handleChange("nationality", e.target.value)}
-              className="w-full border rounded-lg p-2"
-              required
-            >
-              <option value="">Select Nationality</option>
-              {getNationalities.length > 0 ? (
-                getNationalities.map((nat) => (
-                  <option key={nat.nationality_id} value={nat.nationality_id}>
-                    {nat.nationality_name}
-                  </option>
-                ))
-              ) : (
-                <option disabled>Loading...</option>
-              )}
-            </select>
-          </div>
-
-          {/* Date of Birth */}
-          <div>
-            <label className="block text-sm font-medium">Date of Birth</label>
-            <Input
-              type="date"
-              name="dob"
-              value={formData.dob}
-              onChange={(e) => handleChange("dob", e.target.value)}
-            />
-          </div>
-
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium">Password</label>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) => handleChange("password", e.target.value)}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                onClick={() => setShowPassword((prev) => !prev)}
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              * At least 6 characters, include special characters
-            </p>
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="block text-sm font-medium">Confirm Password</label>
-            <div className="relative">
-              <Input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={(e) => handleChange("confirmPassword", e.target.value)}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                onClick={() =>
-                  setShowConfirmPassword((prev) => !prev)
+                placeholder="Enter phone number"
+                value={formData.phone}
+                onChange={(e) =>
+                  handleChange("phone", e.target.value.replace(/\D/g, "")) // ✅ only digits
                 }
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+                maxLength={15}
+                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+              />
             </div>
-          </div>
+            </div>
 
-          {/* Send OTP */}
-          <Button
-            type="submit"
-            className="w-full bg-[#769FCD] hover:bg-[#5578a6] text-white font-semibold py-2 rounded-lg shadow"
-            disabled={loading}
-          >
-            {loading ? "Sending OTP..." : "Send OTP"}
-          </Button>
 
-          {/* Login link */}
-          <p className="text-xs text-muted-foreground text-center">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="underline underline-offset-4 text-[#769FCD] hover:text-[#5578a6]"
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700">Username</label>
+              <Input
+                placeholder="Username"
+                value={formData.username}
+                onChange={(e) => handleChange("username", e.target.value)}
+                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all"
+              />
+            </div>
+
+
+    
+
+
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
+                  className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                * At least 6 characters, include special characters
+              </p>
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2">
+              <label className="block text-sm sm:text-base font-medium text-gray-700">Confirm Password</label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    handleChange("confirmPassword", e.target.value)
+                  }
+                  className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-md border border-gray-300 focus:border-[#769FCD] focus:ring focus:ring-[#769FCD] focus:ring-opacity-25 transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-9 sm:h-11 px-4 py-2 text-sm sm:text-base bg-[#769FCD] hover:bg-[#5578a6] text-white font-semibold rounded-md shadow transition-colors mt-2 sm:mt-3"
+              disabled={loading}
             >
-              Login
-            </Link>
-          </p>
-        </form>
-      </Card>
+              {loading ? "Sending OTP..." : "Send OTP"}
+            </Button>
+
+            <p className="text-xs sm:text-sm text-muted-foreground text-center mt-4 sm:mt-6">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="underline underline-offset-4 text-[#769FCD] hover:text-[#5578a6] font-medium transition-all"
+              >
+                Login
+              </Link>
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
-  </div>
   );
 };
 

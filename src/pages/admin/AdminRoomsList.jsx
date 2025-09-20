@@ -23,16 +23,34 @@ import {
 
 import AdminHeader from './components/AdminHeader'
 
+const getRoomStatusForDates = (room, startDate, endDate) => {
+  if (room.bookings && room.bookings.length > 0) {
+    for (const booking of room.bookings) {
+      const checkIn = new Date(booking.checkin_date + "T00:00:00");
+      const checkOut = new Date(booking.checkout_date + "T00:00:00");
+
+      // Overlap check: if booking intersects with selected range
+      if (startDate < checkOut && endDate > checkIn) {
+        return "Occupied";
+      }
+    }
+  }
+
+  // Default fallback: use API-provided status OR Vacant
+  return room.status_name || "Vacant";
+};
+
+
 function AdminRoomsList() {
   const APIConn = `${localStorage.url}admin.php`
 
   const [rooms, setRooms] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [search, setSearch] = useState('')
-  // Status filtering removed; use dates instead
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
   const [filterCheckIn, setFilterCheckIn] = useState('')
   const [filterCheckOut, setFilterCheckOut] = useState('')
+  const [monitoringMode, setMonitoringMode] = useState(true) // toggle state
 
   const getRooms = async () => {
     setIsLoading(true)
@@ -42,7 +60,6 @@ function AdminRoomsList() {
     try {
       const conn = await axios.post(APIConn, formData)
       if (conn.data) {
-        console.log('API response:', conn.data)
         setRooms(conn.data !== 0 ? conn.data : [])
       } else {
         console.log("No data has been fetched...")
@@ -50,19 +67,15 @@ function AdminRoomsList() {
     } catch (err) {
       console.log('Cannot Find API...', err)
     } finally {
-      console.log('Content is Done...')
       setIsLoading(false)
     }
   }
-
-  
 
   useEffect(() => {
     getRooms()
   }, [])
 
-  // removed status fetching
-
+  // Helpers
   const parseDate = (str) => (str ? new Date(str + 'T00:00:00') : null)
   const rangesOverlap = (startA, endA, startB, endB) => startA < endB && endA > startB
   const addDays = (date, days) => {
@@ -71,7 +84,33 @@ function AdminRoomsList() {
     return d
   }
   const fmt = (date) => (date ? date.toISOString().slice(0, 10) : '')
-  const tomorrow = fmt(addDays(new Date(), 1))
+
+  const getPhilippinesDate = () => {
+    return new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
+    )
+  }
+
+  // Mode: Real-time monitoring (PH date)
+  const getCurrentRoomStatus = (room) => {
+    const now = getPhilippinesDate()
+    const today = new Date(now.toISOString().slice(0, 10) + "T00:00:00")
+
+    if (room.bookings && room.bookings.length > 0) {
+      for (const booking of room.bookings) {
+        const checkIn = new Date(booking.checkin_date + "T00:00:00")
+        const checkOut = new Date(booking.checkout_date + "T00:00:00")
+
+        if (today >= checkIn && today < checkOut) {
+          return "Occupied"
+        }
+      }
+    }
+
+    return room.status_name || "Vacant"
+  }
+
+  // Mode: Filtered by chosen dates
   const isAvailableOnFilterRange = (room) => {
     const start = parseDate(filterCheckIn)
     const end = parseDate(filterCheckOut)
@@ -86,7 +125,7 @@ function AdminRoomsList() {
     return true
   }
 
-  // Date handlers with validation
+  // Date handlers
   const handleFilterInChange = (value) => {
     const inDate = parseDate(value)
     const outDate = parseDate(filterCheckOut)
@@ -110,6 +149,7 @@ function AdminRoomsList() {
     }
   }
 
+  // Filtering logic
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return rooms.filter((room) => {
@@ -117,10 +157,16 @@ function AdminRoomsList() {
         room.roomtype_name?.toLowerCase().includes(q) ||
         room.roomtype_description?.toLowerCase().includes(q) ||
         String(room.roomnumber_id).includes(q)
-      const matchesDateRange = isAvailableOnFilterRange(room)
-      return matchesSearch && matchesDateRange
+
+      if (monitoringMode) {
+        // always include all rooms in monitoring mode
+        return matchesSearch
+      } else {
+        const matchesDateRange = isAvailableOnFilterRange(room)
+        return matchesSearch && matchesDateRange
+      }
     })
-  }, [rooms, search, filterCheckIn, filterCheckOut])
+  }, [rooms, search, filterCheckIn, filterCheckOut, monitoringMode])
 
   const getStatusColor = (status) => {
     const statusLower = (status || '').toLowerCase()
@@ -174,29 +220,41 @@ function AdminRoomsList() {
                   />
                 </div>
 
-                {/* Status Filter removed */}
-
-                {/* Optional Date Range Filter */}
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={filterCheckIn}
-                    onChange={(e) => handleFilterInChange(e.target.value)}
-                    min={tomorrow}
-                    className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                  <input
-                    type="date"
-                    value={filterCheckOut}
-                    onChange={(e) => handleFilterOutChange(e.target.value)}
-                    min={filterCheckIn ? fmt(addDays(parseDate(filterCheckIn), 1)) : tomorrow}
-                    className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
+                {/* Date Filter (only shown if not in monitoring mode) */}
+                {!monitoringMode && (
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={filterCheckIn}
+                      onChange={(e) => handleFilterInChange(e.target.value)}
+                      className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <input
+                      type="date"
+                      value={filterCheckOut}
+                      onChange={(e) => handleFilterOutChange(e.target.value)}
+                      min={filterCheckIn ? fmt(addDays(parseDate(filterCheckIn), 1)) : ''}
+                      className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* View Mode Toggle and Stats */}
+              {/* Toggle + View Mode */}
               <div className="flex items-center gap-4">
+                {/* Monitoring Toggle */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                    Monitoring Mode
+                  </label>
+                  <input
+                    type="checkbox"
+                    checked={monitoringMode}
+                    onChange={() => setMonitoringMode(!monitoringMode)}
+                    className="h-4 w-4"
+                  />
+                </div>
+
                 <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
@@ -254,88 +312,87 @@ function AdminRoomsList() {
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
               : "space-y-4"
             }>
-              {filtered.map((room, index) => (
-                <Card key={index} className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                          {room.roomtype_name}
-                        </CardTitle>
-                        <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
-                          Room #{room.roomnumber_id} • Floor {room.roomfloor}
-                        </CardDescription>
-                      </div>
-                      {/* Status badge removed */}
-                    </div>
-                  </CardHeader>
+              {filtered.map((room, index) => {
+                const status = monitoringMode 
+                  ? getCurrentRoomStatus(room) 
+                  : (isAvailableOnFilterRange(room) ? room.status_name : "Occupied")
 
-                  <CardContent className="pb-3">
-                    <div className="relative">
-                      <Carousel className="w-full">
-                        <CarouselContent>
-                          {!room.images ? (
-                            <CarouselItem>
-                              <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                                <div className="text-center">
-                                  <div className="text-gray-400 dark:text-gray-500 mb-2">
-                                    <Search className="h-8 w-8 mx-auto" />
+                return (
+                  <Card key={index} className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                            {room.roomtype_name}
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                            Room #{room.roomnumber_id} • Floor {room.roomfloor}
+                          </CardDescription>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded ${getStatusColor(status)}`}>
+                          {status}
+                        </span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pb-3">
+                      <div className="relative">
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {!room.images ? (
+                              <CarouselItem>
+                                <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                  <div className="text-center">
+                                    <div className="text-gray-400 dark:text-gray-500 mb-2">
+                                      <Search className="h-8 w-8 mx-auto" />
+                                    </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">No Images</p>
                                   </div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">No Images</p>
-                                </div>
-                              </div>
-                            </CarouselItem>
-                          ) : (
-                            room.images.split(",").map((imageName, idx) => (
-                              <CarouselItem key={idx}>
-                                <div className="aspect-video overflow-hidden rounded-lg">
-                                  <img
-                                    src={`${localStorage.url}images/${imageName}`}
-                                    alt={`${room.roomtype_name} ${idx + 1}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                  />
                                 </div>
                               </CarouselItem>
-                            ))
-                          )}
-                        </CarouselContent>
-                        <CarouselPrevious className="left-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
-                        <CarouselNext className="right-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
-                      </Carousel>
-                    </div>
-                  </CardContent>
+                            ) : (
+                              room.images.split(",").map((imageName, idx) => (
+                                <CarouselItem key={idx}>
+                                  <div className="aspect-video overflow-hidden rounded-lg">
+                                    <img
+                                      src={`${localStorage.url}images/${imageName}`}
+                                      alt={`${room.roomtype_name} ${idx + 1}`}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    />
+                                  </div>
+                                </CarouselItem>
+                              ))
+                            )}
+                          </CarouselContent>
+                          <CarouselPrevious className="left-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
+                          <CarouselNext className="right-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
+                        </Carousel>
+                      </div>
+                    </CardContent>
 
-                  <CardFooter className="pt-0 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                    <CardFooter className="pt-0 flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                            ₱{Number(room.roomtype_price).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            per night
+                          </div>
+                        </div>
+                      </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                          ₱{Number(room.roomtype_price).toLocaleString()}
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Capacity: {room.roomtype_capacity}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          per night
+                          {room.roomtype_beds} bed{room.roomtype_beds > 1 ? 's' : ''}
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Capacity: {room.roomtype_capacity}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {room.roomtype_beds} bed{room.roomtype_beds > 1 ? 's' : ''}
-                      </div>
-                      {filterCheckIn && filterCheckOut && (
-                        <div className="mt-2">
-                          {isAvailableOnFilterRange(room) ? (
-                            <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Available on dates</span>
-                          ) : (
-                            <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Conflict on dates</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
+                    </CardFooter>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </div>

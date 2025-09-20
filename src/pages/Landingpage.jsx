@@ -173,7 +173,6 @@ function Landingpage() {
           <LandingHeader />
         </div>
 
-
         {/* Content (This will occupy all remaining space) */}
         <main className="flex-1 bg-white flex flex-col min-h-screen ">
 

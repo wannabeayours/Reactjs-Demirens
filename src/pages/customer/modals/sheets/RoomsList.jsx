@@ -48,7 +48,7 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
    if (res !== 0) {
     const filteredRooms = res.filter((room) => room.status_id === 3);
     setAvailableRooms(filteredRooms);
-   }else{
+   } else {
     setAvailableRooms([]);
    }
 
@@ -83,23 +83,34 @@ function RoomsList({ rooms, selectedRooms, setSelectedRooms }) {
        <div>
         <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
          <div className="flex justify-center">
-          <Carousel className="w-full max-w-[280px]">
-           <CarouselContent>
-            {Array.from({ length: 5 }).map((_, index) => (
-             <CarouselItem key={index}>
-              <div className="p-1">
-               <Card>
-                <CardContent className="flex aspect-square items-center justify-center p-4">
-                 <span className="text-2xl font-semibold">{index + 1}</span>
-                </CardContent>
-               </Card>
-              </div>
-             </CarouselItem>
-            ))}
-           </CarouselContent>
-           <CarouselPrevious className="left-1" />
-           <CarouselNext className="right-1" />
-          </Carousel>
+          {rooms.images && rooms.images.length > 0 ? (
+           <Carousel className="w-full max-w-xs">
+            <CarouselContent>
+             {rooms.images.map((room, index) => (
+              <CarouselItem key={index}>
+               <div className="p-1">
+                <Card>
+                 <CardContent className="flex aspect-square items-center justify-center p-4">
+                  <div className="w-full h-80 overflow-hidden">
+                   <img src={localStorage.getItem('url') + "images/" + room.imagesroommaster_filename} alt={`Room ${index + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                 </CardContent>
+                </Card>
+               </div>
+              </CarouselItem>
+             ))}
+            </CarouselContent>
+            <CarouselPrevious className="ml-4" />
+            <CarouselNext className="mr-4" />
+           </Carousel>
+          ) : (
+           <Card>
+            <CardContent className="flex aspect-square items-center justify-center p-4">
+             <p className="text-center">No image available</p>
+            </CardContent>
+           </Card>
+          )
+          }
          </div>
          <div>
           <h1 className="font-semibold text-2xl">{rooms.roomtype_name}</h1>

@@ -64,6 +64,8 @@ import { WalkInProvider } from './pages/admin/WalkIn_Folder/WalkInContext';
 import { ApprovalProvider } from './pages/admin/Online_Folder/ApprovalContext';
 import OnlineReqList from './pages/admin/Online_Folder/OnlineReqList';
 import CustomerRoomView from './pages/customer/CustomerRoomView';
+import ForgotPassword from './pages/UserAuth_Folder/ForgotPassword';
+import ResetPassword from './pages/UserAuth_Folder/ResetPassword';
 
 function App() {
 
@@ -117,6 +119,9 @@ function App() {
                 {/* Admin Pages */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/verify" element={<OTP_Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/" element={<Landingpage />} />
                 {/* Admin Pages */}
                 <Route path="/" element={<Landingpage />} />
@@ -124,7 +129,7 @@ function App() {
                 <Route path="/admin/profile" element={<AdminProfile />} />
                 <Route path="/admin/roomslist" element={<AdminRoomsList />} />
                 <Route path="/admin/bookinglist" element={<AdminBookingList />} />
-                
+
                 <Route path="/admin/calendar" element={<AdminCalendar />} />
                 <Route path="/admin/guestprofile" element={<AdminGuestProfile />} />
                 <Route path="/admin/payments" element={<AdminPayments />} />

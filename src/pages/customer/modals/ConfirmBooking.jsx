@@ -79,7 +79,7 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearD
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">Per day</p>
                           <p className="font-semibold text-lg">
-                             ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           <p className="text-xs text-muted-foreground">x {numberOfNights} day(s)</p>
                         </div>
