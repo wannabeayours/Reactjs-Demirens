@@ -215,13 +215,13 @@ const PaymentMethod = () => {
             {walkInData.selectedRooms?.length > 0
               ? walkInData.selectedRooms.map((room, idx) => (
                   <li key={idx}>
-                    Room #{room.roomnumber_id || room.id} (Floor {room.roomfloor || room.floor}) - {room.roomtype_name || room.name || 'Room'} - ₱{(room.roomtype_price || room.price || 0).toLocaleString()}
+                    Room #{room.roomnumber_id || room.id} (Floor {room.roomfloor || room.floor}) - {room.roomtype_name || room.name || 'Room'} - ₱{(room.roomtype_price || room.price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </li>
                 ))
               : walkInData.selectedRoom
               ? (
                 <li>
-                  Room #{walkInData.selectedRoom.roomnumber_id || walkInData.selectedRoom.id} - {walkInData.selectedRoom.roomtype_name || walkInData.selectedRoom.name} - ₱{(walkInData.selectedRoom.roomtype_price || walkInData.selectedRoom.price || 0).toLocaleString()}
+                  Room #{walkInData.selectedRoom.roomnumber_id || walkInData.selectedRoom.id} - {walkInData.selectedRoom.roomtype_name || walkInData.selectedRoom.name} - ₱{(walkInData.selectedRoom.roomtype_price || walkInData.selectedRoom.price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </li>
               )
               : <li>No rooms selected</li>}
@@ -232,15 +232,15 @@ const PaymentMethod = () => {
           <p><strong>Nights:</strong> {nights}</p>
           <p><strong>Guests:</strong> {walkInData.guests || 1}</p>
           <hr />
-          <p><strong>Room Rate:</strong> ₱{roomRate.toLocaleString()} per night</p>
+          <p><strong>Room Rate:</strong> ₱{roomRate.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} per night</p>
           <p>
-            <strong>Subtotal:</strong> ₱{subtotal.toLocaleString()}
-            <span className="text-gray-500"> ({roomRate.toLocaleString()} × {nights} nights)</span>
+            <strong>Subtotal:</strong> ₱{subtotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            <span className="text-gray-500"> ({roomRate.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} × {nights} nights)</span>
           </p>
-          <p><strong>VAT (12%):</strong> ₱{vat.toLocaleString()}</p>
-          <p><strong>Discount:</strong> ₱{(Number(discount) || 0).toLocaleString()}</p>
+          <p><strong>VAT (12%):</strong> ₱{vat.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          <p><strong>Discount:</strong> ₱{(Number(discount) || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
           <hr />
-          <p className="text-lg font-bold">Total: ₱{total.toLocaleString()}</p>
+          <p className="text-lg font-bold">Total: ₱{total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
         </CardContent>
       </Card>
     </div>

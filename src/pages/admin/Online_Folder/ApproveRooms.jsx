@@ -69,21 +69,6 @@ export default function ApproveRooms() {
     [state.requestedRoomTypes]
   );
 
-  const finalList = useMemo(() => {
-    const q = search.toLowerCase();
-    return rooms
-      .filter((room) =>
-        requestedTypeNames.size
-          ? requestedTypeNames.has((room.roomtype_name || "").toLowerCase())
-          : true
-      )
-      .filter((room) =>
-        room.roomtype_name?.toLowerCase().includes(q) ||
-        room.roomtype_description?.toLowerCase().includes(q)
-      )
-      .filter((room) => isAvailable(room, checkIn, checkOut));
-  }, [rooms, requestedTypeNames, search, checkIn, checkOut]);
-
   // Availability helpers
   const parseDate = (str) => (str ? new Date(str + "T00:00:00") : null);
   const rangesOverlap = (startA, endA, startB, endB) => startA < endB && endA > startB; // half-open
@@ -107,6 +92,21 @@ export default function ApproveRooms() {
     }
     return true;
   };
+
+  const finalList = useMemo(() => {
+    const q = search.toLowerCase();
+    return rooms
+      .filter((room) =>
+        requestedTypeNames.size
+          ? requestedTypeNames.has((room.roomtype_name || "").toLowerCase())
+          : true
+      )
+      .filter((room) =>
+        room.roomtype_name?.toLowerCase().includes(q) ||
+        room.roomtype_description?.toLowerCase().includes(q)
+      )
+      .filter((room) => isAvailable(room, checkIn, checkOut));
+  }, [rooms, requestedTypeNames, search, checkIn, checkOut]);
 
   // Date input handlers with validation
   const handleCheckInChange = (value) => {

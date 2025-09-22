@@ -39,7 +39,7 @@ function LandingHeader() {
 
         {/* Right - Login Button */}
         <div >
-          <Button className="bg-black/70 text-white rounded-full px-6 py-2 hover:bg-black/80 md:px-10 md:py-4 md:text-sm">
+          <Button onClick={() => window.location.href = '/login'} className="bg-black/70 text-white rounded-full px-6 py-2 hover:bg-black/80 md:px-10 md:py-4 md:text-sm">
             Log In
           </Button>
         </div>

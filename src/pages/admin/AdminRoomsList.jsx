@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
-import { Search, Grid, List } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, Eye, Edit, EyeOff } from 'lucide-react'
 
 // Card Components
 import {
@@ -21,7 +21,10 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 
+import { Button } from "@/components/ui/button"
+
 import AdminHeader from './components/AdminHeader'
+import AdvancedFiltersSheet from './SubPages/AdvancedFiltersSheet'
 
 const getRoomStatusForDates = (room, startDate, endDate) => {
   if (room.bookings && room.bookings.length > 0) {
@@ -51,6 +54,13 @@ function AdminRoomsList() {
   const [filterCheckIn, setFilterCheckIn] = useState('')
   const [filterCheckOut, setFilterCheckOut] = useState('')
   const [monitoringMode, setMonitoringMode] = useState(true) // toggle state
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [advancedFilters, setAdvancedFilters] = useState({
+    roomStatus: '',
+    roomType: '',
+    priceRange: [0, 5000],
+    selectedFloors: []
+  })
 
   const getRooms = async () => {
     setIsLoading(true)
@@ -153,20 +163,50 @@ function AdminRoomsList() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return rooms.filter((room) => {
+      // Basic search filter
       const matchesSearch =
         room.roomtype_name?.toLowerCase().includes(q) ||
         room.roomtype_description?.toLowerCase().includes(q) ||
         String(room.roomnumber_id).includes(q)
 
-      if (monitoringMode) {
-        // always include all rooms in monitoring mode
-        return matchesSearch
-      } else {
-        const matchesDateRange = isAvailableOnFilterRange(room)
-        return matchesSearch && matchesDateRange
+      // Date range filter
+      let matchesDateRange = true
+      if (!monitoringMode) {
+        matchesDateRange = isAvailableOnFilterRange(room)
       }
+
+      // Advanced filters
+      let matchesAdvancedFilters = true
+
+      // Room status filter
+      if (advancedFilters.roomStatus && advancedFilters.roomStatus !== 'all') {
+        const currentStatus = monitoringMode
+          ? getCurrentRoomStatus(room).toLowerCase()
+          : (isAvailableOnFilterRange(room) ? room.status_name?.toLowerCase() : "occupied")
+
+        matchesAdvancedFilters = matchesAdvancedFilters && (currentStatus === advancedFilters.roomStatus)
+      }
+
+      // Room type filter
+      if (advancedFilters.roomType && advancedFilters.roomType !== 'all') {
+        matchesAdvancedFilters = matchesAdvancedFilters &&
+          room.roomtype_name?.toLowerCase().includes(advancedFilters.roomType)
+      }
+
+      // Price range filter
+      const price = Number(room.roomtype_price) || 0
+      matchesAdvancedFilters = matchesAdvancedFilters &&
+        (price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1])
+
+      // Floor filter
+      if (advancedFilters.selectedFloors.length > 0) {
+        matchesAdvancedFilters = matchesAdvancedFilters &&
+          advancedFilters.selectedFloors.includes(Number(room.roomfloor))
+      }
+
+      return matchesSearch && matchesDateRange && matchesAdvancedFilters
     })
-  }, [rooms, search, filterCheckIn, filterCheckOut, monitoringMode])
+  }, [rooms, search, filterCheckIn, filterCheckOut, monitoringMode, advancedFilters])
 
   const getStatusColor = (status) => {
     const statusLower = (status || '').toLowerCase()
@@ -186,9 +226,19 @@ function AdminRoomsList() {
     }
   }
 
+  // Handle advanced filters
+  const handleApplyAdvancedFilters = (filters) => {
+    setAdvancedFilters(filters);
+  };
+
   return (
     <>
       <AdminHeader />
+      <AdvancedFiltersSheet
+        open={showAdvancedFilters}
+        onOpenChange={setShowAdvancedFilters}
+        onApplyFilters={handleApplyAdvancedFilters}
+      />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="p-6 max-w-7xl mx-auto">
           {/* Header Section */}
@@ -204,9 +254,9 @@ function AdminRoomsList() {
           {/* Filters and Controls */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex flex-wrap gap-3 flex-1">
                 {/* Search Input */}
-                <div className="relative flex-1 max-w-md">
+                <div className="relative flex-1 min-w-[240px]">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
                     type="text"
@@ -219,6 +269,16 @@ function AdminRoomsList() {
                              focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
+
+                {/* Advanced Filters Button */}
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-400"
+                  onClick={() => setShowAdvancedFilters(true)}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Advanced Filters
+                </Button>
 
                 {/* Date Filter (only shown if not in monitoring mode) */}
                 {!monitoringMode && (
@@ -243,8 +303,8 @@ function AdminRoomsList() {
               {/* Toggle + View Mode */}
               <div className="flex items-center gap-4">
                 {/* Monitoring Toggle */}
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded-md">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     Monitoring Mode
                   </label>
                   <input
@@ -258,21 +318,19 @@ function AdminRoomsList() {
                 <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-md transition-colors ${
-                      viewMode === 'grid' 
-                        ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm' 
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
+                        ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
+                      }`}
                   >
                     <Grid className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-md transition-colors ${
-                      viewMode === 'list' 
-                        ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm' 
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'list'
+                        ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
+                      }`}
                   >
                     <List className="h-4 w-4" />
                   </button>
@@ -308,95 +366,113 @@ function AdminRoomsList() {
             </div>
           ) : (
             /* Rooms Grid/List */
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+            <div className={viewMode === 'grid'
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
               : "space-y-4"
             }>
               {filtered.map((room, index) => {
-                const status = monitoringMode 
-                  ? getCurrentRoomStatus(room) 
+                const status = monitoringMode
+                  ? getCurrentRoomStatus(room)
                   : (isAvailableOnFilterRange(room) ? room.status_name : "Occupied")
 
                 return (
                   <Card key={index} className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                            {room.roomtype_name}
-                          </CardTitle>
-                          <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
-                            Room #{room.roomnumber_id} • Floor {room.roomfloor}
-                          </CardDescription>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded ${getStatusColor(status)}`}>
+                    <div className="relative">
+                      {/* Status Badge - Positioned on top of the image */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium shadow-sm ${getStatusColor(status)}`}>
                           {status}
                         </span>
                       </div>
-                    </CardHeader>
 
-                    <CardContent className="pb-3">
-                      <div className="relative">
-                        <Carousel className="w-full">
-                          <CarouselContent>
-                            {!room.images ? (
-                              <CarouselItem>
-                                <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                                  <div className="text-center">
-                                    <div className="text-gray-400 dark:text-gray-500 mb-2">
-                                      <Search className="h-8 w-8 mx-auto" />
-                                    </div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">No Images</p>
-                                  </div>
-                                </div>
-                              </CarouselItem>
-                            ) : (
-                              room.images.split(",").map((imageName, idx) => (
-                                <CarouselItem key={idx}>
-                                  <div className="aspect-video overflow-hidden rounded-lg">
-                                    <img
-                                      src={`${localStorage.url}images/${imageName}`}
-                                      alt={`${room.roomtype_name} ${idx + 1}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                    />
+                      <CardContent className="p-0">
+                        <div className="relative">
+                          <Carousel className="w-full">
+                            <CarouselContent>
+                              {!room.images ? (
+                                <CarouselItem>
+                                  <div className="w-full h-56 flex items-center justify-center bg-muted">
+                                    <span className="text-muted-foreground">No Image</span>
                                   </div>
                                 </CarouselItem>
-                              ))
-                            )}
-                          </CarouselContent>
-                          <CarouselPrevious className="left-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
-                          <CarouselNext className="right-2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800" />
-                        </Carousel>
-                      </div>
-                    </CardContent>
+                              ) : (
+                                room.images.split(",").map((imageName, idx) => (
+                                  <CarouselItem key={idx}>
+                                    <div className="overflow-hidden">
+                                      <img
+                                        src={`${localStorage.url}images/${imageName}`}
+                                        alt={`${room.roomtype_name} ${idx + 1}`}
+                                        className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-200"
+                                      />
+                                    </div>
+                                  </CarouselItem>
+                                ))
+                              )}
+                            </CarouselContent>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                          </Carousel>
+                        </div>
+                      </CardContent>
+                    </div>
 
-                    <CardFooter className="pt-0 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                            ₱{Number(room.roomtype_price).toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            per night
-                          </div>
-                        </div>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-foreground">
+                          {room.roomtype_name} — Room #{room.roomnumber_id} (Floor {room.roomfloor})
+                        </h2>
+                        <span className="font-bold text-green-600 dark:text-green-400">
+                          ₱{Number(room.roomtype_price).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Capacity: {room.roomtype_capacity}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {room.roomtype_beds} bed{room.roomtype_beds > 1 ? 's' : ''}
-                        </div>
-                      </div>
-                    </CardFooter>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {room.roomtype_description}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Capacity: {room.roomtype_capacity} {room.roomtype_capacity > 1 ? 'persons' : 'person'} •
+                        {room.roomtype_beds} bed{room.roomtype_beds > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    
+                    {/* Action Buttons */ }
+                <CardFooter className="px-4 pt-3 pb-4 border-t border-border mt-3">
+                  <div className="flex items-center w-full gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex items-center justify-center gap-1 bg-primary/5 hover:bg-primary/10 border-border text-primary"
+                      onClick={() => console.log(`View Room ${room.roomnumber_id}`)}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex items-center justify-center gap-1 bg-amber-500/5 hover:bg-amber-500/10 border-border text-amber-600 dark:text-amber-500"
+                      onClick={() => console.log(`Edit Room ${room.roomnumber_id}`)}
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex items-center justify-center gap-1 bg-secondary hover:bg-secondary/80 border-border text-secondary-foreground"
+                      onClick={() => console.log(`Hide Room ${room.roomnumber_id}`)}
+                    >
+                      <EyeOff className="h-3.5 w-3.5" />
+                      Hide
+                    </Button>
+                  </div>
+                </CardFooter>
                   </Card>
-                )
-              })}
-            </div>
-          )}
+          )
+          })}
         </div>
+          )}
       </div>
+    </div >
     </>
   )
 }

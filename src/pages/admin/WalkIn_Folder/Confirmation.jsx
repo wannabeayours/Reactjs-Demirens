@@ -136,7 +136,7 @@ export default function Confirmation() {
                 <span className="font-medium">Room #{room.roomnumber_id || room.id}</span> 
                 (Floor {room.roomfloor || room.floor}) - 
                 {room.roomtype_name || room.name || 'Room'} - 
-                ₱{(room.roomtype_price || room.price || 0).toLocaleString()}
+                ₱{(room.roomtype_price || room.price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </li>
             ))}
           </ul>

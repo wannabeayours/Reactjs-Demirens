@@ -58,10 +58,10 @@ function AdminBookingList() {
         setStatus(res.data);
         console.log('Existing Statuses: ', res.data);
       } else {
-        toast.error('Failed to connect');
+        toast.error('Failed to Fetch Status');
       }
     } catch (err) {
-      toast.error('Failed to connect');
+      toast.error('Failed to get connect');
       console.log(err);
     }
   }, [APIConn]);

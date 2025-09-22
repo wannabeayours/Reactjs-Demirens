@@ -175,6 +175,7 @@ function CustomerBookingHis() {
           </div>
         </div>
       </div>
+      
       <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
         <div className="text-black overflow-x-auto w-full">
           <DataTable

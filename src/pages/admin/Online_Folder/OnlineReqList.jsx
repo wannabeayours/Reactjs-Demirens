@@ -135,94 +135,126 @@ export default function OnlineReqList() {
     <>
       <AdminHeader />
       <div className="p-6">
-        <h1 className="text-xl font-bold mb-6 text-foreground">Online Booking Requests</h1>
-        <div className="mb-6 flex w-full md:justify-end">
-          <div className="w-full md:w-1/3">
-            <Input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-6">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Online Booking Requests</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Manage and process customer booking requests</p>
           </div>
-        </div>
-        <div className="hidden md:block">
-          <ScrollArea className="h-[480px] w-full rounded-lg border border-border bg-card shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-muted text-muted-foreground">
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Reference No.</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Customer Name</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Guests</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Room Types</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Stay Dates</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Downpayment</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Status</th>
-                    <th className="border border-border p-2 sticky top-0 z-10 bg-card">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                      <tr key={booking.booking_id} className="hover:bg-muted transition-colors">
-                        <td className="border border-border p-2">
-                          {booking.reference_no || "-"}
-                        </td>
-                        <td className="border border-border p-2">{booking.customer_name}</td>
-                        <td className="border border-border p-2">{booking.guests_amnt}</td>
-                        <td className="border border-border p-2">
-                          {booking.rooms?.length
-                            ? booking.rooms.map((r, index) => (
-                                <div key={`${booking.booking_id}-${r.roomtype_id}-${index}`}>
-                                  {r.roomtype_name}
-                                </div>
-                              ))
-                            : "-"}
-                        </td>
-                        <td className="border border-border p-2">
-                          {formatDateOnly(booking.booking_checkin_dateandtime)}
-                          {" → "}
-                          {formatDateOnly(booking.booking_checkout_dateandtime)}
-                        </td>
-                        <td className="border border-border p-2">
-                          ₱{Number(booking.booking_downpayment || 0).toLocaleString()}
-                        </td>
-                        <td className="border border-border p-2">
-                          {booking.booking_status}
-                        </td>
-                        <td className="border border-border p-2 text-center space-x-2">
-                          <button
-                            onClick={() => goToSelectRooms(booking)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-xl shadow"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() =>
-                              declineBooking(
-                                booking.booking_id,
-                                booking.rooms ? booking.rooms.map((r) => r.roomnumber_id) : []
-                              )
-                            }
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl shadow"
-                          >
-                            Decline
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="text-center p-4 text-muted-foreground">
-                        No booking requests found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          
+          <div className="p-6">
+            <div className="mb-6 flex w-full md:justify-between items-center">
+              <div className="w-full md:w-1/3">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                    </svg>
+                  </div>
+                  <Input
+                    type="search"
+                    placeholder="Search bookings..."
+                    className="pl-10 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-          </ScrollArea>
+            
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <ScrollArea className="h-[480px] w-full">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-700 text-left">
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Reference No.</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Customer Name</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Customer Type</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Room Types</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Stay Dates</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Downpayment</th>
+                        <th className="px-4 py-3 font-semibold text-gray-900 dark:text-white sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <tr key={booking.booking_id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                              {booking.reference_no || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
+                              {booking.customer_name}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                Online
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                              {booking.rooms?.length
+                                ? booking.rooms.map((r, index) => (
+                                    <div key={`${booking.booking_id}-${r.roomtype_id}-${index}`} className="mb-1 last:mb-0">
+                                      {r.roomtype_name}
+                                    </div>
+                                  ))
+                                : "-"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white">
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {formatDateOnly(booking.booking_checkin_dateandtime)}
+                                </span>
+                                <span className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                                  to {formatDateOnly(booking.booking_checkout_dateandtime)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
+                              ₱{Number(booking.booking_downpayment || 0).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => goToSelectRooms(booking)}
+                                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    declineBooking(
+                                      booking.booking_id,
+                                      booking.rooms ? booking.rooms.map((r) => r.roomnumber_id) : []
+                                    )
+                                  }
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm transition-colors"
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="7" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <div className="flex flex-col items-center">
+                              <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              <p className="text-lg font-medium">No booking requests found</p>
+                              <p className="text-sm mt-1">There are currently no online booking requests to display</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
         </div>
       </div>
     </>

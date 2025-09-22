@@ -14,8 +14,6 @@ import {
   Home,
   LogOutIcon,
   MenuSquareIcon,
-  ReceiptText,
-  Send,
   Shield,
   User
 } from 'lucide-react';
@@ -54,9 +52,9 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
     { label: 'Profile', icon: <User className="w-5 h-5" /> },
     { label: 'Booking Summary', icon: <Book className="w-5 h-5" /> },
     { label: 'Booking History', icon: <History className="w-5 h-5" /> },
-    { label: 'Requested Amenities', icon: <Send className="w-5 h-5" /> },
+    // { label: 'Requested Amenities', icon: <Send className="w-5 h-5" /> },
     { label: 'View Booking', icon: <Book className="w-5 h-5" /> },
-    { label: 'Invoice', icon: <ReceiptText className="w-5 h-5" /> },
+    // { label: 'Invoice', icon: <ReceiptText className="w-5 h-5" /> },
     { label: 'Password and Security', icon: <Shield className="w-5 h-5" /> },
     { label: 'Archive', icon: <Archive className="w-5 h-5" /> },
   ];

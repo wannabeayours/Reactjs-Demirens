@@ -16,6 +16,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Card, CardContent } from '@/components/ui/card';
 
 function Login() {
     const { useEffect, useState } = React;
@@ -93,14 +94,14 @@ function Login() {
             console.log("Response Status:", res.status);
 
             // Parse the JSON string response
-            const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-            console.log("Response Data (parsed):", responseData);
-            console.log("Success check:", responseData.success);
-            console.log("User check:", responseData.user);
+            // const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+            // console.log("Response Data (parsed):", responseData);
+            // console.log("Success check:", responseData.success);
+            // console.log("User check:", responseData.user);
 
-            if (responseData && responseData.success && responseData.user) {
+            if (res.data !== 0) {
                 toast.success("Successfully log in");
-                const user = responseData.user;
+                const user = res.data;
                 localStorage.setItem("userId", user.customers_id);
                 localStorage.setItem("customerOnlineId", user.customers_online_id);
                 localStorage.setItem("fname", user.customers_fname);
@@ -110,13 +111,7 @@ function Login() {
                 }, 1500);
             }
             else {
-                console.log("Login failed - Response structure:", responseData);
-                console.log("Why login failed - success:", responseData?.success, "user:", responseData?.user);
-                if (responseData && responseData.message) {
-                    toast.error(responseData.message);
-                } else {
-                    toast.error("Invalid username or password");
-                }
+                toast.error("Invalid Credentials")
             }
 
         } catch (error) {
@@ -146,138 +141,141 @@ function Login() {
 
             {/* Right side - Form */}
             <div className="w-full md:w-1/2 px-4 py-6 sm:px-6 sm:py-8 md:p-10 flex items-center justify-center">
-                <div className="w-full max-w-md space-y-4 sm:space-y-6">
-                    <div className="text-center mb-4 sm:mb-6">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold  text-[#769FCD] ">Login to Your Account</h2>
-                        <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1 sm:mt-2">Enter your credentials to access your account</p>
-                    </div>
+                <Card >
+                    <CardContent className="w-full max-w-md space-y-4 sm:space-y-6">
+                        <div className="text-center mb-4 sm:mb-6">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold  text-[#769FCD] ">Login to Your Account</h2>
+                            <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1 sm:mt-2">Enter your credentials to access your account</p>
+                        </div>
 
-                    {/* Form */}
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                            {/* Email */}
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-1.5">
-                                        <FormLabel className="text-sm sm:text-base font-medium">Username</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="Enter username"
-                                                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-xs sm:text-sm" />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Password */}
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-1.5">
-                                        <div className="flex justify-between items-center">
-                                            <FormLabel className="text-sm sm:text-base font-medium">Password</FormLabel>
-                                        </div>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder="Enter Password"
-                                                className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <div className="flex justify-end">
-                                            <Button variant="link" asChild className="h-auto p-0 text-xs sm:text-sm text-[#769FCD]">
-                                                <Link to="/forgot-password">Forgot Password?</Link>
-                                            </Button>
-                                        </div>
-                                        <FormMessage className="text-xs sm:text-sm" />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Captcha */}
-                            <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg mt-2 sm:mt-3">
-                                <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-700">Security CAPTCHA</h2>
-                                <div className="flex justify-center items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-md">
-                                    {captchaCharacters.map((c, index) => (
-                                        <span
-                                            key={index}
-                                            style={{
-                                                color: c.color,
-                                                fontSize: "clamp(20px, 4vw, 28px)",
-                                                fontWeight: "bold",
-                                                textShadow: "1px 1px 2px rgba(0,0,0,0.1)"
-                                            }}
-                                        >
-                                            {c.char}
-                                        </span>
-                                    ))}
-                                </div>
-
-                                <Input
-                                    type="text"
-                                    value={userInput}
-                                    onChange={handleInputChange}
-                                    placeholder="Enter CAPTCHA characters"
-                                    className="border p-2 w-full rounded-lg mt-3 text-center h-9 sm:h-10 text-sm sm:text-base"
+                        {/* Form */}
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+                                {/* Email */}
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-1.5">
+                                            <FormLabel className="text-sm sm:text-base font-medium">Username</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Enter username"
+                                                    className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-xs sm:text-sm" />
+                                        </FormItem>
+                                    )}
                                 />
 
-                                <div className="flex justify-center mt-2">
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        onClick={generateCaptchaCharacters}
-                                        className="text-[#769FCD] text-xs sm:text-sm underline h-auto p-0"
-                                    >
-                                        Refresh CAPTCHA
-                                    </Button>
+                                {/* Password */}
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-1.5">
+                                            <div className="flex justify-between items-center">
+                                                <FormLabel className="text-sm sm:text-base font-medium">Password</FormLabel>
+                                            </div>
+                                            <FormControl>
+                                                <Input
+                                                    type="password"
+                                                    placeholder="Enter Password"
+                                                    className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <div className="flex justify-end">
+                                                <Button variant="link" asChild className="h-auto p-0 text-xs sm:text-sm text-[#769FCD]">
+                                                    <Link to="/forgot-password">Forgot Password?</Link>
+                                                </Button>
+                                            </div>
+                                            <FormMessage className="text-xs sm:text-sm" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Captcha */}
+                                <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg mt-2 sm:mt-3">
+                                    <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-700">Security CAPTCHA</h2>
+                                    <div className="flex justify-center items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-md">
+                                        {captchaCharacters.map((c, index) => (
+                                            <span
+                                                key={index}
+                                                style={{
+                                                    color: c.color,
+                                                    fontSize: "clamp(20px, 4vw, 28px)",
+                                                    fontWeight: "bold",
+                                                    textShadow: "1px 1px 2px rgba(0,0,0,0.1)"
+                                                }}
+                                            >
+                                                {c.char}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <Input
+                                        type="text"
+                                        value={userInput}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter CAPTCHA characters"
+                                        className="border p-2 w-full rounded-lg mt-3 text-center h-9 sm:h-10 text-sm sm:text-base"
+                                    />
+
+                                    <div className="flex justify-center mt-2">
+                                        <Button
+                                            type="button"
+                                            variant="link"
+                                            onClick={generateCaptchaCharacters}
+                                            className="text-[#769FCD] text-xs sm:text-sm underline h-auto p-0"
+                                        >
+                                            Refresh CAPTCHA
+                                        </Button>
+                                    </div>
+
+                                    {!isCaptchaValid && userInput.length > 0 && (
+                                        <p className="text-red-500 text-xs sm:text-sm mt-1">
+                                            Incorrect CAPTCHA, try again.
+                                        </p>
+                                    )}
                                 </div>
 
-                                {!isCaptchaValid && userInput.length > 0 && (
-                                    <p className="text-red-500 text-xs sm:text-sm mt-1">
-                                        Incorrect CAPTCHA, try again.
-                                    </p>
+                                {/* Login button */}
+                                {isCaptchaValid ? (
+                                    <Button
+                                        className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-[#769FCD] hover:bg-[#5885AF] text-white font-medium rounded-lg transition-all duration-200"
+                                    >
+                                        Login
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed opacity-70"
+                                        disabled
+                                    >
+                                        Complete CAPTCHA to Login
+                                    </Button>
                                 )}
-                            </div>
 
-                            {/* Login button */}
-                            {isCaptchaValid ? (
-                                <Button
-                                    className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-[#769FCD] hover:bg-[#5885AF] text-white font-medium rounded-lg transition-all duration-200"
-                                >
-                                    Login
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed opacity-70"
-                                    disabled
-                                >
-                                    Complete CAPTCHA to Login
-                                </Button>
-                            )}
+                                {/* Sign up link */}
+                                <div className="text-center pt-2">
+                                    <p className="text-xs sm:text-sm text-gray-600">
+                                        Don't have an account?{" "}
+                                        <Link to="/register" className="text-[#769FCD] font-medium hover:underline transition-all">
+                                            Sign Up
+                                        </Link>
+                                    </p>
+                                </div>
+                            </form>
+                        </Form>
+                    </CardContent>
 
-                            {/* Sign up link */}
-                            <div className="text-center pt-2">
-                                <p className="text-xs sm:text-sm text-gray-600">
-                                    Don't have an account?{" "}
-                                    <Link to="/register" className="text-[#769FCD] font-medium hover:underline transition-all">
-                                        Sign Up
-                                    </Link>
-                                </p>
-                            </div>
-                        </form>
-                    </Form>
-                </div>
+                </Card>
             </div>
         </div>
-        
+
     )
 }
 

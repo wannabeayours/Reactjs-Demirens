@@ -35,25 +35,25 @@ function Sidebar({ onCollapse }) {
     { path: "/admin/bookinglist", icon: <File className="w-4 h-4" />, label: "Bookings List" },
     { path: "/admin/guestprofile", icon: <User className="w-4 h-4" />, label: "Guest Profiles" },
     { path: "/admin/transactionhistory", icon: <HistoryIcon className="w-4 h-4" />, label: "Transaction History" },
+    { path: "/admin/requestedamenities", icon: <PillBottleIcon className="w-4 h-4" />, label: "Amenity Requests" },
     { path: "/admin/calendar", icon: <Calendar1Icon className="w-4 h-4" />, label: "Calendar" },
     { path: "/admin/visitorslog", icon: <User2Icon className="w-4 h-4" />, label: "Visitors" },
     { path: "/admin/reviews", icon: <StarIcon className="w-4 h-4" />, label: "Reviews" },
   ]
 
   const bookingLinks = [
-  { path: "/admin/choose-rooms", icon: <NotebookPen className="w-4 h-4" />, label: "Add Walk In" },
-  { path: "/admin/online", icon: <Laptop className="w-4 h-4" />, label: "Add Online" },
-]
+    { path: "/admin/choose-rooms", icon: <NotebookPen className="w-4 h-4" />, label: "Add Walk In" },
+    { path: "/admin/online", icon: <Laptop className="w-4 h-4" />, label: "Add Online" },
+  ]
 
-const paymentLinks = [
-  { path: "/admin/invoice", icon: <ReceiptText className="w-4 h-4" />, label: "Invoice" },
-  { path: "/admin/billings", icon: <Wallet className="w-4 h-4" />, label: "Billings" },
-]
+  const paymentLinks = [
+    { path: "/admin/invoice", icon: <ReceiptText className="w-4 h-4" />, label: "Invoice" },
+    { path: "/admin/billings", icon: <Wallet className="w-4 h-4" />, label: "Billings" },
+  ]
 
   const masterLinks = [
     { path: "/admin/roomtypemaster", icon: <Bed className="w-4 h-4" />, label: "Room Types" },
     { path: "/admin/amenitymaster", icon: <PillBottleIcon className="w-4 h-4" />, label: "Amenities" },
-    { path: "/admin/requestedamenities", icon: <PillBottleIcon className="w-4 h-4" />, label: "Request Amenities" },
     { path: "/admin/chargemaster", icon: <MinusCircleIcon className="w-4 h-4" />, label: "Charges" },
     { path: "/admin/chargescategory", icon: <PlusSquareIcon className="w-4 h-4" />, label: "Charges Masters" },
     { path: "/admin/discountmaster", icon: <Percent className="w-4 h-4" />, label: "Discount" },

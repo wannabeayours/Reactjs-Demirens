@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import CustomerDashboard from './CustomerDashboard';
 import CustomerProfile from './CustomerProfile';
 import CustomerBookingHis from './CustomerBookingHis';
-import CustomerReqAmenities from './CustomerReqAmenities';
-import CustomerInvoices from './CustomerInvoices';
 import CustomerSettings from './CustomerSettings';
 import CustomerBookingSummary from './CustomerBookingSummary';
 import CustomerViewBookings from './CustomerViewBookings';
@@ -11,14 +9,6 @@ import CustomerArchieve from './CustomerArchieve';
 
 import CustomerSidebar from '@/components/layout/CustomerSidebar';
 import CustomerHeader from '@/components/layout/CustomerHeader';
-
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { MenuSquareIcon } from 'lucide-react';
 
 function CustomerMain() {
   const [viewIndex, setViewIndex] = useState(() => {
@@ -33,9 +23,9 @@ function CustomerMain() {
     <CustomerProfile />,
     <CustomerBookingSummary />,
     <CustomerBookingHis />,
-    <CustomerReqAmenities />,
+    // <CustomerReqAmenities />,
     <CustomerViewBookings />,
-    <CustomerInvoices />,
+    // <CustomerInvoices />,
     <CustomerSettings />,
     <CustomerArchieve />
   ];
