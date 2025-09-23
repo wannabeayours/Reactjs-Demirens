@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import React, { useEffect, useState } from 'react'
 import RequestAmenities from './RequestAmenities';
+import { Badge } from '@/components/ui/badge';
 
 function ViewBookingSummary({ getBookingSummary, bookingData }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,6 +30,12 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
         maximumFractionDigits: 2,
       })}`,
       sortable: true },
+      { header: 'Status',
+        cell: (row) => (
+        <Badge className={row.charges_status_name === "Delivered" ? "bg-green-900" : row.charges_status_name === "Pending" ? "bg-orange-500" : "bg-red-500"}>
+          {row.charges_status_name}
+        </Badge>)
+      },
   ];
 
   useEffect(() => {
