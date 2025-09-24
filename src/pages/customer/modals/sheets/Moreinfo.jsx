@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -21,7 +22,7 @@ function Moreinfo({ room }) {
           const url = localStorage.getItem('url') + "customer.php";
           const formData = new FormData();
           formData.append("operation", "getRoomTypeDetails");
-          formData.append("json", JSON.stringify({ roomTypeId: room.room_type }));
+          formData.append("json", JSON.stringify({ roomTypeId: room.room_type ? room.room_type : room.roomtype_id }));
           const response = await axios.post(url, formData);
           const res = response.data;
 
@@ -48,7 +49,7 @@ function Moreinfo({ room }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <span className="underline cursor-pointer">More Info</span>
+        <Button className=" cursor-pointer">More Info</Button>
       </SheetTrigger>
       <SheetContent side="top" className="h-[90vh] overflow-y-auto rounded-b-3xl">
         <ScrollArea className="h-[100vh] md:h-[90)]">

@@ -58,6 +58,45 @@ function CustomerDashboard() {
   const [childrenNumber, setChildrenNumber] = useState(0);
   const [isSearched, setIsSearched] = useState(false);
 
+  // Utility at top of component
+  const getTomorrowAndNextDay = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextDay = new Date(tomorrow);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Convert to yyyy-mm-dd for DatePicker
+    const format = (d) => d.toISOString().split('T')[0];
+    return {
+      checkIn: format(tomorrow),
+      checkOut: format(nextDay),
+    };
+  };
+
+  React.useEffect(() => {
+    const { checkIn, checkOut } = getTomorrowAndNextDay();
+
+    // set form values
+    form.setValue("checkIn", checkIn);
+    form.setValue("checkOut", checkOut);
+
+    // set default adult
+    setAdultNumber(1);
+
+    // also set in localStorage for consistency if needed
+    localStorage.setItem("checkIn", checkIn);
+    localStorage.setItem("checkOut", checkOut);
+    localStorage.setItem("adult", 1);
+    localStorage.setItem("children", 0);
+    localStorage.setItem("guestNumber", 1);
+
+    // Immediately fetch rooms
+    getRooms({ checkIn, checkOut });
+    setIsSearched(true);
+  }, []); // runs once on mount
+
+
+
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -281,7 +320,7 @@ function CustomerDashboard() {
                   </div>
 
                   <div className="flex mt-auto pt-3 border-t border-blue-100 gap-2">
-                     <Moreinfo room={room} />
+                    <Moreinfo room={room} />
                     {room.status_id === 3 ? (
                       <BookingWaccount
                         rooms={rooms}
