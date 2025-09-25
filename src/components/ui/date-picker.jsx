@@ -1,6 +1,5 @@
 import { format } from "date-fns";
 import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "./input";
 
 const DatePicker = ({
   form,
@@ -11,6 +10,7 @@ const DatePicker = ({
   isRequired = false,
   pastAllowed = true,
   futureAllowed = true,
+  hideFormLabel = false
 }) => {
   const now = new Date();
   const formattedNow = withTime
@@ -37,10 +37,12 @@ const DatePicker = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>
-            {label} {isRequired && <span className="text-red-500">*</span>}
-          </FormLabel>
-          <Input
+          {hideFormLabel &&
+            <FormLabel>
+              {label} {isRequired && <span className="text-red-500">*</span>}
+            </FormLabel>
+          }
+          <input
             type={withTime ? "datetime-local" : "date"}
             value={field.value ? field.value.substring(0, withTime ? 16 : 10) : ""}
             onChange={handleChange}

@@ -204,14 +204,17 @@ function Landingpage() {
                             name="checkIn"
                             render={({ field }) => (
                               <FormItem className="animate-slideInLeft" style={{ animationDelay: '100ms' }}>
-                                <DatePicker
-                                  form={form}
-                                  name={field.name}
-                                  label="Check-in"
-                                  pastAllowed={false}
-                                  futureAllowed={true}
-                                  withTime={false}
-                                />
+                                <FormLabel>Check-In</FormLabel>
+                                <div className='text-black'>
+                                  <DatePicker
+                                    form={form}
+                                    name={field.name}
+                                    label=""
+                                    pastAllowed={false}
+                                    futureAllowed={true}
+                                    withTime={false}
+                                  />
+                                </div>
                               </FormItem>
                             )}
                           />
@@ -220,14 +223,17 @@ function Landingpage() {
                             name="checkOut"
                             render={({ field }) => (
                               <FormItem className="animate-slideInLeft" style={{ animationDelay: '200ms' }}>
-                                <DatePicker
-                                  form={form}
-                                  name={field.name}
-                                  label="Check-out"
-                                  pastAllowed={false}
-                                  futureAllowed={true}
-                                  withTime={false}
-                                />
+                                <FormLabel>Check-out</FormLabel>
+                                <div className='text-black'>
+                                  <DatePicker
+                                    form={form}
+                                    name={field.name}
+                                    label=""
+                                    pastAllowed={false}
+                                    futureAllowed={true}
+                                    withTime={false}
+                                  />
+                                </div>
                               </FormItem>
                             )}
                           />
