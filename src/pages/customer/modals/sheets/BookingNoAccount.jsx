@@ -15,7 +15,7 @@ import ConfirmBooking from '../ConfirmBooking'
 import Moreinfo from './Moreinfo'
 import { Badge } from '@/components/ui/badge'
 
-function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
+function BookingNoaccount({ handleGetSummaryInfo, rooms, selectedRoom, handleClearData, adultNumber, childrenNumber }) {
   const [allRooms, setAllRooms] = useState([])
   const [selectedRooms, setSelectedRooms] = useState([])
   const [open, setOpen] = useState(false)
@@ -33,7 +33,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
   const [email, setEmail] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [guests, setGuests] = useState(1);
-  
+
   // Form validation states
   const [errors, setErrors] = useState({
     walkinfirstname: "",
@@ -52,19 +52,19 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       email: "",
       contactNumber: ""
     };
-    
+
     // Validate first name
     if (!walkinfirstname.trim()) {
       newErrors.walkinfirstname = "First name is required";
       isValid = false;
     }
-    
+
     // Validate last name
     if (!walkinlastname.trim()) {
       newErrors.walkinlastname = "Last name is required";
       isValid = false;
     }
-    
+
     // Validate email
     if (!email.trim()) {
       newErrors.email = "Email is required";
@@ -73,13 +73,13 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       newErrors.email = "Email is invalid";
       isValid = false;
     }
-    
+
     // Validate contact number
     if (!contactNumber.trim()) {
       newErrors.contactNumber = "Contact number is required";
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -89,7 +89,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       toast.error("Please fill all required fields correctly");
       return;
     }
-    
+
     try {
       const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
@@ -166,75 +166,74 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
   }
 
   useEffect(() => {
-    if (open) {
-      const checkInStr = localStorage.getItem('checkIn');
-      const checkOutStr = localStorage.getItem('checkOut');
-      const guestNum = parseInt(localStorage.getItem('guestNumber'));
-      const storedAdult = parseInt(localStorage.getItem('adult')) || 1;
-      const storedChildren = parseInt(localStorage.getItem('children'));
+    const checkInStr = localStorage.getItem('checkIn');
+    const checkOutStr = localStorage.getItem('checkOut');
+    const guestNum = parseInt(localStorage.getItem('guestNumber'));
+    const storedAdult = parseInt(localStorage.getItem('adult')) || 1;
+    const storedChildren = parseInt(localStorage.getItem('children'));
 
-      const checkInDate = new Date(checkInStr);
-      const checkOutDate = new Date(checkOutStr);
+    const checkInDate = new Date(checkInStr);
+    const checkOutDate = new Date(checkOutStr);
 
-      // ✅ Normalize to midnight so we only compare dates (ignore time)
-      checkInDate.setHours(0, 0, 0, 0);
-      checkOutDate.setHours(0, 0, 0, 0);
+    // ✅ Normalize to midnight so we only compare dates (ignore time)
+    checkInDate.setHours(0, 0, 0, 0);
+    checkOutDate.setHours(0, 0, 0, 0);
 
-      setCheckIn(checkInDate);
-      setCheckOut(checkOutDate);
+    setCheckIn(checkInDate);
+    setCheckOut(checkOutDate);
 
-      // ✅ Get number of nights (at least 1 night)
-      const diffTime = checkOutDate.getTime() - checkInDate.getTime();
-      const diffDays = Math.max(1, diffTime / (1000 * 60 * 60 * 24));
-      setNumberOfNights(diffDays);
+    // ✅ Get number of nights (at least 1 night)
+    const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+    const diffDays = Math.max(1, diffTime / (1000 * 60 * 60 * 24));
+    setNumberOfNights(diffDays);
 
-      setAllRooms(rooms);
-      console.log("SELECTED ROOooooooooooM", selectedRoom);
+    setAllRooms(rooms);
+    console.log("SELECTED ROOooooooooooM", selectedRoom);
 
-      const selected = {
-        roomtype_name: selectedRoom.roomtype_name,
-        roomtype_price: selectedRoom.roomtype_price,
-        room_type: selectedRoom.roomtype_id,
-        roomtype_description: selectedRoom.roomtype_description,
-        room_capacity: selectedRoom.roomtype_capacity,
-        // Add a unique identifier for each selected room instance
-        unique_id: `${selectedRoom.roomtype_id}_${Date.now()}`
-      };
+    const selected = {
+      roomtype_name: selectedRoom.roomtype_name,
+      roomtype_price: selectedRoom.roomtype_price,
+      room_type: selectedRoom.roomtype_id,
+      roomtype_description: selectedRoom.roomtype_description,
+      room_capacity: selectedRoom.roomtype_capacity,
+      // Add a unique identifier for each selected room instance
+      unique_id: `${selectedRoom.roomtype_id}_${Date.now()}`
+    };
 
-      setSelectedRooms(prev => {
-        const isAlreadySelected = prev.some(room => room.room_type === selected.room_type);
-        if (isAlreadySelected) {
-          return prev; // Don't add duplicate
-        }
-        return [...prev, selected]; // Add new room
-      });
+    setSelectedRooms(prev => {
+      const isAlreadySelected = prev.some(room => room.room_type === selected.room_type);
+      if (isAlreadySelected) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, selected]; // Add new room
+    });
 
-      // ✅ Clamp guest number to max_capacity
-      const validGuestNum = Math.min(guestNum, selected.room_capacity);
-      setGuestCounts(prev => ({
-        ...prev,
-        [selected.unique_id]: validGuestNum
-      }));
+    // ✅ Clamp guest number to max_capacity
+    const validGuestNum = Math.min(guestNum, selected.room_capacity);
+    setGuestCounts(prev => ({
+      ...prev,
+      [selected.unique_id]: validGuestNum
+    }));
 
-      // Initialize adults
-      const initialAdult = Number.isFinite(storedAdult)
-        ? Math.max(0, storedAdult)
-        : (typeof adultNumber === 'number' ? Math.max(0, adultNumber) : 0);
+    // Initialize adults
+    const initialAdult = Number.isFinite(storedAdult)
+      ? Math.max(0, storedAdult)
+      : (typeof adultNumber === 'number' ? Math.max(0, adultNumber) : 0);
 
-      const initAdults = adultNumber || parseInt(storedAdult) || 1;
-      const initChildren = childrenNumber || parseInt(storedChildren) || 0;
+    const initAdults = adultNumber || parseInt(storedAdult) || 1;
+    const initChildren = childrenNumber || parseInt(storedChildren) || 0;
 
-      setAdultCounts(prev => ({
-        ...prev,
-        [selected.unique_id]: initAdults
-      }));
+    setAdultCounts(prev => ({
+      ...prev,
+      [selected.unique_id]: initAdults
+    }));
 
-      setChildrenCounts(prev => ({
-        ...prev,
-        [selected.unique_id]: initChildren
-      }));
+    setChildrenCounts(prev => ({
+      ...prev,
+      [selected.unique_id]: initChildren
+    }));
 
-    }
+
   }, [open, rooms, selectedRoom, adultNumber, childrenNumber]);
 
 
@@ -285,25 +284,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     });
   }, [selectedRooms]);
 
-  // // Keep localStorage in sync when adults change
-  // useEffect(() => {
-  //   const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
-  //   localStorage.setItem('adult', String(totalAdults));
-  //   const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
-  //   localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
-  // }, [adultCounts]);
-
-  // // Keep localStorage in sync when children change
-  // useEffect(() => {
-  //   const totalChildren = Object.values(childrenCounts).reduce((sum, count) => sum + count, 0);
-  //   localStorage.setItem('children', String(totalChildren));
-  //   const totalAdults = Object.values(adultCounts).reduce((sum, count) => sum + count, 0);
-  //   localStorage.setItem('guestNumber', String(totalAdults + totalChildren));
-  // }, [childrenCounts]);
-
-
-
-
   const handleRemoveRoom = (indexRemove) => {
     const roomToRemove = selectedRooms[indexRemove];
     const updatedRooms = selectedRooms.filter((_, index) => index !== indexRemove);
@@ -327,11 +307,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
         delete updated[roomKey];
         return updated;
       });
-      // setExtraBedCounts(prev => {
-      //   const updated = { ...prev };
-      //   delete updated[roomKey];
-      //   return updated;
-      // });
     }
 
     if (updatedRooms.length === 0) {
@@ -344,7 +319,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
 
   const closeConfirmModal = () => {
     setShowConfirmModal(false)
-
   }
 
   const openConfirmModal = () => {
@@ -373,24 +347,69 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
-
-
-
-
-
   return (
     <>
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button >Book Now</Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="text-black p-6 border-none rounded-t-3xl bg-white">
+      <div>
+        <div className="text-black p-6 border-none rounded-t-3xl bg-white">
           <div className="h-[100vh] md:h-[calc(100vh-100px)] md:overflow-y-hidden overflow-y-auto" >
 
+            <div className='flex justify-end gap-2'>
+              <Button>
+                Previous
+              </Button>
+              <Button
+                onClick={() => {
+                  if (selectedRooms.length === 0) {
+                    toast.error("Please select at least one room.");
+                    return;
+                  }
 
+                  // Run validation
+                  if (!validateForm()) {
+                    toast.error("Please fill in all required fields correctly.");
+                    return;
+                  }
+
+                  const subtotal = selectedRooms.reduce(
+                    (sum, room) => sum + Number(room.roomtype_price) * numberOfNights,
+                    0
+                  );
+                  const vat = subtotal - (subtotal / 1.12);
+                  const total = subtotal;
+                  const downpayment = total * 0.5;
+                  handleGetSummaryInfo({
+                    rooms: selectedRooms.map(room => ({
+                      ...room,
+                      guestCount:
+                        (adultCounts[room.unique_id || room.room_type] || 0) +
+                        (childrenCounts[room.unique_id || room.room_type] || 0),
+                      adultCount: adultCounts[room.unique_id || room.room_type] || 0,
+                      childrenCount: childrenCounts[room.unique_id || room.room_type] || 0,
+                    })),
+                    checkIn,
+                    checkOut,
+                    numberOfNights,
+                    vat,
+                    total,
+                    downpayment,
+                    customer: {
+                      firstName: walkinfirstname,
+                      lastName: walkinlastname,
+                      email: email,
+                      contactNumber: contactNumber
+                    }
+                  });
+
+                  // ✅ open modal only if valid
+                  setShowConfirmModal(true);
+                }}
+              >
+                Next
+              </Button>
+            </div>
             <div className="p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full">
                 <div className="p-4 grid grid-cols-2 gap-4">
                   {/* ✅ Check-in input */}
                   <div className="flex flex-col">
@@ -422,20 +441,8 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                     />
                   </div>
                 </div>
-
-
-                {/* <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                  <span className="text-xs text-gray-500">Adults</span>
-                  <div className="ml-auto text-sm font-semibold">{adultNum}</div>
-                </div>
-                <div className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                  <span className="text-xs text-gray-500">Children</span>
-                  <div className="ml-auto text-sm font-semibold">{childrenNum}</div>
-                </div> */}
               </div>
             </div>
-
-
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 h-[calc(100vh-180px)]">
               {/* LEFT SIDE: Selected Rooms (scrollable) */}
@@ -596,13 +603,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                       <div className="mt-3 text-sm text-gray-700">
                                         Total guests: <span className="font-semibold">{(adultCounts[room.unique_id || room.room_type] || 0) + (childrenCounts[room.unique_id || room.room_type] || 0)}</span>
                                       </div>
-
-
-
                                     </div>
-
-
-
                                   </div>
                                 </CardContent>
 
@@ -617,100 +618,80 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                       </div>
                     </ScrollArea>
                   </Card>
-
-
-
-
-
                 </CardContent>
-
               </Card>
-
-
               <ScrollArea className="h-[calc(80vh)]">
                 <div className="flex flex-col border-none bg-transparent pr-2 mb-6 space-y-3 ">
-                    <form>
-                      <Card className="bg-white shadow-md">
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
-                            <div>
-                              <div className="space-y-2">
-                                <Label htmlFor="walkinfirstname">First Name</Label>
-                                <Input 
-                                  id="walkinfirstname"
-                                  placeholder="Enter your first name" 
-                                  value={walkinfirstname}
-                                  onChange={(e) => setWalkinfirstname(e.target.value)}
-                                />
-                                {errors.walkinfirstname && (
-                                  <p className="text-sm font-medium text-red-500">{errors.walkinfirstname}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="space-y-2">
-                                <Label htmlFor="walkinlastname">Last Name</Label>
-                                <Input 
-                                  id="walkinlastname"
-                                  placeholder="Enter your last name" 
-                                  value={walkinlastname}
-                                  onChange={(e) => setWalkinlastname(e.target.value)}
-                                />
-                                {errors.walkinlastname && (
-                                  <p className="text-sm font-medium text-red-500">{errors.walkinlastname}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input 
-                                  id="email"
-                                  placeholder="Enter your email" 
-                                  value={email}
-                                  onChange={(e) => setEmail(e.target.value)}
-                                />
-                                {errors.email && (
-                                  <p className="text-sm font-medium text-red-500">{errors.email}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="space-y-2">
-                                <Label htmlFor="contactNumber">Contact Number</Label>
-                                <Input 
-                                  id="contactNumber"
-                                  placeholder="Enter your contact number" 
-                                  value={contactNumber}
-                                  onChange={(e) => setContactNumber(e.target.value)}
-                                />
-                                {errors.contactNumber && (
-                                  <p className="text-sm font-medium text-red-500">{errors.contactNumber}</p>
-                                )}
-                              </div>
-                            </div>
-                            {showConfirmModal &&
-                              <ConfirmBooking
-                                open={showConfirmModal}
-                                onClose={closeConfirmModal}
-                                handleClearData={handleClearData}
-                                summary={summaryInfo}
-                                onConfirmBooking={customerBookingNoAccount}
+                  <form>
+                    <Card className="bg-white shadow-md">
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
+                          <div>
+                            <div className="space-y-2">
+                              <Label htmlFor="walkinfirstname">First Name</Label>
+                              <Input
+                                id="walkinfirstname"
+                                placeholder="Enter your first name"
+                                value={walkinfirstname}
+                                onChange={(e) => setWalkinfirstname(e.target.value)}
                               />
-                            }
+                              {errors.walkinfirstname && (
+                                <p className="text-sm font-medium text-red-500">{errors.walkinfirstname}</p>
+                              )}
+                            </div>
                           </div>
-                        </CardContent>
+                          <div>
+                            <div className="space-y-2">
+                              <Label htmlFor="walkinlastname">Last Name</Label>
+                              <Input
+                                id="walkinlastname"
+                                placeholder="Enter your last name"
+                                value={walkinlastname}
+                                onChange={(e) => setWalkinlastname(e.target.value)}
+                              />
+                              {errors.walkinlastname && (
+                                <p className="text-sm font-medium text-red-500">{errors.walkinlastname}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input
+                                id="email"
+                                placeholder="Enter your email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                              />
+                              {errors.email && (
+                                <p className="text-sm font-medium text-red-500">{errors.email}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="space-y-2">
+                              <Label htmlFor="contactNumber">Contact Number</Label>
+                              <Input
+                                id="contactNumber"
+                                placeholder="Enter your contact number"
+                                value={contactNumber}
+                                onChange={(e) => setContactNumber(e.target.value)}
+                              />
+                              {errors.contactNumber && (
+                                <p className="text-sm font-medium text-red-500">{errors.contactNumber}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
 
-                      </Card>
-                    </form>
+                    </Card>
+                  </form>
                   <Card className="bg-white shadow-md rounded-2xl ">
                     <CardContent className="space-y-3 text-black">
-
                       <div className="flex justify-between items-center">
                         <h1 className="font-semibold text-lg">Booking Summary</h1>
-
                         <div className="text-sm text-blue-600 font-medium">
-
                           {selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''} Selected
                         </div>
                       </div>
@@ -732,12 +713,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                     = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </p>
                                 </CardContent>
-
-
-
-
                               </Card>
-
                             ))}
                           </ScrollArea>
                         </div>
@@ -779,67 +755,12 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
 
 
                 </div>
-                <Button
-                  onClick={() => {
-                    if (selectedRooms.length === 0) {
-                      toast.error("Please select at least one room.");
-                      return;
-                    }
-
-                    // Run validation
-                    if (!validateForm()) {
-                      toast.error("Please fill in all required fields correctly.");
-                      return;
-                    }
-
-                    const subtotal = selectedRooms.reduce(
-                      (sum, room) => sum + Number(room.roomtype_price) * numberOfNights,
-                      0
-                    );
-                    const vat = subtotal - (subtotal / 1.12);
-                    const total = subtotal;
-                    const downpayment = total * 0.5;
-
-                    setSummaryInfo({
-                      rooms: selectedRooms.map(room => ({
-                        ...room,
-                        guestCount:
-                          (adultCounts[room.unique_id || room.room_type] || 0) +
-                          (childrenCounts[room.unique_id || room.room_type] || 0),
-                        adultCount: adultCounts[room.unique_id || room.room_type] || 0,
-                        childrenCount: childrenCounts[room.unique_id || room.room_type] || 0,
-                      })),
-                      checkIn,
-                      checkOut,
-                      numberOfNights,
-                      vat,
-                      total,
-                      downpayment,
-                      customer: {
-                        firstName: walkinfirstname,
-                        lastName: walkinlastname,
-                        email: email,
-                        contactNumber: contactNumber
-                      }
-                    });
-
-                    // ✅ open modal only if valid
-                    setShowConfirmModal(true);
-                  }}
-                >
-                  Confirm Booking
-                </Button>
 
               </ScrollArea>
-
             </div>
           </div>
-
-
-
-        </SheetContent>
-
-      </Sheet >
+        </div>
+      </div>
     </>
   )
 

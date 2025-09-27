@@ -35,7 +35,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from '@/components/ui/scroll-area'
 import axios from 'axios'
 
-const CustomerPayment = ({ customer, onBack }) => {
+const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
   const APIConn = `${localStorage.url}admin.php`
 
   const [customerBills, setCustomerBills] = useState([]);
@@ -251,6 +251,10 @@ const CustomerPayment = ({ customer, onBack }) => {
   return (
     <>
       <div id='MainPage'>
+         <div className="flex justify-end gap-2">
+        <Button onClick={handlePrevious}>Previous</Button>
+        <Button onClick={handleNext}>Next</Button>
+      </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Column 1: Basic Info, Charges, Total */}
           <div className="space-y-6">
@@ -400,12 +404,7 @@ const CustomerPayment = ({ customer, onBack }) => {
           </div>
         </div>
 
-        <Button
-          onClick={onBack}
-          className="mt-4"
-        >
-          ← Back
-        </Button>
+     
       </div>
 
 

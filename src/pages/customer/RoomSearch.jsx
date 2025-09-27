@@ -21,6 +21,8 @@ import BookingNoAccount from './modals/sheets/BookingNoAccount';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { ScrollBar } from '@/components/ui/scroll-area';
+import ConfirmBooking from './modals/ConfirmBooking';
+import CustomerPayment from '../admin/SubPages/CustomerPayment';
 
 const schema = z.object({
   checkIn: z.string().min(1, { message: "Check in is required" }),
@@ -51,6 +53,7 @@ const schema = z.object({
 });
 
 function RoomSearch() {
+  const [currentStep, setCurrentStep] = useState(1);
   // Initialize state with localStorage values
   const [adultNumber, setAdultNumber] = useState(() => {
     const stored = localStorage.getItem("adult");
@@ -63,10 +66,6 @@ function RoomSearch() {
   const [rooms, setRooms] = useState([]);
   const [isSearched, setIsSearched] = useState(true);
 
-
-
-
-
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -74,8 +73,6 @@ function RoomSearch() {
       checkOut: localStorage.getItem("checkOut") || "",
     },
   })
-
-
 
   const getRooms = useCallback(async (data) => {
     try {
@@ -101,7 +98,46 @@ function RoomSearch() {
     }
   }, [adultNumber, childrenNumber])
 
+  const Stepper = ({ steps, currentStep }) => {
+    return (
+      <div className="flex items-center justify-center gap-4 w-full">
+        {steps.map((step, index) => {
+          const isActive = index + 1 === currentStep;
+          const isCompleted = index + 1 < currentStep;
 
+          return (
+            <div key={index} className="flex flex-col items-center justify-center w-full">
+              <div className="flex items-center w-full">
+                <div
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 
+                  ${isActive ? "border-blue-600 bg-blue-600 text-white" : ""}
+                  ${isCompleted ? "border-green-600 bg-green-600 text-white" : ""}
+                  ${!isActive && !isCompleted ? "border-gray-400 text-gray-500" : ""}
+                `}
+                >
+                  {isCompleted ? "✓" : index + 1}
+                </div>
+                {index !== steps.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mx-2 
+                    ${isCompleted ? "bg-green-600" : "bg-gray-300"}
+                  `}
+                  />
+                )}
+              </div>
+              <p
+                className={`mt-2 text-sm font-medium text-center 
+                ${isActive ? "text-blue-600" : "text-gray-600"}
+              `}
+              >
+                {step.label}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const handleClearData = () => {
     localStorage.removeItem("checkIn");
@@ -132,6 +168,21 @@ function RoomSearch() {
     setIsSearched(true);
   }
 
+  const [selectedRoom, setSelectedRoom] = useState(null);
+
+  const handleSelectRoom = (room) => {
+    setSelectedRoom(room);
+    handleNext();
+  }
+
+const [summaryInfo, setSummaryInfo] = useState({});
+
+  const handleGetSummaryInfo = (summaryInfo) =>{
+    console.log("summaryInfo", summaryInfo)
+    setSummaryInfo(summaryInfo);
+    handleNext();
+  }
+
   // Update form values when localStorage changes
   useEffect(() => {
     const checkIn = localStorage.getItem("checkIn");
@@ -145,7 +196,247 @@ function RoomSearch() {
     if (checkOut) form.setValue("checkOut", checkOut);
   }, [form, getRooms]);
 
+  const handleNext = () => {
+    setCurrentStep((prev) => (prev < steps.length ? prev + 1 : prev));
+  }
 
+  const handlePrevious = () => {
+    setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
+  }
+
+  const roomSearchComponent = () => {
+    return (
+      <div className="flex flex-col gap-6 w-full px-2 md:px-8 py-6">
+        <section className="bg-gray-100 p-6 rounded-lg shadow min-h-[15vh] w-full ">
+          <div className="flex items-center justify-center min-h-[10vh] w-full ">
+            <Card className=" w-full max-w-6xl">
+              <CardContent>
+                <Form {...form}>
+
+                  <form onSubmit={form.handleSubmit(onSubmit)} >
+                    <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+                      {/* 
+            To prefill the form with values passed from another page (e.g., via localStorage or navigation state), 
+            you should initialize your form's default values using those sources.
+            This rewrite will:
+            - Prefill checkIn, checkOut, adultNumber, and childrenNumber from localStorage if available.
+            - Show the values in the form fields.
+            - If the user navigated here from another page and those values were set, they will appear.
+          */}
+                      <FormField
+                        control={form.control}
+                        name="checkIn"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-in"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={false}
+                              // Prefill value from localStorage if available
+                              value={field.value || localStorage.getItem("checkIn") || ""}
+                              onChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="checkOut"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label="Check-out"
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={false}
+                              value={field.value || localStorage.getItem("checkOut") || ""}
+                              onChange={field.onChange}
+                            />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div>
+                        <Label className={"mb-2 "}>Adults</Label>
+                        <div className="flex items-center justify-start space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setAdultNumber(adultNumber - 1)}
+                            disabled={adultNumber <= 1}
+                          >
+                            <MinusIcon />
+                          </Button>
+                          <Input
+                            className="w-1/4"
+                            type="number"
+                            readOnly
+                            value={adultNumber}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setAdultNumber(adultNumber + 1)}
+                          >
+                            <Plus />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className={"mb-2 "}>Children</Label>
+                        <div className="flex items-center justify-start space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setChildrenNumber(childrenNumber - 1)}
+                            disabled={childrenNumber === 0}
+                          >
+                            <MinusIcon />
+                          </Button>
+                          <Input
+                            className="w-1/4"
+                            type="number"
+                            readOnly
+                            value={childrenNumber}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setChildrenNumber(childrenNumber + 1)}
+                          >
+                            <Plus />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-end ">
+                        <Button className="w-full  " type="submit">Search</Button>
+                      </div>
+                    </div>
+                    {/* 
+          If you want to clear the prefilled values when the user clicks a "Clear" button, 
+          call handleClearData() which removes the localStorage items and resets the state.
+        */}
+                  </form>
+                </Form>
+              </CardContent>
+
+            </Card>
+          </div>
+        </section>
+        <section className=" min-h-[50vh] w-full">
+          <ScrollArea className="rounded-md border p-4 ">
+
+
+            {!isSearched ? (
+              <p className="text-center text-lg font-semibold  mt-10">
+                Please check in and check out first.
+              </p>
+            ) : rooms.length === 0 ? (
+              <p className="text-center text-lg font-semibold text-gray-600 mt-10">
+                No rooms available for {Number(adultNumber < 1 ? 1 : adultNumber) + Number(childrenNumber)} guest(s).
+              </p>
+            ) : (
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
+                {rooms.map((room, index) => (
+
+
+                  <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
+
+                    {/* Image Section */}
+                    <div className="h-[30vh] w-full overflow-hidden ">
+                      <img
+                        src={localStorage.getItem("url") + "images/" + room.roomtype_image} alt="Room" className="w-full h-full object-cover" />
+
+                    </div>
+
+                    {/* Info Section */}
+                    <div className="flex flex-col p-4 flex-1">
+                      <h5 className="text-4xl font-semibold mb-2  text-blue-500">{room.roomtype_name}</h5>
+                      {/* <Button
+                    variant="link"
+                    className="w-full justify-start"
+
+                  >
+                    View Room →
+                  </Button> */}
+                      <p
+                        className="text-sm text-gray-600 mb-4 overflow-hidden"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3, // bilang sa lines na ipakita
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {room.roomtype_description}
+                      </p>
+                      <div className="flex items-center justify-between mb-4">
+                        {/* Price + Moon icon */}
+                        <h2 className="text-xl font-bold text-blue-600 flex items-center gap-1">
+                          ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
+
+                        </h2>
+
+                        {/* Room Details in Badge Row */}
+                        <div className="flex gap-2">
+                          <Badge className="bg-transparent border-blue-500 text-blue-500">{room.roomtype_sizes}</Badge>
+                          <Badge className="bg-transparent border-blue-500 text-blue-500">
+                            {room.roomtype_capacity}
+                            <User size={20} className="ml-1" />
+                          </Badge>
+                          <Badge className="bg-transparent border-blue-500 text-blue-500">
+                            {room.roomtype_beds}
+                            <BedDoubleIcon size={20} className="ml-1" />
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className='flex items-end'>
+                        <Button className="w-full" onClick={ () => handleSelectRoom(room)}>Book</Button>
+                      </div>
+                      {/* <div className="flex mt-auto gap-2">
+
+                        {room.status_id === 3 ? (
+                          <BookingNoAccount
+                            rooms={rooms}
+                            selectedRoom={room}
+                            handleClearData={handleClearData}
+                            adultNumber={adultNumber}
+                            childrenNumber={childrenNumber}
+                          />
+                        ) : (
+                          <Button disabled className="w-full">Book Now</Button>
+                        )}
+                        <Button >View Details</Button>
+                      </div> */}
+                    </div>
+
+
+                  </Card>
+                ))}
+              </div>
+            )}
+
+
+            <ScrollBar />
+          </ScrollArea >
+        </section>
+
+      </div>
+    );
+  }
+
+  const steps = [
+    { label: "Search Room", content: () => roomSearchComponent() },
+    { label: "Details", content: () => <BookingNoAccount handleGetSummaryInfo={handleGetSummaryInfo} rooms={rooms} selectedRoom={selectedRoom} handleClearData={handleClearData} adultNumber={adultNumber} childrenNumber={childrenNumber} />},
+    { label: "Confirm", content: () => <ConfirmBooking summary={summaryInfo} handleNext={handleNext} handlePrevious={handlePrevious} /> },
+    { label: "Finish", content: () => <CustomerPayment customer={summaryInfo} handleNext={handleNext} handlePrevious={handlePrevious} handle/>},
+  ];
 
 
 
@@ -154,234 +445,17 @@ function RoomSearch() {
 
 
   return (
-    <div className="flex flex-col gap-6 w-full px-2 md:px-8 py-6">
+    <>
+      <div className="p-8 w-full mx-auto">
+        <Stepper steps={steps} currentStep={currentStep} />
 
-
-      <section className="bg-gray-100 p-6 rounded-lg shadow min-h-[15vh] w-full ">
-
-        <div className="flex items-center justify-center min-h-[10vh] w-full ">
-          <Card className=" w-full max-w-6xl">
-            <CardContent>
-              <Form {...form}>
-
-                <form onSubmit={form.handleSubmit(onSubmit)} >
-                  <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
-                    {/* 
-            To prefill the form with values passed from another page (e.g., via localStorage or navigation state), 
-            you should initialize your form's default values using those sources.
-            This rewrite will:
-            - Prefill checkIn, checkOut, adultNumber, and childrenNumber from localStorage if available.
-            - Show the values in the form fields.
-            - If the user navigated here from another page and those values were set, they will appear.
-          */}
-                    <FormField
-                      control={form.control}
-                      name="checkIn"
-                      render={({ field }) => (
-                        <FormItem>
-                          <DatePicker
-                            form={form}
-                            name={field.name}
-                            label="Check-in"
-                            pastAllowed={false}
-                            futureAllowed={true}
-                            withTime={false}
-                            // Prefill value from localStorage if available
-                            value={field.value || localStorage.getItem("checkIn") || ""}
-                            onChange={field.onChange}
-                          />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="checkOut"
-                      render={({ field }) => (
-                        <FormItem>
-                          <DatePicker
-                            form={form}
-                            name={field.name}
-                            label="Check-out"
-                            pastAllowed={false}
-                            futureAllowed={true}
-                            withTime={false}
-                            value={field.value || localStorage.getItem("checkOut") || ""}
-                            onChange={field.onChange}
-                          />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div>
-                      <Label className={"mb-2 "}>Adults</Label>
-                      <div className="flex items-center justify-start space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setAdultNumber(adultNumber - 1)}
-                          disabled={adultNumber <= 1}
-                        >
-                          <MinusIcon />
-                        </Button>
-                        <Input
-                          className="w-1/4"
-                          type="number"
-                          readOnly
-                          value={adultNumber}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setAdultNumber(adultNumber + 1)}
-                        >
-                          <Plus />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className={"mb-2 "}>Children</Label>
-                      <div className="flex items-center justify-start space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setChildrenNumber(childrenNumber - 1)}
-                          disabled={childrenNumber === 0}
-                        >
-                          <MinusIcon />
-                        </Button>
-                        <Input
-                          className="w-1/4"
-                          type="number"
-                          readOnly
-                          value={childrenNumber}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setChildrenNumber(childrenNumber + 1)}
-                        >
-                          <Plus />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex items-end ">
-                      <Button className="w-full  " type="submit">Search</Button>
-                    </div>
-                  </div>
-                  {/* 
-          If you want to clear the prefilled values when the user clicks a "Clear" button, 
-          call handleClearData() which removes the localStorage items and resets the state.
-        */}
-                </form>
-              </Form>
-            </CardContent>
-
-          </Card>
+        <div className="mt-8">
+          {steps[currentStep - 1].content()}
         </div>
 
+      </div>
+    </>
 
-
-
-      </section>
-
-
-      <section className=" min-h-[50vh] w-full">
-        <ScrollArea className="rounded-md border p-4 ">
-
-
-          {!isSearched ? (
-            <p className="text-center text-lg font-semibold  mt-10">
-              Please check in and check out first.
-            </p>
-          ) : rooms.length === 0 ? (
-            <p className="text-center text-lg font-semibold text-gray-600 mt-10">
-              No rooms available for {Number(adultNumber < 1 ? 1 : adultNumber) + Number(childrenNumber)} guest(s).
-            </p>
-          ) : (
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
-              {rooms.map((room, index) => (
-
-
-                <Card key={index} className="flex flex-col h-full rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border  bg-sky-100">
-
-                  {/* Image Section */}
-                  <div className="h-[30vh] w-full overflow-hidden ">
-                    <img
-                      src={localStorage.getItem("url") + "images/" + room.roomtype_image} alt="Room" className="w-full h-full object-cover" />
-
-                  </div>
-
-                  {/* Info Section */}
-                  <div className="flex flex-col p-4 flex-1">
-                    <h5 className="text-4xl font-semibold mb-2  text-blue-500">{room.roomtype_name}</h5>
-                    {/* <Button
-                    variant="link"
-                    className="w-full justify-start"
-
-                  >
-                    View Room →
-                  </Button> */}
-                    <p
-                      className="text-sm text-gray-600 mb-4 overflow-hidden"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3, // bilang sa lines na ipakita
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {room.roomtype_description}
-                    </p>
-                    <div className="flex items-center justify-between mb-4">
-                      {/* Price + Moon icon */}
-                      <h2 className="text-xl font-bold text-blue-600 flex items-center gap-1">
-                        ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
-
-                      </h2>
-
-                      {/* Room Details in Badge Row */}
-                      <div className="flex gap-2">
-                        <Badge className="bg-transparent border-blue-500 text-blue-500">{room.roomtype_sizes}</Badge>
-                        <Badge className="bg-transparent border-blue-500 text-blue-500">
-                          {room.roomtype_capacity}
-                          <User size={20} className="ml-1" />
-                        </Badge>
-                        <Badge className="bg-transparent border-blue-500 text-blue-500">
-                          {room.roomtype_beds}
-                          <BedDoubleIcon size={20} className="ml-1" />
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex mt-auto gap-2">
-
-                      {room.status_id === 3 ? (
-                        <BookingNoAccount
-                          rooms={rooms}
-                          selectedRoom={room}
-                          handleClearData={handleClearData}
-                          adultNumber={adultNumber}
-                          childrenNumber={childrenNumber}
-                        />
-                      ) : (
-                        <Button disabled className="w-full">Book Now</Button>
-                      )}
-                      <Button >View Details</Button>
-                    </div>
-                  </div>
-
-
-                </Card>
-              ))}
-            </div>
-          )}
-
-
-          <ScrollBar />
-        </ScrollArea >
-      </section>
-
-    </div>
 
   )
 }

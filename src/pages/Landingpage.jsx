@@ -103,7 +103,7 @@ function Landingpage() {
       const formData = new FormData();
       formData.append("operation", "getRooms");
       const res = await axios.post(url, formData);
-      console.log("res ni get rooms", res)
+      console.log("res ni get roomssss", res)
 
       // Ensure rooms is always an array
       const data = Array.isArray(res.data) ? res.data : [];
