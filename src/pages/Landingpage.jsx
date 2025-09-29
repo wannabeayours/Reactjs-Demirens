@@ -184,10 +184,10 @@ function Landingpage() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent z-10"></div>
             <div className="grid grid-rows-2 gap-10 text-white pt-20 pl-4 md:pl-20 md:pt-32 lg:pt-80 relative z-20">
               {/* Row 1: Welcome Text */}
-              <div className="text-left mt-24 w-full animate-fadeIn">
+              <div className="text-left  w-full animate-fadeIn">
                 <h1 className="font-playfair text-5xl md:text-8xl bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80 animate-slideInLeft">Welcome to Demerin Hotel</h1>
                 <h1 className="font-playfair text-5xl md:text-8xl bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80 animate-slideInRight">& Restaurant</h1>
-                <p className="text-xl md:text-xl mt-4 animate-fadeIn opacity-0 animation-delay-300">
+                <p className="text-xl md:text-xl mt-4 animate-fadeIn  animation-delay-300">
                   Experience comfort, convenience, and genuine hospitality where your stay feels like home,
                 </p>
                 <p className="text-xl md:text-xl mt-2 animate-fadeIn opacity-0 animation-delay-500">and every moment is made memorable.</p>
@@ -438,9 +438,9 @@ function Landingpage() {
                                 </p>
 
                                 <div className="flex items-center justify-between mb-4">
-                                  <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 flex items-center gap-1">
-                                    ₱ {Number(room.roomtype_price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/night
-                                    <Moon size={20} className="text-blue-600" />
+                                  <h2 className="text-xl font-bold text-blue-700 flex items-center gap-1 animate-fadeIn">
+                                    ₱ {Number(room.roomtype_price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                                    <span className="text-sm font-normal text-gray-500">/night</span>
                                   </h2>
                                   <div className="flex gap-2">
                                     <Badge className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 transition-colors duration-300">{room.room_sizes}</Badge>
@@ -457,7 +457,7 @@ function Landingpage() {
 
                                 <div className="mt-auto">
                                   <Button
-                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
                                     onClick={() => handleNextPage(room)}
                                   >
                                     <span className="group-hover:mr-2 transition-all duration-300">View Room</span>
@@ -484,16 +484,16 @@ function Landingpage() {
           <section id="contact" className="py-20 px-6 rounded overflow-hidden bg-gradient-to-b from-white to-blue-50">
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-16 animate-fadeIn mt-14">
-                <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800">CONTACT US</h2>
-                <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto"></div>
+                <h2 className="text-6xl font-playfair mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-indigo-800">CONTACT US</h2>
+                <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto"></div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 {/* Left Column - Contact Form */}
                 <div className="flex flex-col space-y-6 animate-slideInLeft" style={{ animationDelay: '100ms' }}>
-                  <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500">
+                  <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-blue-100">
                     <h3 className="text-3xl font-playfair mb-6 text-blue-800">Have Questions?</h3>
-                    <h4 className="text-2xl font-playfair mb-8 text-purple-700">We've Got Answers!</h4>
+                    <h4 className="text-2xl font-playfair mb-8 text-indigo-700">We've Got Answers!</h4>
 
                     <Form {...contactform}>
                       <form onSubmit={contactform.handleSubmit(onContactSubmit)} className="space-y-6">
@@ -559,7 +559,7 @@ function Landingpage() {
                         />
                         <Button
                           type="submit"
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg group"
                         >
                           <span className="group-hover:mr-2 transition-all duration-300">Send Message</span>
                           <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
@@ -571,7 +571,7 @@ function Landingpage() {
 
                 {/* Right Column - Image and Text */}
                 <div className="flex flex-col space-y-8 animate-slideInRight" style={{ animationDelay: '200ms' }}>
-                  <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 rounded-3xl shadow-lg text-white transform hover:shadow-xl transition-all duration-300">
+                  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-3xl shadow-lg text-white transform hover:shadow-xl transition-all duration-300">
                     <h3 className="text-3xl font-playfair mb-6">Get In Touch</h3>
                     <p className="text-lg leading-relaxed">
                       Find everything you need to know about your stay at Demiren Hotel & Restaurant.
