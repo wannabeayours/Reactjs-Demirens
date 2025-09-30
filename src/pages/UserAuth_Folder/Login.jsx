@@ -122,106 +122,140 @@ function Login() {
 
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-[#F7FBFC]">
-            {/* Left side - Hidden on mobile */}
-            <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#113f67] via-[#34699A] to-[#226597]344rd p-6 sm:p-8 md:p-10 flex-col justify-center items-center text-white">
-                <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Welcome to Demirens Hotel</h1>
-                    <p className="text-base sm:text-lg md:text-xl opacity-90">Login to access your account and manage your bookings.</p>
-
-                    {/* SVG Icon */}
-                    <div className="flex justify-center mt-6 sm:mt-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 flex items-center justify-center p-3 sm:p-4 lg:p-6 relative overflow-hidden">
+            {/* Enhanced Background Elements */}
+            <div className="absolute inset-0 overflow-hidden">
+                {/* Animated gradient orbs - responsive sizes */}
+                <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-40 h-40 sm:w-60 sm:h-60 lg:w-80 lg:h-80 bg-gradient-to-r from-indigo-400/15 to-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-r from-purple-400/10 to-blue-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+                
+                {/* Geometric patterns - responsive sizes */}
+                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-10 lg:right-10 w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border border-white/10 rotate-45 animate-spin-slow"></div>
+                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 border border-white/10 rotate-12 animate-bounce-slow"></div>
+                <div className="absolute top-1/3 right-1/3 w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-white/5 rotate-45 animate-pulse"></div>
             </div>
-
-            {/* Right side - Form */}
-            <div className="w-full md:w-1/2 px-4 py-6 sm:px-6 sm:py-8 md:p-10 flex items-center justify-center">
-                <Card >
-                    <CardContent className="w-full max-w-md space-y-4 sm:space-y-6">
-                        <div className="text-center mb-4 sm:mb-6">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold  text-[#769FCD] ">Login to Your Account</h2>
-                            <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1 sm:mt-2">Enter your credentials to access your account</p>
+            
+            {/* Centered login card - responsive sizing */}
+            <Card className="w-full max-w-xs sm:max-w-sm md:max-w-md bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl relative z-10 mx-auto">
+                <CardContent className="w-full space-y-4 p-4 sm:p-6">
+                    <div className="text-center mb-4 sm:mb-5">
+                        {/* Modern Logo/Icon - responsive sizing */}
+                        <div className="mb-3 sm:mb-4 flex justify-center">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
                         </div>
+                        <div className="mb-3">
+                            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
+                                Welcome Back
+                            </h1>
+                            <div className="w-12 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 mx-auto mt-2 rounded-full"></div>
+                        </div>
+                        <p className="text-xs sm:text-sm text-blue-100/80">
+                            Please sign in to your account
+                        </p>
+                    </div>
 
-                        {/* Form */}
+                        {/* Enhanced Form */}
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                                {/* Email */}
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                {/* Enhanced Email Field */}
                                 <FormField
                                     control={form.control}
                                     name="email"
                                     render={({ field }) => (
                                         <FormItem className="space-y-1.5">
-                                            <FormLabel className="text-sm sm:text-base font-medium">Username</FormLabel>
+                                            <FormLabel className="text-sm font-medium text-white/90">Email / Username</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Enter username"
-                                                    className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
-                                                    {...field}
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        placeholder="Enter your email or username"
+                                                        className="h-9 px-3 py-2 text-sm rounded-lg border-2 border-white/20 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 bg-white/10 shadow-sm hover:shadow-md text-white placeholder:text-white/50"
+                                                        {...field}
+                                                    />
+                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                        <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </FormControl>
-                                            <FormMessage className="text-xs sm:text-sm" />
+                                            <FormMessage className="text-xs" />
                                         </FormItem>
                                     )}
                                 />
 
-                                {/* Password */}
+                                {/* Enhanced Password Field */}
                                 <FormField
                                     control={form.control}
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem className="space-y-1.5">
                                             <div className="flex justify-between items-center">
-                                                <FormLabel className="text-sm sm:text-base font-medium">Password</FormLabel>
+                                                <FormLabel className="text-sm font-medium text-white/90">Password</FormLabel>
                                             </div>
                                             <FormControl>
-                                                <Input
-                                                    type="password"
-                                                    placeholder="Enter Password"
-                                                    className="h-9 sm:h-10 px-3 py-2 text-sm sm:text-base rounded-lg focus:ring-2 focus:ring-[#769FCD] transition-all"
-                                                    {...field}
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        type="password"
+                                                        placeholder="Enter your password"
+                                                        className="h-9 px-3 py-2 text-sm rounded-lg border-2 border-white/20 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 bg-white/10 shadow-sm hover:shadow-md text-white placeholder:text-white/50"
+                                                        {...field}
+                                                    />
+                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                        <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </FormControl>
                                             <div className="flex justify-end">
-                                                <Button variant="link" asChild className="h-auto p-0 text-xs sm:text-sm text-[#769FCD]">
+                                                <Button variant="link" asChild className="h-auto p-0 text-xs text-blue-300 hover:text-blue-200 transition-colors">
                                                     <Link to="/forgot-password">Forgot Password?</Link>
                                                 </Button>
                                             </div>
-                                            <FormMessage className="text-xs sm:text-sm" />
+                                            <FormMessage className="text-xs" />
                                         </FormItem>
                                     )}
                                 />
 
-                                {/* Captcha */}
-                                <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg mt-2 sm:mt-3">
-                                    <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-700">Security CAPTCHA</h2>
-                                    <div className="flex justify-center items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-md">
-                                        {captchaCharacters.map((c, index) => (
-                                            <span
-                                                key={index}
-                                                style={{
-                                                    color: c.color,
-                                                    fontSize: "clamp(20px, 4vw, 28px)",
-                                                    fontWeight: "bold",
-                                                    textShadow: "1px 1px 2px rgba(0,0,0,0.1)"
-                                                }}
-                                            >
-                                                {c.char}
-                                            </span>
-                                        ))}
+                                {/* Enhanced Captcha */}
+                                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-inner">
+                                    <h2 className="text-sm font-bold mb-3 text-white/90 text-center flex items-center justify-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                        Security Verification
+                                    </h2>
+                                    <div className="bg-white/20 rounded-lg p-3 shadow-sm border-2 border-dashed border-blue-300/50 mb-3">
+                                        <div className="flex justify-center items-center gap-2">
+                                            {captchaCharacters.map((c, index) => (
+                                                <span
+                                                    key={index}
+                                                    style={{
+                                                        color: c.color,
+                                                        fontSize: "20px",
+                                                        fontWeight: "bold",
+                                                        textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
+                                                        transform: `rotate(${Math.random() * 15 - 7.5}deg)`
+                                                    }}
+                                                    className="select-none"
+                                                >
+                                                    {c.char}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <Input
                                         type="text"
                                         value={userInput}
                                         onChange={handleInputChange}
-                                        placeholder="Enter CAPTCHA characters"
-                                        className="border p-2 w-full rounded-lg mt-3 text-center h-9 sm:h-10 text-sm sm:text-base"
+                                        placeholder="Enter the characters above"
+                                        className="border-2 border-white/20 p-2 w-full rounded-lg text-center h-9 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 bg-white/10 shadow-sm text-white placeholder:text-white/50"
                                     />
 
                                     <div className="flex justify-center mt-2">
@@ -229,56 +263,61 @@ function Login() {
                                             type="button"
                                             variant="link"
                                             onClick={generateCaptchaCharacters}
-                                            className="text-[#769FCD] text-xs sm:text-sm underline h-auto p-0"
+                                            className="text-blue-300 hover:text-blue-200 text-xs underline h-auto p-0 transition-colors"
                                         >
-                                            Refresh CAPTCHA
+                                            🔄 Generate New Code
                                         </Button>
                                     </div>
 
                                     {!isCaptchaValid && userInput.length > 0 && (
-                                        <p className="text-red-500 text-xs sm:text-sm mt-1">
-                                            Incorrect CAPTCHA, try again.
-                                        </p>
+                                        <div className="mt-2 p-2 bg-red-500/20 border border-red-400/30 rounded-lg">
+                                            <p className="text-red-200 text-xs text-center font-medium">
+                                                ❌ Incorrect verification code, please try again.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {isCaptchaValid && (
+                                        <div className="mt-2 p-2 bg-green-500/20 border border-green-400/30 rounded-lg">
+                                            <p className="text-green-200 text-xs text-center font-medium">
+                                                ✅ Verification successful!
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
 
-                                {/* Login button */}
-                                {isCaptchaValid ? (
-                                    <Button
-                                        className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-[#769FCD] hover:bg-[#5885AF] text-white font-medium rounded-lg transition-all duration-200"
-                                    >
-                                        Login
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        className="w-full mt-4 text-sm sm:text-base py-2 sm:py-2.5 h-10 sm:h-11 bg-gray-300 text-gray-500 font-medium rounded-lg cursor-not-allowed opacity-70"
-                                        disabled
-                                    >
-                                        Complete CAPTCHA to Login
-                                    </Button>
-                                )}
+                                {/* Sign In Button */}
+                                <Button
+                                    type="submit"
+                                    disabled={!isCaptchaValid}
+                                    className={`w-full h-12 rounded-xl font-semibold text-base transition-all duration-300 transform hover:scale-[1.02] ${
+                                        isCaptchaValid
+                                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl'
+                                            : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                    }`}
+                                >
+                                    Sign In
+                                </Button>
 
-                                {/* Sign up link */}
-                                <div className="text-center pt-2">
-                                    <p className="text-xs sm:text-sm text-gray-600">
-                                        Don't have an account?{" "}
-                                        <Link to="/register" className="text-[#769FCD] font-medium hover:underline transition-all">
-                                            Sign Up
+                                {/* Sign Up Section */}
+                                <div className="text-center pt-4 border-t border-white/10">
+                                    <p className="text-white/70 text-sm">
+                                        Don't have an account?{' '}
+                                        <Link
+                                            to="/register"
+                                            className="text-blue-300 hover:text-blue-200 font-semibold transition-colors duration-200 hover:underline"
+                                        >
+                                            Sign up here
                                         </Link>
                                     </p>
                                 </div>
                             </form>
                         </Form>
                     </CardContent>
-
                 </Card>
             </div>
-        </div>
-
+      
     )
 }
-
-
 
 export default Login
