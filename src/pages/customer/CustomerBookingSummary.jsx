@@ -34,6 +34,7 @@ function CustomerBookingSummary() {
       formData.append("operation", "getBookingSummary");
       formData.append("json", JSON.stringify(jsonData));
       const res = await axios.post(url, formData);
+      console.log("res ni booking summary", res);
       setData(res.data);
       console.log("res ni booking summary", res);
     } catch (error) {

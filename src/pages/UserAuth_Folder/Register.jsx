@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -14,6 +15,24 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [getNationalities, setGetNationalities] = useState([]);
+
+
+  // Utility: check password rules
+  const checkPasswordRules = (password) => {
+    const rules = {
+      length: password.length >= 8 && password.length <= 12,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      maxThreeNumbers: (password.match(/[0-9]/g) || []).length <= 3,
+      noSpecials: /^[A-Za-z0-9]*$/.test(password),
+      noSpaces: !/\s/.test(password),
+    };
+
+    const passed = Object.values(rules).filter(Boolean).length;
+    return { rules, passed, total: Object.keys(rules).length };
+  };
+
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -122,37 +141,37 @@ const Register = () => {
   };
 
   return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 flex items-center justify-center p-3 sm:p-4 lg:p-6 relative overflow-hidden">
-            {/* Enhanced Background Elements */}
-            <div className="absolute inset-0 overflow-hidden">
-                {/* Animated gradient orbs - responsive sizes */}
-                <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-40 h-40 sm:w-60 sm:h-60 lg:w-80 lg:h-80 bg-gradient-to-r from-indigo-400/15 to-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-r from-purple-400/10 to-blue-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
-                
-                {/* Geometric patterns - responsive sizes */}
-                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-10 lg:right-10 w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border border-white/10 rotate-45 animate-spin-slow"></div>
-                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 border border-white/10 rotate-12 animate-bounce-slow"></div>
-                <div className="absolute top-1/3 right-1/3 w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-white/5 rotate-45 animate-pulse"></div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 flex items-center justify-center p-3 sm:p-4 lg:p-6 relative overflow-hidden">
+      {/* Enhanced Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Animated gradient orbs - responsive sizes */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-40 h-40 sm:w-60 sm:h-60 lg:w-80 lg:h-80 bg-gradient-to-r from-indigo-400/15 to-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-r from-purple-400/10 to-blue-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
 
-            {/* Main Registration Card - responsive sizing */}
-            <Card className="w-full max-w-xs sm:max-w-sm md:max-w-md bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl relative z-10 mx-auto">
-                <CardHeader className="text-center pb-3 sm:pb-4 pt-4 sm:pt-6 px-4 sm:px-6">
-                    {/* Logo/Icon - responsive sizing */}
-                    <div className="mx-auto mb-2 sm:mb-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                        </svg>
-                    </div>
-                    
-                    <CardTitle className="text-xl sm:text-2xl font-bold text-white mb-1">Create Account</CardTitle>
-                    <CardDescription className="text-blue-100/80 text-xs sm:text-sm">
-                        Join us today and get started
-                    </CardDescription>
-                </CardHeader>
+        {/* Geometric patterns - responsive sizes */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:top-10 lg:right-10 w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border border-white/10 rotate-45 animate-spin-slow"></div>
+        <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 border border-white/10 rotate-12 animate-bounce-slow"></div>
+        <div className="absolute top-1/3 right-1/3 w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-white/5 rotate-45 animate-pulse"></div>
+      </div>
 
-                <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+      {/* Main Registration Card - responsive sizing */}
+      <Card className="w-full max-w-xs sm:max-w-sm md:max-w-md bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl relative z-10 mx-auto">
+        <CardHeader className="text-center pb-3 sm:pb-4 pt-4 sm:pt-6 px-4 sm:px-6">
+          {/* Logo/Icon - responsive sizing */}
+          <div className="mx-auto mb-2 sm:mb-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+          </div>
+
+          <CardTitle className="text-xl sm:text-2xl font-bold text-white mb-1">Create Account</CardTitle>
+          <CardDescription className="text-blue-100/80 text-xs sm:text-sm">
+            Join us today and get started
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
 
           <form onSubmit={onSubmit} className="space-y-4">
             {/* Name Fields Row */}
@@ -266,8 +285,6 @@ const Register = () => {
                 className="h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-blue-400 focus:ring-blue-400/20 rounded-lg transition-all duration-300"
               />
             </div>
-
-            {/* Password Field */}
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-sm font-medium text-white/90">
                 Password
@@ -279,7 +296,8 @@ const Register = () => {
                   placeholder="Password"
                   value={formData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
-                  className="h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-blue-400 focus:ring-blue-400/20 rounded-lg transition-all duration-300 pr-8"
+                  className="h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/50 
+        focus:border-blue-400 focus:ring-blue-400/20 rounded-lg transition-all duration-300 pr-8"
                 />
                 <button
                   type="button"
@@ -290,10 +308,42 @@ const Register = () => {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <p className="text-xs text-blue-100/70 mt-0.5">
-                * At least 6 characters, include special characters
-              </p>
+
+              {/* Password validation progress */}
+              {formData.password && (() => {
+                const { rules, passed, total } = checkPasswordRules(formData.password);
+                const percent = (passed / total) * 100;
+                return (
+                  <div className="space-y-2 mt-2">
+                    <Progress value={percent} className="h-2 bg-white/20" />
+                    <ul className="text-xs space-y-1 text-white/80">
+                      <li className={rules.length ? "text-green-400" : "text-red-400"}>
+                        {rules.length ? "✔" : "✘"} 8–12 characters
+                      </li>
+                      <li className={rules.upper ? "text-green-400" : "text-red-400"}>
+                        {rules.upper ? "✔" : "✘"} At least 1 uppercase
+                      </li>
+                      <li className={rules.lower ? "text-green-400" : "text-red-400"}>
+                        {rules.lower ? "✔" : "✘"} At least 1 lowercase
+                      </li>
+                      <li className={rules.number ? "text-green-400" : "text-red-400"}>
+                        {rules.number ? "✔" : "✘"} At least 1 number
+                      </li>
+                      <li className={rules.maxThreeNumbers ? "text-green-400" : "text-red-400"}>
+                        {rules.maxThreeNumbers ? "✔" : "✘"} Max 3 numbers
+                      </li>
+                      <li className={rules.noSpecials ? "text-green-400" : "text-red-400"}>
+                        {rules.noSpecials ? "✔" : "✘"} No special characters
+                      </li>
+                      <li className={rules.noSpaces ? "text-green-400" : "text-red-400"}>
+                        {rules.noSpaces ? "✔" : "✘"} No spaces
+                      </li>
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
+
 
             {/* Confirm Password Field */}
             <div className="space-y-1.5">

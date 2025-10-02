@@ -761,8 +761,45 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       <div className="lg:col-span-1">
         <div className="sticky top-4">
           <BookingSummary />
+          {/* Navigation Controls - Top Right */}
+          <div className="flex justify-end items-center gap-3 mt-20">
+            <div className="text-sm text-gray-500 hidden md:block">
+              Step {currentStep} of {steps.length}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNextStep}
+                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowAlert}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                size="sm"
+              >
+                Confirm Booking
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+
     </div>
   );
 
@@ -844,6 +881,42 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
           </Form>
         </CardContent>
       </Card>
+      {/* Navigation Controls - Top Right */}
+      <div className="flex justify-end items-center gap-3  mt-3">
+        <div className="text-sm text-gray-500 hidden md:block">
+          Step {currentStep} of {steps.length}
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={handlePrevStep}
+          disabled={currentStep === 1}
+          className="flex items-center gap-2"
+          size="sm"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+
+        {currentStep < steps.length ? (
+          <Button
+            onClick={handleNextStep}
+            className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+            size="sm"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleShowAlert}
+            className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+            size="sm"
+          >
+            Confirm Booking
+          </Button>
+        )}
+      </div>
     </div>
   );
 
@@ -1023,6 +1096,43 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
               </div>
             </CardContent>
           </Card>
+
+          {/* Navigation Controls - Top Right */}
+          <div className="flex items-center justify-end gap-3 ">
+            <div className="text-sm text-gray-500 hidden md:block">
+              Step {currentStep} of {steps.length}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNextStep}
+                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowAlert}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                size="sm"
+              >
+                Confirm Booking
+              </Button>
+            )}
+          </div>
         </div>
       </ScrollArea>
     );
@@ -1051,42 +1161,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
               <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
             </div>
 
-            {/* Navigation Controls - Top Right */}
-            <div className="flex items-center gap-3 ">
-              <div className="text-sm text-gray-500 hidden md:block">
-                Step {currentStep} of {steps.length}
-              </div>
 
-              <Button
-                variant="outline"
-                onClick={handlePrevStep}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2"
-                size="sm"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              {currentStep < steps.length ? (
-                <Button
-                  onClick={handleNextStep}
-                  className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
-                  size="sm"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleShowAlert}
-                  className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                  size="sm"
-                >
-                  Confirm Booking
-                </Button>
-              )}
-            </div>
           </div>
 
           {/* Stepper */}

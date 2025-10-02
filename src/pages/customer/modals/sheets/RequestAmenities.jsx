@@ -116,6 +116,7 @@ function RequestAmenities({ bookingId, bookingRoomId, getBookingSummary }) {
   formData.append("operation", "addBookingCharges");
   formData.append("json", JSON.stringify(payload));
   axios.post(url, formData).then(res => {
+    console.log("res ni request amenities", res);
    if (res.data === 1) {
     getBookingSummary();
     toast.success("Amenities added successfully");

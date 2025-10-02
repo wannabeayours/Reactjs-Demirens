@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetFooter, SheetTrigger } from '@/components/ui/sheet'
 import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
@@ -854,47 +854,10 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       </SheetTrigger>
       <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full p-6 rounded-t-3xl">
         <div className="flex flex-col h-full mt-5">
-          <div className="mb-6 flex justify-between items-start">
+          <div className="mb-6">
             <div>
               <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
               <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
-            </div>
-
-            {/* Navigation Controls - Top Right */}
-            <div className="flex items-center gap-3 ">
-              <div className="text-sm text-gray-500 hidden md:block">
-                Step {currentStep} of {steps.length}
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={handlePrevStep}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2"
-                size="sm"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              {currentStep < steps.length ? (
-                <Button
-                  onClick={handleNextStep}
-                  className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
-                  size="sm"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleConfirmBooking}
-                  className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                  size="sm"
-                >
-                  Confirm Booking
-                </Button>
-              )}
             </div>
           </div>
 
@@ -908,9 +871,50 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
             {currentStep === 1 && <RoomSelectionStep />}
             {currentStep === 2 && <BookingConfirmationStep />}
           </div>
+
+
         </div>
         <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
+        <SheetFooter>
+          {/* Navigation Controls - Bottom Right */}
+          <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+            <div className="text-sm text-gray-500 hidden md:block">
+              Step {currentStep} of {steps.length}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNextStep}
+                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleConfirmBooking}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                size="sm"
+              >
+                Confirm Booking
+              </Button>
+            )}
+          </div>
+        </SheetFooter>
       </SheetContent>
+
     </Sheet>
   );
 
