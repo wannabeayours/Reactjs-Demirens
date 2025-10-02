@@ -133,7 +133,6 @@ function ConfirmBooking({ open, onClose, summary, onConfirmBooking, handleClearD
           <Button onClick={handleConfirm}>Confirm Booking</Button>
         </div>
       </div>
-
     </div>
   );
 }

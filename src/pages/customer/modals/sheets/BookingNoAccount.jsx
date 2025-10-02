@@ -5,55 +5,151 @@ import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { BedDouble, Info, MinusIcon, Plus, Trash2 } from 'lucide-react'
+import { BedDouble, Info, MinusIcon, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
-import { Link, useNavigate } from 'react-router-dom'
-import ConfirmBooking from '../ConfirmBooking'
+import { Link } from 'react-router-dom'
 import Moreinfo from './Moreinfo'
 import { Input } from '@/components/ui/input'
+import { Stepper } from '@/components/ui/stepper'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { format } from 'date-fns'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import ComboBox from '@/components/ui/combo-box'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import ShowAlert from '@/components/ui/show-alert'
+
+const schema = z.object({
+  walkinfirstname: z.string().min(1, { message: "First name is required" }),
+  walkinlastname: z.string().min(1, { message: "Last name is required" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  contactNumber: z.string().min(1, { message: "Contact number is required" }),
+  totalPay: z.string().min(1, { message: "Total pay is required" }),
+  paymentMethod: z.number().min(1, { message: "Payment method is required" }),
+})
 
 function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
 
-  const [walkinfirstname, setWalkinfirstname] = useState("");
-  const [walkinlastname, setWalkinlastname] = useState("");
-  const [email, setEmail] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
+  // Form states
+  const [paymentMethod, setPaymentMethod] = useState([]);
 
-  const [errors, setErrors] = useState({
-    walkinfirstname: "",
-    walkinlastname: "",
-    email: "",
-    contactNumber: ""
-  });
+  const [alertMessage, setAlertMessage] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleShowAlert = async () => {
+    // First validate the entire form
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast.error("Please fill in all required fields correctly.");
+      return;
+    }
+
+    const formValues = form.getValues();
+    const { totalPay, paymentMethod } = formValues;
+    const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
+    const downPayment = (subtotal * 0.5).toFixed(2)
+
+    // Additional payment validations
+    if (paymentMethod === 0) {
+      toast.error("Please select a payment method");
+      return;
+    } else if (totalPay === "") {
+      toast.error("Please enter total amount");
+      return;
+    } else if (Number(totalPay) < downPayment) {
+      toast.error("Total amount must be at least 50% of the subtotal");
+      return;
+    }
+
+    setAlertMessage("All payments are non-refundable. However, bookings may be canceled within 24 hours of confirmation.");
+    setShowAlert(true);
+  };
+  const handleCloseAlert = async (status) => {
+    if (status === 1) {
+      // Validate the form before proceeding
+      const isValid = await form.trigger();
+      if (isValid) {
+        handleConfirmBooking();
+      } else {
+        toast.error("Please fill in all required fields correctly.");
+      }
+    }
+    setShowAlert(false);
+  };
+
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      totalPay: "",
+      paymentMethod: 0,
+      walkinfirstname: "",
+      walkinlastname: "",
+      email: "",
+      contactNumber: "",
+    },
+  })
+
+  // Stepper state
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const steps = [
+    {
+      id: 'rooms',
+      title: 'Select Rooms',
+      description: 'Choose your rooms'
+    },
+    {
+      id: 'info',
+      title: 'Guest Information',
+      description: 'Enter your details'
+    },
+    {
+      id: 'confirm',
+      title: 'Confirm Booking',
+      description: 'Review and confirm'
+    }
+  ];
 
   const customerBookingNoAccount = async () => {
-    if (!validateForm()) {
+    const childrenNumber = localStorage.getItem("children");
+    const adultNumber = localStorage.getItem("adult");
+    const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
+    const displayedVat = subtotal - (subtotal / 1.12)
+    const downPayment = (subtotal * 0.5).toFixed(2)
+    const totalAmount = subtotal.toFixed(2)
+
+    // Validate ALL form fields including payment fields
+    const isValid = await form.trigger();
+    if (!isValid) {
       toast.error("Please fill all required fields correctly");
       return;
     }
 
+    const formValues = form.getValues();
+    const { walkinfirstname, walkinlastname, email, contactNumber, totalPay, paymentMethod } = formValues;
+
     try {
       const url = localStorage.getItem('url') + "customer.php";
-      const customerId = localStorage.getItem("userId");
-      const childrenNumber = localStorage.getItem("children");
-      const adultNumber = localStorage.getItem("adult");
-      const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-      const displayedVat = subtotal - (subtotal / 1.12)
-      const totalAmount = subtotal.toFixed(2)
-      const downPayment = (subtotal * 0.5).toFixed(2)
+
       const bookingDetails = {
-        "checkIn": checkIn,
-        "checkOut": checkOut,
+        "checkIn": formatYMD(checkIn),
+        "checkOut": formatYMD(checkOut),
         "downpayment": downPayment,
         "totalAmount": totalAmount,
+        "totalPay": totalPay,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
-        "adult": adultNumber
+        "adult": adultNumber,
+        "payment_method_id": paymentMethod,
       }
+
       console.log("selected rooms", selectedRooms)
       console.log("adultCounts", adultCounts)
       console.log("childrenCounts", childrenCounts)
+
       const roomDetails = selectedRooms.map((room) => {
         const adultCount = adultCounts[room.room_type] || 0;
         const childrenCount = childrenCounts[room.room_type] || 0;
@@ -90,63 +186,48 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
         setSelectedRooms([]);
         setAdultCounts({});
         setChildrenCounts({});
-        // setExtraBedCounts({});
         setGuestCounts({});
         handleClearData();
+        // Reset stepper
+        setCurrentStep(1);
         // Set a flag to trigger refresh in CustomerViewBookings
-        localStorage.setItem('refreshBookings', Date.now().toString());
+        // localStorage.setItem('refreshBookings', Date.now().toString());
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else if (res.data === -1) {
+        toast.error("The room is not available anymore");
       }
       else {
         toast.error("Booking error");
       }
 
-
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-
     }
   }
 
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = {
-      walkinfirstname: "",
-      walkinlastname: "",
-      email: "",
-      contactNumber: ""
-    };
-
-    // Validate first name
-    if (!walkinfirstname.trim()) {
-      newErrors.walkinfirstname = "First name is required";
-      isValid = false;
+  const getPaymentMethod = async () => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const formData = new FormData();
+      formData.append("operation", "getPaymentMethod");
+      const res = await axios.post(url, formData);
+      console.log("res ni get payment method", res);
+      if (res.data !== 0) {
+        const formattedData = res.data.map((item) => ({
+          value: item.payment_method_id,
+          label: item.payment_method_name,
+        }));
+        setPaymentMethod(formattedData);
+      }
+      // setPaymentMethod(res.data !== 0 ? res.data : []);
+    } catch (error) {
+      toast.error("Network error");
+      console.error(error);
     }
-
-    // Validate last name
-    if (!walkinlastname.trim()) {
-      newErrors.walkinlastname = "Last name is required";
-      isValid = false;
-    }
-
-    // Validate email
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
-      isValid = false;
-    }
-
-    // Validate contact number
-    if (!contactNumber.trim()) {
-      newErrors.contactNumber = "Contact number is required";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
+  }
 
   // ---------------------- Utilities (YMD, timezone-safe) ----------------------
   const pad = (n) => String(n).padStart(2, '0');
@@ -180,19 +261,17 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     ? initialCheckOutCandidate
     : _minOut;
 
-  // ---------------------- Effects ----------------------
+  // ---------------------- State ----------------------
   const [allRooms, setAllRooms] = useState([])
   const [selectedRooms, setSelectedRooms] = useState([])
   const [open, setOpen] = useState(false)
   const [checkIn, setCheckIn] = useState(initialCheckIn)
   const [checkOut, setCheckOut] = useState(initialCheckOut)
   const [numberOfNights, setNumberOfNights] = useState(1)
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [summaryInfo, setSummaryInfo] = useState(null);
   const [guestCounts, setGuestCounts] = useState({});
   const [adultCounts, setAdultCounts] = useState({});
   const [childrenCounts, setChildrenCounts] = useState({});
-  const navigateTo = useNavigate();
+
 
   // recalc nights whenever dates change
   useEffect(() => {
@@ -204,8 +283,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       setNumberOfNights(days);
     }
   }, [checkIn, checkOut]);
-
-
 
   // When the sheet opens, sync localStorage -> state and add selectedRoom only once
   useEffect(() => {
@@ -290,6 +367,10 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRooms]);
 
+  useEffect(() => {
+    getPaymentMethod();
+  }, []);
+
   // ---------------------- Handlers ----------------------
 
   const handleCheckInChange = (e) => {
@@ -345,75 +426,606 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     }
   };
 
-  const openConfirmModal = () => setShowConfirmModal(true);
-  const closeConfirmModal = () => setShowConfirmModal(false);
-
-  // ---------------------- Booking submit ----------------------
-  const customerBookingWithAccount = async () => {
-    try {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (new Date(checkIn).getTime() <= today.getTime()) {
-        toast.error("Check-in date cannot be today or earlier.");
+  // ---------------------- Step Navigation ----------------------
+  const handleNextStep = async () => {
+    if (currentStep === 1) {
+      if (selectedRooms.length === 0) {
+        toast.error("Please select at least one room.");
         return;
       }
-
-      const url = localStorage.getItem('url') + "customer.php";
-      const customerId = localStorage.getItem("userId");
-      const childrenNumberLS = localStorage.getItem("children") || 0;
-      const adultNumberLS = localStorage.getItem("adult") || 1;
-
-      const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0);
-      const displayedVat = subtotal - (subtotal / 1.12);
-      const totalAmount = subtotal.toFixed(2);
-      const downPayment = (subtotal * 0.5).toFixed(2);
-
-      const bookingDetails = {
-        checkIn: formatYMD(checkIn),
-        checkOut: formatYMD(checkOut),
-        downpayment: downPayment,
-        totalAmount: totalAmount,
-        displayedVat: displayedVat.toFixed(2),
-        children: childrenNumberLS,
-        adult: adultNumberLS
-      };
-
-      const roomDetails = selectedRooms.map((room) => {
-        const adultCount = adultCounts[room.room_type] || 0;
-        const childrenCount = childrenCounts[room.room_type] || 0;
-        return {
-          roomTypeId: room.room_type,
-          guestCount: adultCount + childrenCount,
-          adultCount: adultCount,
-          childrenCount: childrenCount,
-        };
-      });
-
-      const jsonData = { customerId, bookingDetails, roomDetails };
-      const formData = new FormData();
-      formData.append("operation", "customerBookingWithAccount");
-      formData.append("json", JSON.stringify(jsonData));
-      const res = await axios.post(url, formData);
-
-      if (res.data === -1) {
-        toast.error("The room is not available anymore");
-      } else if (res.data === 1) {
-        toast.success("Booking successful");
-        setOpen(false);
-        localStorage.removeItem('checkIn');
-        localStorage.removeItem('checkOut');
-        setSelectedRooms([]);
-        setAdultCounts({});
-        setChildrenCounts({});
-        setGuestCounts({});
-        handleClearData();
-        localStorage.setItem('refreshBookings', Date.now().toString());
-      } else {
-        toast.error("Booking error");
+    } else if (currentStep === 2) {
+      // Validate the form using react-hook-form
+      const isValid = await form.trigger(["walkinfirstname", "walkinlastname", "email", "contactNumber"]);
+      if (!isValid) {
+        toast.error("Please fill in all required fields correctly.");
+        return;
       }
-    } catch (error) {
-      toast.error("Something went wrong");
-      console.error(error);
     }
+
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleConfirmBooking = () => {
+    customerBookingNoAccount();
+  };
+
+
+  // Booking Summary Component
+  const BookingSummary = () => {
+    const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+    const vat = subtotal - (subtotal / 1.12);
+    const total = subtotal;
+    const down = total * 0.5;
+
+    return (
+      <div className="space-y-4">
+        {/* Booking Details */}
+        <Card className="bg-white shadow-md">
+          <CardContent className="p-4">
+            <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Check-in:</span>
+                <span className="font-medium">{checkIn ? format(checkIn, 'MMM dd, yyyy') : '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Check-out:</span>
+                <span className="font-medium">{checkOut ? format(checkOut, 'MMM dd, yyyy') : '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Nights:</span>
+                <span className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Total Guests:</span>
+                <span className="font-medium">{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0)} guest{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Summary */}
+        {selectedRooms.length > 0 && (
+          <Card className="bg-white shadow-md border-2 border-blue-200">
+            <CardContent className="p-4">
+              <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span>Subtotal:</span>
+                  <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span>VAT (12%) included:</span>
+                  <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center font-semibold">
+                  <span>Total Amount:</span>
+                  <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center font-bold text-blue-600">
+                  <span>Down Payment (50%):</span>
+                  <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-800">
+                    <strong>Note:</strong> 50% down payment required to confirm booking.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
+  // Step components for the booking process
+  const RoomSelectionStep = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left side - Room Selection (2/3 width on desktop) */}
+      <div className="lg:col-span-2 space-y-4">
+        {/* Date Selection - Only in Step 1 */}
+        <Card className="bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="checkin">Check-in Date</Label>
+                <input
+                  type="date"
+                  id="checkin"
+                  value={checkIn ? formatYMD(checkIn) : ''}
+                  onChange={handleCheckInChange}
+                  min={tomorrowStr}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="checkout">Check-out Date</Label>
+                <input
+                  type="date"
+                  id="checkout"
+                  value={checkOut ? formatYMD(checkOut) : ''}
+                  onChange={handleCheckOutChange}
+                  min={checkIn ? formatYMD(new Date(checkIn.getTime() + 24 * 60 * 60 * 1000)) : tomorrowStr}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {numberOfNights > 0 && (
+              <div className="mt-3 text-sm text-gray-600">
+                Duration: {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Selected Rooms: {selectedRooms.length}
+          </div>
+          <div>
+            <RoomsList
+              rooms={allRooms}
+              selectedRooms={selectedRooms}
+              setSelectedRooms={setSelectedRooms}
+            />
+          </div>
+        </div>
+
+        <Card className="bg-gray-100">
+          <ScrollArea className="h-[calc(100vh-400px)]">
+            <div>
+              {selectedRooms.length > 0 ? (
+                <div>
+                  {selectedRooms.map((room, index) => (
+                    <Card key={index} className="mb-3 m-3">
+                      <CardContent>
+                        <div className="flex justify-end">
+                          <Trash2
+                            className="cursor-pointer text-red-500"
+                            onClick={() => handleRemoveRoom(index)}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                          <div>
+                            <h1 className="font-semibold text-2xl font-playfair text-[#113F67]">
+                              {room.roomtype_name}
+                            </h1>
+                            <h1>{room.roomtype_description}</h1>
+                            <Link>
+                              <div className="flex flex-row space-x-2 mt-2 mb-2">
+                                <div>
+                                  <Moreinfo room={room} />
+                                </div>
+                                <div>
+                                  <Info />
+                                </div>
+                              </div>
+                            </Link>
+                            <h1 className="flex items-center gap-2 font-semibold text-[#113F67]">
+                              <BedDouble size={20} />
+                              ₱{" "}
+                              {Number(room.roomtype_price).toLocaleString(
+                                "en-PH",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}
+                              /day
+                            </h1>
+
+                            {/* Adult/Children selectors */}
+                            <div className="mt-4 grid grid-cols-2 gap-4">
+                              {/* Adults */}
+                              <div className="rounded-2xl border-none p-4">
+                                <div className="flex items-center ">
+                                  <Label className="mb-2">Adults</Label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={() => {
+                                      const roomTypeId = room.room_type;
+                                      const current = adultCounts[roomTypeId] || 0;
+                                      setAdultCounts((prev) => ({
+                                        ...prev,
+                                        [roomTypeId]: Math.max(0, current - 1),
+                                      }));
+                                    }}
+                                    disabled={(adultCounts[room.room_type] || 0) <= 1}
+                                  >
+                                    <MinusIcon />
+                                  </Button>
+                                  {adultCounts[room.room_type] || 0}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={() => {
+                                      const roomTypeId = room.room_type;
+                                      const current = adultCounts[roomTypeId] || 0;
+                                      const currentChildren = childrenCounts[roomTypeId] || 0;
+                                      if (
+                                        current + currentChildren <
+                                        (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                      ) {
+                                        setAdultCounts((prev) => ({
+                                          ...prev,
+                                          [roomTypeId]: current + 1,
+                                        }));
+                                      }
+                                    }}
+                                    disabled={
+                                      (adultCounts[room.room_type] || 0) +
+                                      (childrenCounts[room.room_type] || 0) >=
+                                      (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                    }
+                                  >
+                                    <Plus />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Children */}
+                              <div className="rounded-2xl border-none p-4">
+                                <div className="flex items-center">
+                                  <Label className="mb-2">Children</Label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={() => {
+                                      const roomTypeId = room.room_type;
+                                      const current = childrenCounts[roomTypeId] || 0;
+                                      setChildrenCounts((prev) => ({
+                                        ...prev,
+                                        [roomTypeId]: Math.max(0, current - 1),
+                                      }));
+                                    }}
+                                    disabled={(childrenCounts[room.room_type] || 0) <= 0}
+                                  >
+                                    <MinusIcon />
+                                  </Button>
+                                  {childrenCounts[room.room_type] || 0}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={() => {
+                                      const roomTypeId = room.room_type;
+                                      const current = childrenCounts[roomTypeId] || 0;
+                                      const currentAdults = adultCounts[roomTypeId] || 0;
+                                      if (
+                                        currentAdults + current <
+                                        (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                      ) {
+                                        setChildrenCounts((prev) => ({
+                                          ...prev,
+                                          [roomTypeId]: current + 1,
+                                        }));
+                                      }
+                                    }}
+                                    disabled={
+                                      (adultCounts[room.room_type] || 0) +
+                                      (childrenCounts[room.room_type] || 0) >=
+                                      (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                    }
+                                  >
+                                    <Plus />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 text-sm text-gray-700">
+                              Total guests:{" "}
+                              <span className="font-semibold">
+                                {(adultCounts[room.room_type] || 0) +
+                                  (childrenCounts[room.room_type] || 0)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No rooms selected yet.</p>
+                  <p className="text-sm">Click "Add Room" to get started.</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </Card>
+      </div>
+
+      {/* Right side - Booking Summary (1/3 width on desktop) */}
+      <div className="lg:col-span-1">
+        <div className="sticky top-4">
+          <BookingSummary />
+        </div>
+      </div>
+    </div>
+  );
+
+  const GuestInformationStep = () => (
+    <div className="max-w-2xl mx-auto">
+      <Card className="bg-white shadow-md">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
+          <Form {...form}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="walkinfirstname"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your first name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="walkinlastname"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your last name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="contactNumber"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Contact Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your contact number"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const BookingConfirmationStep = () => {
+    const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+    const vat = subtotal - (subtotal / 1.12);
+    const total = subtotal;
+    const down = total * 0.5;
+    const formValues = form.getValues();
+
+
+    return (
+      <ScrollArea className="h-[calc(100vh-400px)]">
+        <div className="space-y-4">
+          <Card>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
+                  <FormField
+                    name="paymentMethod"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <div>
+                          <ComboBox
+                            list={paymentMethod}
+                            subject="payment method"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="totalPay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Pay</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="Enter your total pay" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+          {/* Guest Information */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+            <Card className="bg-white shadow-md">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">First Name</p>
+                    <p className="font-medium">{formValues.walkinfirstname}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Last Name</p>
+                    <p className="font-medium">{formValues.walkinlastname}</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Email</p>
+                      <p className="font-medium">{formValues.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Contact Number</p>
+                      <p className="font-medium">{formValues.contactNumber}</p>
+                    </div>
+
+                  </div>
+
+
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Booking Details */}
+            <Card className="bg-white shadow-md">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Check-in Date</p>
+                    <p className="font-medium">{format(checkIn, 'PPP')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Check-out Date</p>
+                    <p className="font-medium">{format(checkOut, 'PPP')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Number of Nights</p>
+                    <p className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Guests</p>
+                    <p className="font-medium">{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0)} guest{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Room Details */}
+          <Card className="bg-white shadow-md">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Selected Rooms</h3>
+                <Badge variant="secondary">{selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''}</Badge>
+              </div>
+
+              <div className="space-y-3">
+                {selectedRooms.map((room, index) => (
+                  <Card key={index} className="bg-gray-50 border">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium text-lg">{room.roomtype_name}</h4>
+                          <p className="text-sm text-gray-600">{room.roomtype_description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-sm text-gray-600">per night</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex gap-4">
+                          <span>Adults: {adultCounts[room.room_type] || 0}</span>
+                          <span>Children: {childrenCounts[room.room_type] || 0}</span>
+                        </div>
+                        <div className="font-medium">
+                          {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} × ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Summary */}
+          <Card className="bg-white shadow-md border-2 border-blue-200">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span>Subtotal:</span>
+                  <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>VAT (12%) included:</span>
+                  <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center text-lg font-semibold">
+                  <span>Total Amount:</span>
+                  <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center text-lg font-bold text-blue-600">
+                  <span>Down Payment (50%):</span>
+                  <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> A 50% down payment is required to confirm your booking.
+                    The remaining balance will be collected upon check-in.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollArea>
+    );
   };
 
   // ---------------------- Small helper for input min attr ----------------------
@@ -422,474 +1034,76 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
 
 
   return (
-    <>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button >Book Now</Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-auto max-h-[97vh] overflow-y-auto rounded-t-3xl ">
-          <div>
-            {/* ✅ Date pickers */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
-              <div className="flex flex-col gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                <div className="text-xs text-gray-500">Check-in</div>
-                <input
-                  type="date"
-                  className="w-full rounded-md border px-2 py-1"
-                  value={formatYMD(checkIn)}
-                  min={tomorrowStr}
-                  onChange={(e) => {
-                    const ymd = e.target.value;
-                    const newDate = parseYMD(ymd);
-                    if (!newDate) return;
-                    setCheckIn(newDate);
-                    localStorage.setItem('checkIn', ymd); // store YMD
-
-                    // ensure checkOut >= next day
-                    const nextDay = new Date(newDate);
-                    nextDay.setDate(newDate.getDate() + 1);
-                    nextDay.setHours(0, 0, 0, 0);
-                    if (checkOut.getTime() <= newDate.getTime()) {
-                      setCheckOut(nextDay);
-                      localStorage.setItem('checkOut', formatYMD(nextDay)); // store YMD
-                    }
-                  }}
-                />
-              </div>
-
-              {/* ✅ CHECK-OUT */}
-              <div className="flex flex-col gap-2 rounded-xl border bg-white/70 px-3 py-2 shadow-sm">
-                <div className="text-xs text-gray-500">Check-out</div>
-                <input
-                  type="date"
-                  className="w-full rounded-md border px-2 py-1"
-                  value={formatYMD(checkOut)}
-                  min={formatYMD(new Date(checkIn.getTime() + 86400000))}
-                  onChange={(e) => {
-                    const ymd = e.target.value;
-                    const newDate = parseYMD(ymd);
-                    if (!newDate) return;
-                    setCheckOut(newDate);
-                    localStorage.setItem('checkOut', ymd); // store YMD
-                  }}
-                />
-              </div>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          className="bg-[#113F67] text-white hover:bg-[#0d2f4f] border-[#113F67]"
+        >
+          Book Now
+        </Button>
+      </SheetTrigger>
+      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full p-6 rounded-t-3xl">
+        <div className="flex flex-col h-full mt-5">
+          <div className="mb-6 flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
+              <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
             </div>
 
-            {/* ✅ MAIN GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 rounded-t-2xl bg-gray-100 ">
-              <div className="space-y-8 md:sticky md:top-4">
-                <Card className="bg-white shadow-xl text-black w-full">
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-gray-600">
-                          Selected Rooms: {selectedRooms.length}
-                        </div>
-                        <div>
-                          <RoomsList
-                            rooms={allRooms}
-                            selectedRooms={selectedRooms}
-                            setSelectedRooms={setSelectedRooms}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <Card className="bg-gray-100">
-                      <ScrollArea className="h-[calc(100vh-300px)]">
-                        <div>
-                          {selectedRooms.length > 0 ? (
-                            <div>
-                              {selectedRooms.map((room, index) => (
-                                <Card key={index} className="mb-3 m-3">
-                                  <CardContent>
-                                    <div className="flex justify-end">
-                                      <Trash2
-                                        className="cursor-pointer text-red-500"
-                                        onClick={() => handleRemoveRoom(index)}
-                                      />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                                      <div>
-                                        <h1 className="font-semibold text-2xl font-playfair text-[#113F67]">
-                                          {room.roomtype_name}
-                                        </h1>
-                                        <h1>{room.roomtype_description}</h1>
-                                        <Link>
-                                          <div className="flex flex-row space-x-2 mt-2 mb-2">
-                                            <div>
-                                              <Moreinfo room={room} />
-                                            </div>
-                                            <div>
-                                              <Info />
-                                            </div>
-                                          </div>
-                                        </Link>
-                                        <h1 className="flex items-center gap-2 font-semibold text-[#113F67]">
-                                          <BedDouble size={20} />
-                                          ₱{" "}
-                                          {Number(room.roomtype_price).toLocaleString(
-                                            "en-PH",
-                                            {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                            }
-                                          )}
-                                          /day
-                                        </h1>
-
-                                        {/* ✅ Adult/Children selectors */}
-                                        <div className="mt-4 grid grid-cols-2 gap-4">
-                                          {/* Adults */}
-                                          <div className="rounded-2xl border-none p-4">
-                                            <div className="flex items-center ">
-                                              <Label className="mb-2">Adults</Label>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="rounded-full"
-                                                onClick={() => {
-                                                  const roomTypeId = room.room_type;
-                                                  const current =
-                                                    adultCounts[roomTypeId] || 0;
-                                                  setAdultCounts((prev) => ({
-                                                    ...prev,
-                                                    [roomTypeId]: Math.max(
-                                                      0,
-                                                      current - 1
-                                                    ),
-                                                  }));
-                                                }}
-                                                disabled={
-                                                  (adultCounts[room.room_type] || 0) <= 1
-                                                }
-                                              >
-                                                <MinusIcon />
-                                              </Button>
-                                              {adultCounts[room.room_type] || 0}
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="rounded-full"
-                                                onClick={() => {
-                                                  const roomTypeId = room.room_type;
-                                                  const current =
-                                                    adultCounts[roomTypeId] || 0;
-                                                  const currentChildren =
-                                                    childrenCounts[roomTypeId] || 0;
-                                                  if (
-                                                    current + currentChildren <
-                                                    (room.roomtype_capacity ||
-                                                      Number.MAX_SAFE_INTEGER)
-                                                  ) {
-                                                    setAdultCounts((prev) => ({
-                                                      ...prev,
-                                                      [roomTypeId]: current + 1,
-                                                    }));
-                                                  }
-                                                }}
-                                                disabled={
-                                                  (adultCounts[room.room_type] || 0) +
-                                                  (childrenCounts[room.room_type] || 0) >=
-                                                  (room.roomtype_capacity ||
-                                                    Number.MAX_SAFE_INTEGER)
-                                                }
-                                              >
-                                                <Plus />
-                                              </Button>
-                                            </div>
-                                          </div>
-
-                                          {/* Children */}
-                                          <div className="rounded-2xl border-none p-4">
-                                            <div className="flex items-center">
-                                              <Label className="mb-2">Children</Label>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="rounded-full"
-                                                onClick={() => {
-                                                  const roomTypeId = room.room_type;
-                                                  const current =
-                                                    childrenCounts[roomTypeId] || 0;
-                                                  setChildrenCounts((prev) => ({
-                                                    ...prev,
-                                                    [roomTypeId]: Math.max(
-                                                      0,
-                                                      current - 1
-                                                    ),
-                                                  }));
-                                                }}
-                                                disabled={
-                                                  (childrenCounts[room.room_type] || 0) <= 0
-                                                }
-                                              >
-                                                <MinusIcon />
-                                              </Button>
-                                              {childrenCounts[room.room_type] || 0}
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="rounded-full"
-                                                onClick={() => {
-                                                  const roomTypeId = room.room_type;
-                                                  const current =
-                                                    childrenCounts[roomTypeId] || 0;
-                                                  const currentAdults =
-                                                    adultCounts[roomTypeId] || 0;
-                                                  if (
-                                                    currentAdults + current <
-                                                    (room.roomtype_capacity ||
-                                                      Number.MAX_SAFE_INTEGER)
-                                                  ) {
-                                                    setChildrenCounts((prev) => ({
-                                                      ...prev,
-                                                      [roomTypeId]: current + 1,
-                                                    }));
-                                                  }
-                                                }}
-                                                disabled={
-                                                  (adultCounts[room.room_type] || 0) +
-                                                  (childrenCounts[room.room_type] || 0) >=
-                                                  (room.roomtype_capacity ||
-                                                    Number.MAX_SAFE_INTEGER)
-                                                }
-                                              >
-                                                <Plus />
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        <div className="mt-3 text-sm text-gray-700">
-                                          Total guests:{" "}
-                                          <span className="font-semibold">
-                                            {(adultCounts[room.room_type] || 0) +
-                                              (childrenCounts[room.room_type] || 0)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
-                            </div>
-                          ) : (
-                            <p>No rooms selected</p>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </Card>
-                  </CardContent>
-                </Card>
+            {/* Navigation Controls - Top Right */}
+            <div className="flex items-center gap-3 ">
+              <div className="text-sm text-gray-500 hidden md:block">
+                Step {currentStep} of {steps.length}
               </div>
 
-              {/* ✅ Right column summary */}
-              <ScrollArea className="h-[calc(90vh)]">
-                <div className="flex flex-col border-none bg-transparent pr-2 mb-6 space-y-3 ">
-                  <form>
-                    <Card className="bg-white shadow-md">
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-2">
-                          <div>
-                            <div className="space-y-2">
-                              <Label htmlFor="walkinfirstname">First Name</Label>
-                              <Input
-                                id="walkinfirstname"
-                                placeholder="Enter your first name"
-                                value={walkinfirstname}
-                                onChange={(e) => setWalkinfirstname(e.target.value)}
-                              />
-                              {errors.walkinfirstname && (
-                                <p className="text-sm font-medium text-red-500">{errors.walkinfirstname}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="space-y-2">
-                              <Label htmlFor="walkinlastname">Last Name</Label>
-                              <Input
-                                id="walkinlastname"
-                                placeholder="Enter your last name"
-                                value={walkinlastname}
-                                onChange={(e) => setWalkinlastname(e.target.value)}
-                              />
-                              {errors.walkinlastname && (
-                                <p className="text-sm font-medium text-red-500">{errors.walkinlastname}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="space-y-2">
-                              <Label htmlFor="email">Email</Label>
-                              <Input
-                                id="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                              />
-                              {errors.email && (
-                                <p className="text-sm font-medium text-red-500">{errors.email}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="space-y-2">
-                              <Label htmlFor="contactNumber">Contact Number</Label>
-                              <Input
-                                id="contactNumber"
-                                placeholder="Enter your contact number"
-                                value={contactNumber}
-                                onChange={(e) => setContactNumber(e.target.value)}
-                              />
-                              {errors.contactNumber && (
-                                <p className="text-sm font-medium text-red-500">{errors.contactNumber}</p>
-                              )}
-                            </div>
-                          </div>
-                          {showConfirmModal &&
-                            <ConfirmBooking
-                              open={showConfirmModal}
-                              onClose={closeConfirmModal}
-                              handleClearData={handleClearData}
-                              summary={summaryInfo}
-                              onConfirmBooking={customerBookingNoAccount}
-                            />
-                          }
-                        </div>
-                      </CardContent>
+              <Button
+                variant="outline"
+                onClick={handlePrevStep}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2"
+                size="sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
 
-                    </Card>
-                  </form>
-                  <Card className="bg-white shadow-md rounded-2xl ">
-                    <CardContent className="space-y-3 text-black">
-
-                      <div className="flex justify-between items-center">
-                        <h1 className="font-semibold text-lg">Booking Summary</h1>
-
-                        <div className="text-sm text-blue-600 font-medium">
-
-                          {selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''} Selected
-                        </div>
-                      </div>
-                      <Card className="bg-gray-50 border rounded-sm shadow-sm hover:shadow-md transition-shadow">
-                        <div className="p-2">
-                          <ScrollArea className="h-52 ">
-                            {selectedRooms.length > 0 && selectedRooms.map((room, index) => (
-                              <Card key={index} className="mb-3 shadow-md rounded-sm">
-                                <CardContent >
-                                  <CardTitle >Room {index + 1}</CardTitle>
-                                  <div className="flex flex-row justify-between items-center  py-2">
-                                    <h2 className="font-medium text-lg">{room.roomtype_name}</h2>
-
-                                    <p className="font-semibold text-xl">
-                                      {`${numberOfNights} Day(s) x ₱${room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                                    </p>
-                                  </div>
-                                  <p className="text-md font-semibold text-right text-[#113F67]">
-                                    = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </p>
-                                </CardContent>
-
-
-
-
-                              </Card>
-
-                            ))}
-                          </ScrollArea>
-                        </div>
-                      </Card>
-                      {(() => {
-                        const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
-                        const vat = subtotal - (subtotal / 1.12);
-                        const total = subtotal
-                        const down = total * 0.5
-                        return (
-                          <>
-
-                            <div className="flex justify-between items-center py-2 ">
-                              <span className="font-medium">VAT (12%) included:</span>
-                              <span>₱ {vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2">
-                              <span className="font-semibold">Total (VAT included):</span>
-                              <span className="font-semibold text-2xl">₱ {total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2">
-                              <span className="font-semibold">Down Payment (50%):</span>
-                              <span className="font-semibold text-2xl text-blue-600">₱ {down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </CardContent>
-
-                  </Card>
-                  <Button
-                    onClick={() => {
-                      if (selectedRooms.length === 0) {
-                        toast.error("Please select at least one room.");
-                        return;
-                      }
-
-                      // Run validation
-                      if (!validateForm()) {
-                        toast.error("Please fill in all required fields correctly.");
-                        return;
-                      }
-
-                      const subtotal = selectedRooms.reduce(
-                        (sum, room) => sum + Number(room.roomtype_price) * numberOfNights,
-                        0
-                      );
-                      const vat = subtotal - (subtotal / 1.12);
-                      const total = subtotal;
-                      const downpayment = total * 0.5;
-
-                      setSummaryInfo({
-                        rooms: selectedRooms.map(room => ({
-                          ...room,
-                          guestCount:
-                            (adultCounts[room.unique_id || room.room_type] || 0) +
-                            (childrenCounts[room.unique_id || room.room_type] || 0),
-                          adultCount: adultCounts[room.unique_id || room.room_type] || 0,
-                          childrenCount: childrenCounts[room.unique_id || room.room_type] || 0,
-                        })),
-                        checkIn,
-                        checkOut,
-                        numberOfNights,
-                        vat,
-                        total,
-                        downpayment,
-                        customer: {
-                          firstName: walkinfirstname,
-                          lastName: walkinlastname,
-                          email: email,
-                          contactNumber: contactNumber
-                        }
-                      });
-
-                      // ✅ open modal only if valid
-                      setShowConfirmModal(true);
-                    }}
-                  >
-                    Confirm Booking
-                  </Button>
-                </div>
-
-
-              </ScrollArea>
+              {currentStep < steps.length ? (
+                <Button
+                  onClick={handleNextStep}
+                  className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                  size="sm"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleShowAlert}
+                  className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                  size="sm"
+                >
+                  Confirm Booking
+                </Button>
+              )}
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+
+          {/* Stepper */}
+          <div className="mb-6">
+            <Stepper steps={steps} currentStep={currentStep} />
+          </div>
+
+          {/* Step Content */}
+          <div className="flex-1">
+            {currentStep === 1 && <RoomSelectionStep />}
+            {currentStep === 2 && <GuestInformationStep />}
+            {currentStep === 3 && <BookingConfirmationStep />}
+          </div>
+        </div>
+        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
+      </SheetContent>
+    </Sheet>
   );
 
 }

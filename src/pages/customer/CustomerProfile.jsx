@@ -21,6 +21,7 @@ function CustomerProfile() {
       const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
       const jsonData = { "customers_id": customerId };
+      console.log("jsonData", jsonData);
       const formData = new FormData();
       formData.append("operation", "customerProfile");
       formData.append("json", JSON.stringify(jsonData));
@@ -55,7 +56,6 @@ function CustomerProfile() {
       {loading ? (
         <Spinner />
       ) : (
-   
 
         <Card className="px-8 py-8 mt-10 w-full shadow-xl min-h-[600px]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
