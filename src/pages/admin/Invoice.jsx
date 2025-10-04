@@ -1,112 +1,385 @@
 import React, { useEffect, useState } from "react";
-import AdminHeader from "./components/AdminHeader";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { FileText, Settings, CheckCircle, XCircle, Eye, Search, Filter, X } from "lucide-react";
+import AdminHeader from "./components/AdminHeader";
+import InvoiceManagementSubpage from "./SubPages/InvoiceManagementSubpage";
+import { DateFormatter } from './Function_Files/DateFormatter';
 
-function Invoice() {
-  const APIConn = `${localStorage.url}admin.php`
+function CreateInvoice() {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
+  const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchBookings = async () => {
     try {
+      const url = localStorage.getItem("url") + "transactions.php";
+      console.log("Fetching bookings from URL:", url);
       const formData = new FormData();
-      formData.append("method", "getBookingsWithBillingStatus");
-      const res = await axios.post(APIConn, formData);
+      formData.append("operation", "getBookingsWithBillingStatus");
+      const res = await axios.post(url, formData);
+      console.log("API Response:", res.data);
       setBookings(res.data !== 0 ? res.data : []);
+      console.log("Bookings set:", res.data !== 0 ? res.data : []);
     } catch (err) {
-      toast.error("Error loading bookings");
+      console.error("Error loading bookings:", err);
+      toast.error("Error loading bookings: " + err.message);
     }
   };
 
-  const createInvoice = async (billing_id) => {
-    try {
-      setLoading(true);
+  const handleBookingAction = (booking) => {
+    setSelectedBooking(booking);
+    setShowInvoiceManagement(true);
+  };
 
-      const jsonData = {
-        billing_ids: [billing_id],
-        employee_id: 1, // Replace with secureLocalStorage/session value
-        payment_method_id: 2,
-        invoice_status_id: 1,
-      };
+  const handleInvoiceCreated = () => {
+    fetchBookings(); // Refresh the bookings list
+  };
 
-      const formData = new FormData();
-      formData.append("method", "createInvoice");
-      formData.append("json", JSON.stringify(jsonData));
+  // Filter bookings based on search query and status filter
+  const getFilteredBookings = () => {
+    let filteredBookings = bookings;
 
-      const url = localStorage.getItem("url") + "transactions.php";
-
-      const res = await axios.post(url, formData);
-      console.log("Invoice API response:", res.data);
-
-      if (res.data?.success) {
-        alert(res.data.message || "Invoice created successfully!");
-        fetchBookings(); // Refresh list
-      } else {
-        alert(res.data.message || "Failed to create invoice.");
-      }
-    } catch (err) {
-      console.error("Error creating invoice:", err);
-      alert("An error occurred while creating the invoice.");
-    } finally {
-      setLoading(false);
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.booking_id.toString().includes(query) ||
+        booking.reference_no.toLowerCase().includes(query) ||
+        (booking.customer_name && booking.customer_name.toLowerCase().includes(query)) ||
+        booking.customer_name === null && "walk-in".includes(query)
+      );
     }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filteredBookings = filteredBookings.filter(booking => {
+        if (statusFilter === "created") {
+          return booking.invoice_id !== null && booking.invoice_id !== undefined;
+        } else if (statusFilter === "not-created") {
+          return booking.invoice_id === null || booking.invoice_id === undefined;
+        }
+        return true;
+      });
+    }
+
+    return filteredBookings;
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
   };
 
   useEffect(() => {
     fetchBookings();
+    
+    // Check if there's a reference number to auto-fill from BookingList
+    const autoSearchReference = localStorage.getItem('invoiceSearchReference');
+    if (autoSearchReference) {
+      setSearchQuery(autoSearchReference);
+      localStorage.removeItem('invoiceSearchReference'); // Clear after use
+    }
   }, []);
 
+  // Debug function to test API connection
+  const testAPIConnection = async () => {
+    try {
+      const url = localStorage.getItem("url") + "transactions.php";
+      const formData = new FormData();
+      formData.append("operation", "getBookingsWithBillingStatus");
+      const res = await axios.post(url, formData);
+      console.log("API Test Response:", res.data);
+      toast.success("API connection successful!");
+    } catch (err) {
+      console.error("API Test Error:", err);
+      toast.error("API connection failed: " + err.message);
+    }
+  };
+
   return (
-    <>
+    <div className="lg:ml-72 p-3 lg:p-6 space-y-4 lg:space-y-6 max-w-full overflow-hidden">
+      <AdminHeader/>
+      {/* Header Section */}
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#34699a]/10 dark:bg-[#34699a]/20 rounded-lg">
+                <FileText className="h-5 w-5 lg:h-6 lg:w-6 text-[#34699a] dark:text-[#34699a]" />
+              </div>
+              <div>
+                <CardTitle className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                  Invoice Management
+                </CardTitle>
+                <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
+                  Comprehensive billing validation and invoice creation system
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={testAPIConnection}
+                className="flex items-center gap-2 text-xs lg:text-sm"
+              >
+                <Settings className="h-3 w-3 lg:h-4 lg:w-4" />
+                <span className="hidden sm:inline">Test API</span>
+                <span className="sm:hidden">Test</span>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
-      <div>
-        <AdminHeader />
-      </div>
+      {/* Loading State */}
+      {loading && (
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#34699a]"></div>
+              <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300">Processing invoice...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <div>
-        <h2>Booking List</h2>
-        {loading && <p>Processing invoice...</p>}
-        <table border="1" cellPadding={5}>
-          <thead>
-            <tr>
-              <th>Booking ID</th>
-              <th>Reference No</th>
-              <th>Customer</th>
-              <th>Check-In</th>
-              <th>Check-Out</th>
-              <th>Billing ID</th>
-              <th>Invoice</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bookings.map((b) => (
-              <tr key={b.booking_id}>
-                <td>{b.booking_id}</td>
-                <td>{b.reference_no}</td>
-                <td>{b.customer_name || "Walk-In"}</td>
-                <td>{b.booking_checkin_dateandtime}</td>
-                <td>{b.booking_checkout_dateandtime}</td>
-                <td>{b.billing_id || "None"}</td>
-                <td>{b.invoice_id ? "✅ Created" : "❌ Not Created"}</td>
-                <td>
-                  {!b.invoice_id && b.billing_id ? (
-                    <button onClick={() => createInvoice(b.billing_id)}>
-                      Create Invoice
-                    </button>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Search and Filter Section */}
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <Search className="h-4 w-4 lg:h-5 lg:w-5" />
+            <span className="text-lg lg:text-xl">Search & Filter</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by booking ID, reference, or customer name..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
 
-    </>
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#34699a] focus:border-[#34699a] outline-none"
+              >
+                <option value="all">All Status</option>
+                <option value="created">Created</option>
+                <option value="not-created">Not Created</option>
+              </select>
+            </div>
+
+            {/* Clear Filters Button */}
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Results Count */}
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {getFilteredBookings().length} of {bookings.length} bookings
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bookings Table */}
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <FileText className="h-4 w-4 lg:h-5 lg:w-5" />
+            <span className="text-lg lg:text-xl">Booking Invoices</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 lg:p-6">
+          <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50 dark:bg-gray-700">
+                  <TableHead className="min-w-[60px] lg:min-w-[80px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">ID</TableHead>
+                  <TableHead className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Reference</TableHead>
+                  <TableHead className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</TableHead>
+                  <TableHead className="min-w-[100px] lg:min-w-[140px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden sm:table-cell">Check-In</TableHead>
+                  <TableHead className="min-w-[100px] lg:min-w-[140px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden md:table-cell">Check-Out</TableHead>
+                  <TableHead className="min-w-[60px] lg:min-w-[100px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden lg:table-cell">Billing ID</TableHead>
+                  <TableHead className="min-w-[80px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Status</TableHead>
+                  <TableHead className="min-w-[60px] lg:min-w-[100px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden lg:table-cell">Validation</TableHead>
+                  <TableHead className="min-w-[80px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {getFilteredBookings().length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">
+                      <div className="text-gray-500 dark:text-gray-400">
+                        {bookings.length === 0 
+                          ? "No bookings found" 
+                          : "No bookings match your search criteria"}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  getFilteredBookings().map((b, index) => (
+                  <TableRow key={`booking-${b.booking_id}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <TableCell className="font-medium whitespace-nowrap text-xs lg:text-sm text-gray-900 dark:text-gray-100">
+                      {b.booking_id}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100">
+                      <span className="block lg:hidden">{b.reference_no.substring(0, 8)}...</span>
+                      <span className="hidden lg:block">{b.reference_no}</span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs lg:text-sm text-gray-900 dark:text-gray-100">
+                      <span className="block lg:hidden truncate max-w-[80px]">{b.customer_name || "Walk-In"}</span>
+                      <span className="hidden lg:block">{b.customer_name || "Walk-In"}</span>
+                    </TableCell>
+                    <TableCell className="text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100 hidden sm:table-cell">
+                      {DateFormatter.formatDateOnly(b.booking_checkin_dateandtime)}
+                    </TableCell>
+                    <TableCell className="text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100 hidden md:table-cell">
+                      {DateFormatter.formatDateOnly(b.booking_checkout_dateandtime)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs lg:text-sm hidden lg:table-cell">
+                      {b.billing_id ? (
+                        <Badge variant="outline" className="text-xs">{b.billing_id}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">None</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {b.invoice_id ? (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">Created</span>
+                          <span className="sm:hidden">✓</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="text-xs">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">Not Created</span>
+                          <span className="sm:hidden">✗</span>
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs lg:text-sm text-muted-foreground hidden lg:table-cell">
+                        <span>—</span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {!b.invoice_id ? (
+                        <Button 
+                          onClick={() => handleBookingAction(b)}
+                          variant="default"
+                          size="sm"
+                          className="flex items-center gap-1 text-xs lg:text-sm px-2 lg:px-3 py-1 lg:py-2"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span className="hidden sm:inline">Manage</span>
+                          <span className="sm:hidden">View</span>
+                        </Button>
+                      ) : (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          <span className="hidden sm:inline">Created</span>
+                          <span className="sm:hidden">✓</span>
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoice Management Modal */}
+      {showInvoiceManagement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 lg:p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => setShowInvoiceManagement(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-7xl max-h-[98vh] w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <FileText className="h-4 w-4 lg:h-5 lg:w-5 text-[#34699a] flex-shrink-0" />
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-white truncate">
+                  Invoice Management - Booking #{selectedBooking?.booking_id}
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowInvoiceManagement(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0 ml-2"
+              >
+                <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+          </div>
+            
+            {/* Modal Body */}
+            <div className="overflow-y-auto max-h-[calc(98vh-80px)]">
+              {selectedBooking && (
+                <InvoiceManagementSubpage
+                  selectedBooking={selectedBooking}
+                  onClose={() => setShowInvoiceManagement(false)}
+                  onInvoiceCreated={handleInvoiceCreated}
+                />
+              )}
+              </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-export default Invoice;
+export default CreateInvoice;

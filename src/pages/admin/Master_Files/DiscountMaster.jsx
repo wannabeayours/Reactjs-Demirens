@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useState, useEffect } from 'react';
 import AdminModal from '@/pages/admin/components/AdminModal';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/popover"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,167 +44,177 @@ function DiscountMaster() {
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState("");
 
   const formSchema = z.object({
-    discountType: z.string().min(1, 'Required'),
-    startDate: z.string().min(1, 'Required'),
-    endDate: z.string().min(1, 'Required'),
-    discountPercent: z.string().min(1, 'Required'),
+    discountName: z.string().min(1, 'Required'),
+    discountPercentage: z.string().optional(),
+    discountAmount: z.string().optional(),
+    discountDescription: z.string().optional(),
+  }).refine((data) => data.discountPercentage || data.discountAmount, {
+    message: "Either percentage or amount is required",
+    path: ["discountPercentage"],
   });
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      discountType: '',
-      startDate: '',
-      endDate: '',
-      discountPercent: '',
+      discountName: '',
+      discountPercentage: '',
+      discountAmount: '',
+      discountDescription: '',
     },
   });
 
-  // --------- For Modal --------- //
-  const [modalSettings, setModalSettings] = useState({
-    modalMode: '',
-    showModal: false,
-  });
+  // Load data on component mount
+  useEffect(() => {
+    loadDiscounts();
+  }, []);
+
+  const loadDiscounts = async () => {
+    setIsLoading(true);
+    const reqFormDiscounts = new FormData();
+    reqFormDiscounts.append('method', 'viewDiscounts');
+
+    try {
+      const conn = await axios.post(APIConn, reqFormDiscounts);
+      if (conn.data) {
+        setAllDiscounts(conn.data !== 0 ? conn.data : []);
+      }
+    } catch (err) {
+      toast('Failed to load discounts');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const popAddModal = () => {
-    setModalSettings({
-      modalMode: 'add',
-      showModal: true,
-    });
+    setModalMode('add');
+    setSelectedDiscount(null);
+    form.reset();
+    setShowModal(true);
   };
 
   const popUpdateModal = (discountData) => {
-    console.log("From Update MOdal:", discountData);
     const formattedData = {
-      discountType: discountData.discounts_type,
-      startDate: discountData.discounts_datestart,
-      endDate: discountData.discounts_dateend,
-      discountPercent: discountData.discounts_percent
-    }
+      discountName: discountData.discounts_name,
+      discountPercentage: discountData.discounts_percentage?.toString() || '',
+      discountAmount: discountData.discounts_amount?.toString() || '',
+      discountDescription: discountData.discounts_description || ''
+    };
+    
     setSelectedDiscount({
       discount_id: discountData.discounts_id,
       ...formattedData
     });
 
     form.reset(formattedData);
-
-    setModalSettings({
-      showModal: true,
-      modalMode: "update"
-    })
-  };
-
-  // --------- API Connections --------- //
-  const getAllDiscounts = async () => {
-    setIsLoading(true);
-    const reqFormDiscounts = new FormData();
-    reqFormDiscounts.append('method', 'view_discount');
-
-    try {
-      const conn = await axios.post(APIConn, reqFormDiscounts);
-      if (conn.data) {
-        setAllDiscounts(conn.data !== 0 ? conn.data : []);
-
-        // Find a Way to only call this once and only call it when something is either added, updated or deleted do the 
-        // same thing for the other master files in order to avoid wasting API Calls
-        // console.log("FetchData", conn.data);
-
-      } else {
-        console.log('No data has been fetched...');
-      }
-    } catch (err) {
-      toast('Failed Connection... ');
-    } finally {
-      toast('Content is Done...');
-      setIsLoading(false);
-    }
+    setModalMode("update");
+    setShowModal(true);
   };
 
   const addNewDiscounts = async (discountData) => {
     setIsLoading(true);
     const addDiscountForm = new FormData();
-    addDiscountForm.append("method", "add_discount");
+    addDiscountForm.append("method", "addDiscounts");
     addDiscountForm.append("json", JSON.stringify(discountData));
-
-    console.log("Send this data to API", addDiscountForm);
 
     try {
       const conn = await axios.post(APIConn, addDiscountForm);
       if (conn.data === 1) {
         toast("Added New Discount!");
+        resetModal();
+        loadDiscounts(); // Reload data
+      } else {
+        toast("Failed to add discount");
       }
     } catch (err) {
       toast("Failed to Add Discount...");
     } finally {
-      resetStates();
-      toast("Content is Done");
+      setIsLoading(false);
     }
-  }
+  };
 
   const updateDiscounts = async (discountValues) => {
-    setIsLoading(false);
+    setIsLoading(true);
     const jsonData = {
-      discounts_id: selectedDiscount.discount_id,
-      discount_type: discountValues.discountType,
-      discount_startDate: discountValues.startDate,
-      discount_endDate: discountValues.endDate,
-      discount_percent: parseInt(discountValues.discountPercent)
-    }
+      discount_id: selectedDiscount.discount_id,
+      discountName: discountValues.discountName,
+      discountPercentage: discountValues.discountPercentage ? parseFloat(discountValues.discountPercentage) : null,
+      discountAmount: discountValues.discountAmount ? parseInt(discountValues.discountAmount) : null,
+      discountDescription: discountValues.discountDescription
+    };
 
     const updateDiscForm = new FormData();
-    updateDiscForm.append("method", "update_discount");
+    updateDiscForm.append("method", "updateDiscounts");
     updateDiscForm.append("json", JSON.stringify(jsonData));
-
-    console.log("Get this only: ", updateDiscForm);
 
     try {
       const conn = await axios.post(APIConn, updateDiscForm);
       if (conn.data === 1) {
         toast("Successfully Updated!");
+        resetModal();
+        loadDiscounts(); // Reload data
       } else {
         toast("Failed to update...");
       }
     } catch (err) {
       toast("Cannot connect to API...");
     } finally {
-      resetStates();
       setIsLoading(false);
-      toast("Content Loaded");
     }
-  }
-
-  // --------- Other Functions --------- //
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
   };
 
-  const resetStates = () => {
-    setModalSettings({
-      modalMode: "",
-      showModal: false
-    })
+  const deleteDiscount = async () => {
+    if (!selectedDiscount) return;
+    
+    setIsLoading(true);
+    const jsonData = {
+      discount_id: selectedDiscount.discount_id
+    };
+    
+    const formData = new FormData();
+    formData.append("method", "disableDiscounts");
+    formData.append("json", JSON.stringify(jsonData));
+
+    try {
+      const conn = await axios.post(APIConn, formData);
+      if (conn.data === 1) {
+        toast("Successfully deleted discount");
+        resetModal();
+        loadDiscounts();
+      } else {
+        toast("Failed to delete discount");
+      }
+    } catch (error) {
+      console.log("API Connection Failed..." + error);
+      toast("Failed to delete");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const popDeleteModal = (discount) => {
+    setModalMode('delete');
+    setSelectedDiscount({
+      discount_id: discount.discounts_id,
+      discountName: discount.discounts_name
+    });
+    setShowModal(true);
+  };
+
+  const resetModal = () => {
+    setShowModal(false);
+    setModalMode("");
+    setSelectedDiscount(null);
     form.reset();
-    setIsLoading(false);
-  }
+  };
 
   // Filter discounts based on search term
   const filteredDiscounts = allDiscounts.filter(discount =>
-    discount.discounts_type.toLowerCase().includes(searchTerm.toLowerCase())
+    discount.discounts_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  useEffect(() => {
-    if (!modalSettings.showModal) {
-      getAllDiscounts();
-    }
-  }, [modalSettings.showModal, getAllDiscounts]);
 
   return (
     <>
@@ -215,7 +225,7 @@ function DiscountMaster() {
       ) : (
         <>
           <AdminHeader onCollapse={setIsCollapsed} />
-          <div className={`transition-all duration-300 ${isCollapsed ? 'ml-0' : 'ml-0'} p-6`}>
+          <div className={`transition-all duration-300 ${isCollapsed ? 'ml-0' : 'lg:ml-72'} p-6`}>
             <Card className="shadow-lg">
               <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20">
                 <div className="flex justify-between items-center">
@@ -290,7 +300,7 @@ function DiscountMaster() {
                           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Avg. Discount</p>
                           <p className="text-2xl font-bold text-green-600">
                             {allDiscounts.length > 0 
-                              ? Math.round(allDiscounts.reduce((sum, disc) => sum + disc.discounts_percent, 0) / allDiscounts.length)
+                              ? Math.round(allDiscounts.reduce((sum, disc) => sum + (disc.discounts_percentage || 0), 0) / allDiscounts.length)
                               : 0}%
                           </p>
                         </div>
@@ -323,19 +333,16 @@ function DiscountMaster() {
                       <TableHeader className="bg-gray-50 dark:bg-gray-800/50">
                         <TableRow>
                           <TableHead className="font-semibold">ID</TableHead>
-                          <TableHead className="font-semibold">Type</TableHead>
-                          <TableHead className="font-semibold">Start Date</TableHead>
-                          <TableHead className="font-semibold">End Date</TableHead>
-                          <TableHead className="font-semibold text-center">Discount %</TableHead>
-                          <TableHead className="font-semibold text-center">Status</TableHead>
+                          <TableHead className="font-semibold">Name</TableHead>
+                          <TableHead className="font-semibold">Description</TableHead>
+                          <TableHead className="font-semibold text-center">Percentage</TableHead>
+                          <TableHead className="font-semibold text-center">Amount</TableHead>
                           <TableHead className="font-semibold text-center">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredDiscounts.length > 0 ? (
                           filteredDiscounts.map((discount, index) => {
-                            const isActive = new Date() >= new Date(discount.discounts_datestart) && 
-                                           new Date() <= new Date(discount.discounts_dateend);
                             return (
                               <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">
@@ -343,24 +350,27 @@ function DiscountMaster() {
                                     #{discount.discounts_id}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="font-medium">{discount.discounts_type}</TableCell>
-                                <TableCell>{formatDate(discount.discounts_datestart)}</TableCell>
-                                <TableCell>{formatDate(discount.discounts_dateend)}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
-                                    {discount.discounts_percent}%
-                                  </Badge>
+                                <TableCell className="font-medium">{discount.discounts_name}</TableCell>
+                                <TableCell className="max-w-[200px] truncate">
+                                  {discount.discounts_description || 'No description'}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                  <Badge 
-                                    variant={isActive ? "default" : "secondary"}
-                                    className={isActive 
-                                      ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-                                      : "bg-gray-100 text-gray-700 dark:bg-gray-950 dark:text-gray-300"
-                                    }
-                                  >
-                                    {isActive ? 'Active' : 'Inactive'}
-                                  </Badge>
+                                  {discount.discounts_percentage ? (
+                                    <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                                      {discount.discounts_percentage}%
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {discount.discounts_amount ? (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
+                                      ₱{discount.discounts_amount}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Popover>
@@ -384,6 +394,7 @@ function DiscountMaster() {
                                           variant="ghost" 
                                           size="sm" 
                                           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => popDeleteModal(discount)}
                                         >
                                           <Trash2 className="w-4 h-4 mr-2" />
                                           Delete
@@ -397,7 +408,7 @@ function DiscountMaster() {
                           })
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                               {searchTerm ? 'No discounts found matching your search.' : 'No discounts available.'}
                             </TableCell>
                           </TableRow>
@@ -411,22 +422,17 @@ function DiscountMaster() {
           </div>
 
           <AdminModal
-            isVisible={modalSettings.showModal}
-            onClose={() =>
-              setModalSettings({
-                modalMode: '',
-                showModal: false,
-              })
-            }
+            isVisible={showModal}
+            onClose={resetModal}
             modalTitle={
-              modalSettings.modalMode === 'add'
+              modalMode === 'add'
                 ? 'Add new Discount'
-                : modalSettings.modalMode === 'update'
+                : modalMode === 'update'
                   ? 'Update Existing Discount'
                   : 'Remove Discount'
             }
           >
-            {modalSettings.modalMode === 'add' && (
+            {modalMode === 'add' && (
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit((values) => addNewDiscounts(values))}
@@ -434,12 +440,12 @@ function DiscountMaster() {
                 >
                   <FormField
                     control={form.control}
-                    name="discountType"
+                    name="discountName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Type</FormLabel>
+                        <FormLabel>Discount Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Type of discount" {...field} />
+                          <Input placeholder="e.g. Early Bird, Senior Citizen" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -448,12 +454,23 @@ function DiscountMaster() {
 
                   <FormField
                     control={form.control}
-                    name="startDate"
+                    name="discountPercentage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>Discount Percentage</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="text" 
+                            placeholder="e.g. 15.50" 
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow only numbers and decimal point
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -462,12 +479,23 @@ function DiscountMaster() {
 
                   <FormField
                     control={form.control}
-                    name="endDate"
+                    name="discountAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>Discount Amount (Fixed)</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="text" 
+                            placeholder="e.g. 500" 
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow only numbers and decimal point
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -476,24 +504,24 @@ function DiscountMaster() {
 
                   <FormField
                     control={form.control}
-                    name="discountPercent"
+                    name="discountDescription"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Percent</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="e.g. 15" {...field} />
+                          <Textarea placeholder="Optional description..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <Button type="submit">Submit</Button>
+                  <Button type="submit" disabled={isLoading}>Submit</Button>
                 </form>
               </Form>
             )}
 
-            {modalSettings.modalMode === 'update' && selectedDiscount && (
+            {modalMode === 'update' && selectedDiscount && (
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit((values) => {
@@ -501,14 +529,14 @@ function DiscountMaster() {
                   })}
                   className="space-y-4"
                 >
-                  {/* Discount Type */}
+                  {/* Discount Name */}
                   <FormField
                     control={form.control}
-                    name="discountType"
-                    defaultValue={selectedDiscount.discountType}
+                    name="discountName"
+                    defaultValue={selectedDiscount.discountName}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Type</FormLabel>
+                        <FormLabel>Discount Name</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -516,60 +544,100 @@ function DiscountMaster() {
                     )}
                   />
 
-                  {/* Start Date */}
+                  {/* Discount Percentage */}
                   <FormField
                     control={form.control}
-                    name="startDate"
-                    defaultValue={selectedDiscount.startDate}
+                    name="discountPercentage"
+                    defaultValue={selectedDiscount.discountPercentage}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel>Discount Percentage</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="text" 
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow only numbers and decimal point
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  {/* End Date */}
+                  {/* Discount Amount */}
                   <FormField
                     control={form.control}
-                    name="endDate"
-                    defaultValue={selectedDiscount.endDate}
+                    name="discountAmount"
+                    defaultValue={selectedDiscount.discountAmount}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel>Discount Amount (Fixed)</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="text" 
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow only numbers and decimal point
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  {/* Discount Percent */}
+                  {/* Description */}
                   <FormField
                     control={form.control}
-                    name="discountPercent"
-                    defaultValue={selectedDiscount.discountPercent}
+                    name="discountDescription"
+                    defaultValue={selectedDiscount.discountDescription}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Discount Percent</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Textarea {...field} />
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
                     Update
                   </Button>
                 </form>
               </Form>
             )}
 
-
-            {modalSettings.modalMode === 'delete' && <>This is where to delete!</>}
+            {modalMode === 'delete' && selectedDiscount && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+                    <Trash2 className="h-6 w-6 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Delete Discount</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Are you sure you want to delete <strong>"{selectedDiscount.discountName}"</strong>? This action cannot be undone.
+                  </p>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={resetModal}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={deleteDiscount} disabled={isLoading}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Discount
+                  </Button>
+                </div>
+              </div>
+            )}
           </AdminModal>
         </>
       )}

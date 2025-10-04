@@ -1,22 +1,23 @@
 import React, { useState } from 'react'
-import AdminDashboard from './AdminDashboard'
-import AdminProfile from './AdminProfile'
+import AdminDashboard from './Dashboard'
+import AdminProfile from './Profile'
 import AdminHeader from './components/AdminHeader'
-import AdminRoomsList from './AdminRoomsList'
-import AdminCalendar from './AdminCalendar'
-import AdminGuestProfile from './AdminGuestProfile'
-import AdminPayments from './AdminPayments'
-import AdminRequestedAmenities from './AdminRequestedAmenities'
-import AdminReviews from './AdminReviews'
-import AdminTransactionHis from './AdminTransactionHis'
-import AdminVisitorsLog from './AdminVisitorsLog'
-import AdminBookingList from './AdminBookingList'
+import AdminRoomsList from './RoomsList'
+import AdminCalendar from './Calendar'
+import AdminGuestProfile from './GuestProfile'
+import AdminPayments from './Payments'
+import AdminRequestedAmenities from './RequestedAmenities'
+import AdminReviews from './Reviews'
+import AdminTransactionHis from './TransactionHis'
+import AdminVisitorsLog from './VisitorsLog'
+import AdminBookingList from './BookingList'
 import AdminNewBook from './WalkIn_Folder/AddWalkIn'
 import AdminAmenityMaster from './Master_Files/AmenityMaster'
 import AdminChargesCategory from './Master_Files/ChargesCategory'
 import AdminChargeMaster from './Master_Files/ChargeMaster'
 import AdminDiscountMaster from './Master_Files/DiscountMaster'
 import AdminRoomtype from './Master_Files/RoomTypeMaster'
+import EmployeeManagement from './EmployeeManagement'
 
 export const AdminMain = () => {
 
@@ -29,6 +30,7 @@ export const AdminMain = () => {
   const adminViews = [
     <AdminDashboard />,
     <AdminProfile />,
+    <EmployeeManagement />,
     <AdminRoomsList />,
     <AdminCalendar />,
     <AdminGuestProfile />,

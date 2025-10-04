@@ -21,6 +21,7 @@ import BookingNoAccount from './modals/sheets/BookingNoAccount';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { ScrollBar } from '@/components/ui/scroll-area';
+import Moreinfo from './modals/sheets/Moreinfo';
 
 const schema = z.object({
   checkIn: z.string().min(1, { message: "Check in is required" }),
@@ -366,7 +367,8 @@ function RoomSearch() {
                       ) : (
                         <Button disabled className="w-full">Book Now</Button>
                       )}
-                      <Button >View Details</Button>
+                      <Moreinfo room={room} />
+
                     </div>
                   </div>
 

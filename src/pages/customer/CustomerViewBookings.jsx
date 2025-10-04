@@ -48,7 +48,10 @@ function CustomerViewBookings() {
       formData.append("json", JSON.stringify(jsonData));
       formData.append("operation", "customerCancelBooking");
       const res = await axios.post(url, formData);
-      if (res.data === 1) {
+      if (res.data === -1) {
+        // already 24 hours ago booked
+        toast.error('Booking cannot be cancelled because it was made more than 24 hours ago and it is non-refundable.');
+      } else if (res.data === 1) {
         customerViewBookings();
         toast.success('Booking cancelled!');
       } else {

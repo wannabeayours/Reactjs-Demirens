@@ -4,8 +4,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import AdminHeader from "../components/AdminHeader";
 import { useApproval } from "./ApprovalContext";
+import ConfirmationModal from "../../../components/ui/ConfirmationModal";
+import SuccessModal from "../../../components/ui/SuccessModal";
+import { NumberFormatter } from '../Function_Files/NumberFormatter';
 
-const currency = (n) => `₱${Number(n || 0).toLocaleString()}`;
+const currency = (n) => NumberFormatter.formatCurrency(n);
 
 export default function ApprovalReceipt() {
   const APIConn = `${localStorage.url}admin.php`;
@@ -15,6 +18,11 @@ export default function ApprovalReceipt() {
 
   const bookingId = state.bookingId || Number(bookingIdParam);
   const nights = state.nights || 0;
+
+  // Modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const lineItems = useMemo(
     () =>
@@ -42,7 +50,7 @@ export default function ApprovalReceipt() {
     }));
   }, [subtotal, vat, grandTotal, downpayment, setState]);
 
-  const confirmApproval = async () => {
+  const handleConfirmClick = () => {
     if (!bookingId || !state.adminId || !state.selectedRooms?.length) {
       alert("Missing data to confirm approval.");
       console.log(bookingId);
@@ -50,8 +58,11 @@ export default function ApprovalReceipt() {
       console.log(state.selectedRooms?.length);
       return;
     }
+    setShowConfirmModal(true);
+  };
 
-    if (!window.confirm("Finalize approval and write to database?")) return;
+  const confirmApproval = async () => {
+    setIsProcessing(true);
     try {
       const fd = new FormData();
       fd.append("method", "approveCustomerBooking");
@@ -74,21 +85,23 @@ export default function ApprovalReceipt() {
 
       const res = await axios.post(APIConn, fd);
       if (res.data?.success) {
-        alert("Booking approved successfully!");
-        navigate("/admin/online");
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
       } else {
         alert(`Error: ${res.data?.message || "Unknown error"}`);
       }
     } catch (err) {
       console.error("Error approving booking:", err);
       alert("Something went wrong while approving.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
     <>
       <AdminHeader />
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="lg:ml-72 p-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-2 text-foreground">
           Approve Booking #{bookingId} — Step 2: Receipt
         </h1>
@@ -103,54 +116,54 @@ export default function ApprovalReceipt() {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="p-3 text-left">Room</th>
-                <th className="p-3 text-right">Nightly Price</th>
-                <th className="p-3 text-right">Nights</th>
-                <th className="p-3 text-right">Line Total</th>
+                <th className="p-3 text-left text-foreground">Room</th>
+                <th className="p-3 text-right text-foreground">Nightly Price</th>
+                <th className="p-3 text-right text-foreground">Nights</th>
+                <th className="p-3 text-right text-foreground">Line Total</th>
               </tr>
             </thead>
             <tbody>
               {lineItems.map((li, idx) => (
                 <tr key={`${li.id}-${idx}`} className="border-t border-border">
-                  <td className="p-3">
+                  <td className="p-3 text-foreground">
                     {li.roomtype_name} — Room #{li.id}
                   </td>
-                  <td className="p-3 text-right">{currency(li.price)}</td>
-                  <td className="p-3 text-right">{li.nights}</td>
-                  <td className="p-3 text-right">{currency(li.lineTotal)}</td>
+                  <td className="p-3 text-right text-foreground">{currency(li.price)}</td>
+                  <td className="p-3 text-right text-foreground">{li.nights}</td>
+                  <td className="p-3 text-right text-foreground">{currency(li.lineTotal)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot className="border-t border-border">
               <tr>
-                <td colSpan={3} className="p-3 text-right font-medium">
+                <td colSpan={3} className="p-3 text-right font-medium text-foreground">
                   Subtotal
                 </td>
-                <td className="p-3 text-right">{currency(subtotal)}</td>
+                <td className="p-3 text-right text-foreground">{currency(subtotal)}</td>
               </tr>
               <tr>
-                <td colSpan={3} className="p-3 text-right font-medium">
+                <td colSpan={3} className="p-3 text-right font-medium text-foreground">
                   VAT (12%)
                 </td>
-                <td className="p-3 text-right">{currency(vat)}</td>
+                <td className="p-3 text-right text-foreground">{currency(vat)}</td>
               </tr>
               <tr>
-                <td colSpan={3} className="p-3 text-right font-bold">
+                <td colSpan={3} className="p-3 text-right font-bold text-foreground">
                   Grand Total
                 </td>
-                <td className="p-3 text-right font-bold">{currency(grandTotal)}</td>
+                <td className="p-3 text-right font-bold text-foreground">{currency(grandTotal)}</td>
               </tr>
               <tr>
-                <td colSpan={3} className="p-3 text-right font-medium">
+                <td colSpan={3} className="p-3 text-right font-medium text-foreground">
                   Downpayment (50%)
                 </td>
-                <td className="p-3 text-right font-medium text-blue-600">{currency(downpayment)}</td>
+                <td className="p-3 text-right font-medium text-blue-600 dark:text-blue-400">{currency(downpayment)}</td>
               </tr>
               <tr>
-                <td colSpan={3} className="p-3 text-right font-medium">
+                <td colSpan={3} className="p-3 text-right font-medium text-foreground">
                   Balance (50%)
                 </td>
-                <td className="p-3 text-right font-medium text-green-600">{currency(grandTotal - downpayment)}</td>
+                <td className="p-3 text-right font-medium text-green-600 dark:text-green-400">{currency(grandTotal - downpayment)}</td>
               </tr>
             </tfoot>
           </table>
@@ -159,18 +172,44 @@ export default function ApprovalReceipt() {
         <div className="mt-6 flex items-center justify-end gap-2">
           <button
             onClick={() => navigate(-1)}
-            className="px-4 py-2 rounded border border-border bg-card hover:bg-muted"
+            className="px-4 py-2 rounded border border-border bg-card hover:bg-muted text-foreground transition-colors"
           >
             Back
           </button>
           <button
-            onClick={confirmApproval}
-            className="px-6 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            onClick={handleConfirmClick}
+            className="px-6 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isProcessing}
           >
-            Confirm Approval
+            {isProcessing ? "Processing..." : "Confirm Approval"}
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmApproval}
+        title="Finalize Booking Approval"
+        message={`Are you sure you want to approve this booking? This action will finalize the booking for ${state.customerName || 'the customer'} and write the data to the database. This action cannot be undone.`}
+        confirmText="Approve Booking"
+        cancelText="Cancel"
+        type="warning"
+        isLoading={isProcessing}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate("/admin/online");
+        }}
+        title="Booking Approved Successfully!"
+        message={`The booking for ${state.customerName || 'the customer'} has been approved and finalized. The customer will receive a confirmation email with their booking details.`}
+        buttonText="Return to Bookings"
+      />
     </>
   );
 }

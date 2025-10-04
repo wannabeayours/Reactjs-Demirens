@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useState, useEffect } from 'react';
 import AdminModal from '@/pages/admin/components/AdminModal'
 import AdminHeader from '@/pages/admin/components/AdminHeader';
 import { Button } from "@/components/ui/button"
@@ -30,172 +29,168 @@ function AmenityMaster() {
   const APIConn = `${localStorage.url}admin.php`;
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // Please use this to replace the other one
-  // const [modalSettings, setModalSettings] = useState({
-  //     showModal: false,
-  //     modalMode: ""
-  //   });
-  const [showModal, setShowModal] = useState("");
-  const [modalMode, setModeModal] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState("");
   const [amenities, setAmenities] = useState([]);
   const [amenityID, setAmenityID] = useState(0);
   const [amenityName, setAmenityName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // View Amenities
-  const getAmenities = async () => {
+  // Load amenities on component mount
+  useEffect(() => {
+    loadAmenities();
+  }, []);
+
+  const loadAmenities = async () => {
     setIsLoading(true);
     const formData = new FormData();
-    formData.append("method", "view_amenities");
+    formData.append("method", "viewAmenities");
 
     try {
       const conn = await axios.post(APIConn, formData);
       if (conn.data) {
-        console.log(APIConn);
-        console.log('API response:', conn.data);
         setAmenities(conn.data !== 0 ? conn.data : []);
-      } else {
-        console.log("No data has been fetched...");
       }
-
     } catch (err) {
-      console.log('Cannot Find API...', err)
+      console.log('Cannot Find API...', err);
     } finally {
-      console.log('Content is Done...');
       setIsLoading(false);
     }
-
-  }
+  };
 
   const popAddModal = () => {
-    setModeModal("add");
+    setModalMode("add");
+    setAmenityID(0);
+    setAmenityName("");
     setShowModal(true);
-  }
+  };
 
   const popUpdateModal = (amenity) => {
-    setModeModal("update");
-    setAmenityID(amenity.room_amenities_master_id)
+    setModalMode("update");
+    setAmenityID(amenity.room_amenities_master_id);
     setAmenityName(amenity.room_amenities_master_name);
-    setShowModal(true)
+    setShowModal(true);
   };
 
   const popDeleteModal = (amenity) => {
-    setModeModal("delete");
-    setAmenityID(amenity.room_amenities_master_id)
+    setModalMode("delete");
+    setAmenityID(amenity.room_amenities_master_id);
     setAmenityName(amenity.room_amenities_master_name);
-    setShowModal(true)
+    setShowModal(true);
   };
 
-  // Adds New Ameneties
   const addAmenity = async () => {
+    if (!amenityName.trim()) {
+      toast("Please enter amenity name");
+      return;
+    }
+
     setIsLoading(true);
     const jsonData = { amenity_name: amenityName };
-
     const formData = new FormData();
-    formData.append("method", "add_amenities");
+    formData.append("method", "addAmenities");
     formData.append("json", JSON.stringify(jsonData));
 
     try {
       const conn = await axios.post(APIConn, formData);
       if (conn.data === 1) {
         toast("Successfully added new Amenity");
-        resetUseStates();
+        resetModal();
+        loadAmenities(); // Reload data
       } else {
-        toast("No data has been fetched...");
-        resetUseStates();
+        toast("Failed to add amenity");
       }
-
     } catch (err) {
       console.log('Cannot Find API...', err);
-      resetUseStates();
+      toast("Failed to add amenity");
     } finally {
-      console.log('Content is Done...');
       setIsLoading(false);
     }
+  };
 
-  }
-
-  // Update Chosen Amenity
   const updateAmenity = async () => {
+    if (!amenityName.trim()) {
+      toast("Please enter amenity name");
+      return;
+    }
+
     setIsLoading(true);
     const jsonData = {
       amenity_id: amenityID,
       amenity_name: amenityName
-    }
+    };
     const updateAmenityForm = new FormData();
-    updateAmenityForm.append("method", "update_amenities");
+    updateAmenityForm.append("method", "updateAmenities");
     updateAmenityForm.append("json", JSON.stringify(jsonData));
-
-    console.log("Json Data: ", jsonData)
 
     try {
       const conn = await axios.post(APIConn, updateAmenityForm);
       if (conn.data === 1) {
         toast("Successfully Updated Item");
-        resetUseStates();
+        resetModal();
+        loadAmenities(); // Reload data
       } else {
-        toast("Failed to Update.")
-        resetUseStates();
+        toast("Failed to Update");
       }
     } catch (error) {
       console.log("API Connection Failed..." + error);
+      toast("Failed to update");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
-  // Delete Amenity
-  const removeAmenity = () => {
+  const removeAmenity = async () => {
     setIsLoading(true);
     const jsonData = {
       amenity_id: amenityID,
       amenity_name: amenityName
+    };
+    
+    const formData = new FormData();
+    formData.append("method", "disableAmenities");
+    formData.append("json", JSON.stringify(jsonData));
+
+    try {
+      const conn = await axios.post(APIConn, formData);
+      if (conn.data === 1) {
+        toast("Successfully deleted amenity");
+        resetModal();
+        loadAmenities(); // Reload data
+      } else {
+        toast("Failed to delete amenity");
+      }
+    } catch (error) {
+      console.log("API Connection Failed..." + error);
+      toast("Failed to delete");
+    } finally {
+      setIsLoading(false);
     }
-    // console.log("Deleted Amenity", jsonData);
-    setIsLoading(false);
-    setShowModal(false);
-    setModeModal("");
-  }
+  };
 
-  // Lists Order
-  // const AscName = "";
-  // const DescName = "";
-  // const AscNum = "";
-  // const Desc = "";
-
-  const resetUseStates = () => {
+  const resetModal = () => {
     setAmenityID(0);
     setAmenityName("");
     setShowModal(false);
-    setModeModal("");
-  }
+    setModalMode("");
+  };
 
   // Filter amenities based on search term
   const filteredAmenities = amenities.filter(amenity =>
     amenity.room_amenities_master_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  useEffect(() => {
-    console.log("Loaded Data: ", amenities)
-    getAmenities();
-  }, [APIConn, showModal])
-
   return (
     <>
-      {isLoading ?
-        <>
-          <div className="flex items-center justify-center h-screen bg-white/30 backdrop-blur-sm">
-            <h1 className="text-3xl font-bold text-center">Loading...</h1>
-          </div>
-        </>
-
-        :
-
+      {isLoading ? (
+        <div className="flex items-center justify-center h-screen bg-white/30 backdrop-blur-sm">
+          <h1 className="text-3xl font-bold text-center">Loading...</h1>
+        </div>
+      ) : (
         <>
           <AdminHeader onCollapse={setIsCollapsed} />
-          <div className={`transition-all duration-300 ${isCollapsed ? 'ml-0' : 'ml-0'} p-6`}>
+          <div className={`transition-all duration-300 ${isCollapsed ? 'ml-0' : 'lg:ml-72'} p-6`}>
             <Card className="shadow-lg">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
                 <div className="flex justify-between items-center">
@@ -353,16 +348,16 @@ function AmenityMaster() {
             </Card>
           </div>
 
-          {/* For Updates */}
-          <AdminModal isVisible={showModal}
-            onClose={() => {
-              setShowModal(false); setModeModal("");
-            }}
+          {/* Modal */}
+          <AdminModal 
+            isVisible={showModal}
+            onClose={resetModal}
             modalTitle={
               modalMode === "add" ? "Add Amenity" :
-                modalMode === "update" ? "Update Amenity" :
-                  "Delete Amenity"
-            }>
+              modalMode === "update" ? "Update Amenity" :
+              "Delete Amenity"
+            }
+          >
             {modalMode === "add" && (
               <div className="space-y-4">
                 <div>
@@ -377,10 +372,10 @@ function AmenityMaster() {
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => resetUseStates()}>
+                  <Button variant="outline" onClick={resetModal}>
                     Cancel
                   </Button>
-                  <Button onClick={addAmenity} className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={addAmenity} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
                     <FilePlus2 className="w-4 h-4 mr-2" />
                     Add Amenity
                   </Button>
@@ -402,10 +397,10 @@ function AmenityMaster() {
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => resetUseStates()}>
+                  <Button variant="outline" onClick={resetModal}>
                     Cancel
                   </Button>
-                  <Button onClick={updateAmenity} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={updateAmenity} className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
                     <Edit className="w-4 h-4 mr-2" />
                     Update Amenity
                   </Button>
@@ -425,10 +420,10 @@ function AmenityMaster() {
                   </p>
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => resetUseStates()}>
+                  <Button variant="outline" onClick={resetModal}>
                     Cancel
                   </Button>
-                  <Button variant="destructive" onClick={removeAmenity}>
+                  <Button variant="destructive" onClick={removeAmenity} disabled={isLoading}>
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Amenity
                   </Button>
@@ -437,7 +432,7 @@ function AmenityMaster() {
             )}
           </AdminModal>
         </>
-      }
+      )}
     </>
   )
 }

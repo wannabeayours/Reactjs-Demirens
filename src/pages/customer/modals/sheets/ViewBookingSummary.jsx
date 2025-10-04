@@ -15,21 +15,19 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
   // const [charges, setCharges] = useState
 
   const columns = [
-    { header: 'Charges category', accessor: 'charges_category_name', sortable: true },
-    { header: 'Description', accessor: 'charges_master_name', sortable: true },
+    { header: 'Charges category', accessor: 'charges_category_name'},
+    { header: 'Description', accessor: 'charges_master_name'},
     { header: 'Quantity', accessor: 'booking_charges_quantity' },
     { header: 'Price', accessor: 
       (row) => `${row.booking_charges_price === 0 ? "Free" : "₱" + parseFloat(row.booking_charges_price).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      })}`,
-      sortable: true },
+      })}`,},
     { header: 'Total', accessor: 
       (row) => `₱${parseFloat(row.total).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      })}`,
-      sortable: true },
+      })}` },
       { header: 'Status',
         cell: (row) => (
         <Badge className={row.charges_status_name === "Delivered" ? "bg-green-900" : row.charges_status_name === "Pending" ? "bg-orange-500" : "bg-red-500"}>

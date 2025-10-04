@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetFooter, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import React, { useEffect, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
@@ -23,9 +23,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import ShowAlert from '@/components/ui/show-alert'
 
 const schema = z.object({
-  totalPay: z.string().min(1, { message: "Total amount is required" }),
+  totalPay: z.string().min(1, { message: "Total pay is required" }),
   paymentMethod: z.number().min(1, { message: "Payment method is required" }),
-
 })
 
 function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
@@ -36,11 +35,22 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
 
-  const handleShowAlert = () => {
+  const handleShowAlert = async () => {
+    // First validate the entire form
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast.error("Please fill in all required fields correctly.");
+      return;
+    }
+
     const formValues = form.getValues();
     const { totalPay, paymentMethod } = formValues;
     const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-    const downPayment = (subtotal * 0.5).toFixed(2)
+    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 400 * numberOfNights, 0);
+    const totalWithBeds = subtotal + extraBedCharges;
+    const downPayment = (totalWithBeds * 0.5).toFixed(2)
+
+    // Additional payment validations
     if (paymentMethod === 0) {
       toast.error("Please select a payment method");
       return;
@@ -48,16 +58,22 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       toast.error("Please enter total amount");
       return;
     } else if (Number(totalPay) < downPayment) {
-      toast.error("Total amount must be at least 50% of the subtotal");
+      toast.error(`Total amount must be at least 50% of the total (₱${downPayment})`);
       return;
     }
+
     setAlertMessage("All payments are non-refundable. However, bookings may be canceled within 24 hours of confirmation.");
     setShowAlert(true);
   };
-
-  const handleCloseAlert = (status) => {
+  const handleCloseAlert = async (status) => {
     if (status === 1) {
-      customerBookingWithAccount();
+      // Validate the form before proceeding
+      const isValid = await form.trigger();
+      if (isValid) {
+        handleConfirmBooking();
+      } else {
+        toast.error("Please fill in all required fields correctly.");
+      }
     }
     setShowAlert(false);
   };
@@ -69,7 +85,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       paymentMethod: 0,
     },
   })
-
 
   // Stepper state
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,7 +102,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     }
   ];
 
-  // ---------------------- Booking submit ----------------------
   const customerBookingWithAccount = async () => {
     try {
       // const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -124,15 +138,18 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const roomDetails = selectedRooms.map((room) => {
         const adultCount = adultCounts[room.room_type] || 0;
         const childrenCount = childrenCounts[room.room_type] || 0;
+        const bedCount = bedCounts[room.room_type] || 1;
         return {
           roomTypeId: room.room_type,
           guestCount: adultCount + childrenCount,
           adultCount: adultCount,
           childrenCount: childrenCount,
+          bedCount: bedCount
         };
       });
 
       const jsonData = { customerId, bookingDetails, roomDetails };
+      console.log("jsonData ni customerBookingWithAccount", jsonData);
       const formData = new FormData();
       formData.append("operation", "customerBookingWithAccount");
       formData.append("json", JSON.stringify(jsonData));
@@ -184,7 +201,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     }
   }
 
-
   // ---------------------- Utilities (YMD, timezone-safe) ----------------------
   const pad = (n) => String(n).padStart(2, '0');
   const formatYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -227,6 +243,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   const [guestCounts, setGuestCounts] = useState({});
   const [adultCounts, setAdultCounts] = useState({});
   const [childrenCounts, setChildrenCounts] = useState({});
+  const [bedCounts, setBedCounts] = useState({});
 
 
   // recalc nights whenever dates change
@@ -271,6 +288,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           room_type: selectedRoom.roomtype_id,
           roomtype_description: selectedRoom.roomtype_description,
           roomtype_capacity: selectedRoom.roomtype_capacity,
+          roomtype_maxbeds: selectedRoom.roomtype_maxbeds,
         };
 
         const guestNum = parseInt(localStorage.getItem('guestNumber')) || initialGuestNumber || 1;
@@ -281,6 +299,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         setGuestCounts(g => ({ ...g, [roomTypeId]: Math.min(guestNum, selected.roomtype_capacity || 1) }));
         setAdultCounts(a => ({ ...a, [roomTypeId]: Math.min(storedAdult, selected.roomtype_capacity || Number.MAX_SAFE_INTEGER) }));
         setChildrenCounts(c => ({ ...c, [roomTypeId]: Math.min(storedChildren, selected.roomtype_capacity || Number.MAX_SAFE_INTEGER) }));
+        setBedCounts(b => ({ ...b, [roomTypeId]: 0 })); // Initialize with 0 beds
 
         return [...prev, selected];
       });
@@ -316,6 +335,13 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         setChildrenCounts(prev => ({
           ...prev,
           [roomTypeId]: Math.min(storedChildren, remaining)
+        }));
+      }
+
+      if (bedCounts[roomTypeId] === undefined) {
+        setBedCounts(prev => ({
+          ...prev,
+          [roomTypeId]: 0 // Initialize with 0 beds
         }));
       }
     });
@@ -372,6 +398,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       setAdultCounts(prev => { const copy = { ...prev }; delete copy[roomToRemove.room_type]; return copy; });
       setChildrenCounts(prev => { const copy = { ...prev }; delete copy[roomToRemove.room_type]; return copy; });
       setGuestCounts(prev => { const copy = { ...prev }; delete copy[roomToRemove.room_type]; return copy; });
+      setBedCounts(prev => { const copy = { ...prev }; delete copy[roomToRemove.room_type]; return copy; });
     }
 
     if (updated.length === 0) {
@@ -383,11 +410,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   };
 
   // ---------------------- Step Navigation ----------------------
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 1) {
-      // Validate room selection
       if (selectedRooms.length === 0) {
         toast.error("Please select at least one room.");
+        return;
+      }
+    } else if (currentStep === 2) {
+      // Validate the form using react-hook-form
+      const isValid = await form.trigger(["walkinfirstname", "walkinlastname", "email", "contactNumber"]);
+      if (!isValid) {
+        toast.error("Please fill in all required fields correctly.");
         return;
       }
     }
@@ -404,15 +437,16 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   };
 
   const handleConfirmBooking = () => {
-    handleShowAlert();
+    customerBookingWithAccount();
   };
 
 
   // Booking Summary Component
   const BookingSummary = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 400 * numberOfNights, 0);
     const vat = subtotal - (subtotal / 1.12);
-    const total = subtotal;
+    const total = subtotal + extraBedCharges;
     const down = total * 0.5;
 
     return (
@@ -452,6 +486,18 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <span>Subtotal:</span>
                   <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                {selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-sm">
+                      <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱400:</span>
+                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 400).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
+                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 400 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between items-center text-sm">
                   <span>VAT (12%) included:</span>
                   <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -683,6 +729,61 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                               </div>
                             </div>
 
+                            {/* Beds selector */}
+                            <div className="mt-4">
+                              <div className="rounded-2xl border-none p-4">
+                                <div className="flex items-center">
+                                  <Label className="mb-2">Add Beds{" (₱400 each bed)"}</Label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const roomTypeId = room.room_type;
+                                      const current = bedCounts[roomTypeId] || 0;
+                                      setBedCounts((prev) => ({
+                                        ...prev,
+                                        [roomTypeId]: Math.max(0, current - 1),
+                                      }));
+                                    }}
+                                    disabled={(bedCounts[room.room_type] || 0) <= 0}
+                                  >
+                                    <MinusIcon />
+                                  </Button>
+                                  {bedCounts[room.room_type] || 0}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-full"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const roomTypeId = room.room_type;
+                                      const current = bedCounts[roomTypeId] || 0;
+                                      const maxBeds = room.roomtype_maxbeds || 1;
+                                      if (current < maxBeds) {
+                                        setBedCounts((prev) => ({
+                                          ...prev,
+                                          [roomTypeId]: current + 1,
+                                        }));
+                                      }
+                                    }}
+                                    disabled={
+                                      (bedCounts[room.room_type] || 0) >=
+                                      (room.roomtype_maxbeds || 1)
+                                    }
+                                  >
+                                    <Plus />
+                                  </Button>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Max beds: {room.roomtype_maxbeds || 1}
+                                </div>
+                              </div>
+                            </div>
+
                             <div className="mt-3 text-sm text-gray-700">
                               Total guests:{" "}
                               <span className="font-semibold">
@@ -711,16 +812,56 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       <div className="lg:col-span-1">
         <div className="sticky top-4">
           <BookingSummary />
+          {/* Navigation Controls - Top Right */}
+          <div className="flex justify-end items-center gap-3 mt-20">
+            <div className="text-sm text-gray-500 hidden md:block">
+              Step {currentStep} of {steps.length}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNextStep}
+                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowAlert}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                size="sm"
+              >
+                Confirm Booking
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+
     </div>
   );
 
   const BookingConfirmationStep = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 400 * numberOfNights, 0);
     const vat = subtotal - (subtotal / 1.12);
-    const total = subtotal;
+    const total = subtotal + extraBedCharges;
     const down = total * 0.5;
+    const formValues = form.getValues();
+
 
     return (
       <ScrollArea className="h-[calc(100vh-400px)]">
@@ -764,6 +905,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </Form>
             </CardContent>
           </Card>
+    
           {/* Room Details */}
           <Card className="bg-white shadow-md">
             <CardContent className="p-6">
@@ -790,6 +932,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                         <div className="flex gap-4">
                           <span>Adults: {adultCounts[room.room_type] || 0}</span>
                           <span>Children: {childrenCounts[room.room_type] || 0}</span>
+                          <span>Extra Beds: {bedCounts[room.room_type] || 0}</span>
                         </div>
                         <div className="font-medium">
                           {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} × ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -815,6 +958,18 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <span>VAT (12%) included:</span>
                   <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                {extraBedCharges > 0 && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱400:</span>
+                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 400).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
+                      <span>₱{extraBedCharges.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                  </>
+                )}
                 <Separator />
                 <div className="flex justify-between items-center text-lg font-semibold">
                   <span>Total Amount:</span>
@@ -833,51 +988,9 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </div>
             </CardContent>
           </Card>
-        </div>
-      </ScrollArea>
-    );
-  };
 
-  // ---------------------- Small helper for input min attr ----------------------
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0);
-  const tomorrowStr = formatYMD(tomorrow);
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          className="bg-[#113F67] text-white hover:bg-[#0d2f4f] border-[#113F67]"
-        >
-          Book Now
-        </Button>
-      </SheetTrigger>
-      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full p-6 rounded-t-3xl">
-        <div className="flex flex-col h-full mt-5">
-          <div className="mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
-              <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
-            </div>
-          </div>
-
-          {/* Stepper */}
-          <div className="mb-6">
-            <Stepper steps={steps} currentStep={currentStep} />
-          </div>
-
-          {/* Step Content */}
-          <div className="flex-1">
-            {currentStep === 1 && <RoomSelectionStep />}
-            {currentStep === 2 && <BookingConfirmationStep />}
-          </div>
-
-
-        </div>
-        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
-        <SheetFooter>
-          {/* Navigation Controls - Bottom Right */}
-          <div className="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-200">
+          {/* Navigation Controls - Top Right */}
+          <div className="flex items-center justify-end gap-3 ">
             <div className="text-sm text-gray-500 hidden md:block">
               Step {currentStep} of {steps.length}
             </div>
@@ -904,7 +1017,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </Button>
             ) : (
               <Button
-                onClick={handleConfirmBooking}
+                onClick={handleShowAlert}
                 className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
                 size="sm"
               >
@@ -912,9 +1025,50 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </Button>
             )}
           </div>
-        </SheetFooter>
-      </SheetContent>
+        </div>
+      </ScrollArea>
+    );
+  };
 
+  // ---------------------- Small helper for input min attr ----------------------
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0);
+  const tomorrowStr = formatYMD(tomorrow);
+
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          className="bg-[#113F67] text-white hover:bg-[#0d2f4f] border-[#113F67]"
+        >
+          Book Now
+        </Button>
+      </SheetTrigger>
+      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full p-6 rounded-t-3xl">
+        <div className="flex flex-col h-full mt-5">
+          <div className="mb-6 flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
+              <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
+            </div>
+
+
+          </div>
+
+          {/* Stepper */}
+          <div className="mb-6">
+            <Stepper steps={steps} currentStep={currentStep} />
+          </div>
+
+          {/* Step Content */}
+          <div className="flex-1">
+            {currentStep === 1 && <RoomSelectionStep />}
+            {currentStep === 2 && <BookingConfirmationStep />}
+          </div>
+        </div>
+        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
+      </SheetContent>
     </Sheet>
   );
 

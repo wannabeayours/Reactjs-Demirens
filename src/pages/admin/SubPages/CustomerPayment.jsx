@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { NumberFormatter } from '../Function_Files/NumberFormatter'
+import { DateFormatter } from '../Function_Files/DateFormatter'
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -35,7 +37,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from '@/components/ui/scroll-area'
 import axios from 'axios'
 
-const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
+const CustomerPayment = ({ customer, onBack }) => {
   const APIConn = `${localStorage.url}admin.php`
 
   const [customerBills, setCustomerBills] = useState([]);
@@ -193,11 +195,7 @@ const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
   }
 
   const formatDate = (dateStr) =>
-    new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    DateFormatter.formatLongDate(dateStr)
 
   const handlePay = () => {
     console.log("Processing payment...");
@@ -251,10 +249,6 @@ const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
   return (
     <>
       <div id='MainPage'>
-         <div className="flex justify-end gap-2">
-        <Button onClick={handlePrevious}>Previous</Button>
-        <Button onClick={handleNext}>Next</Button>
-      </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Column 1: Basic Info, Charges, Total */}
           <div className="space-y-6">
@@ -314,12 +308,10 @@ const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
                                 <TableCell>{bill.item_name}</TableCell>
                                 <TableCell>{bill.item_amount || 1}</TableCell>
                                 <TableCell>
-                                  ₱ {parseFloat(bill.item_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  {NumberFormatter.formatCurrency(bill.item_price)}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  ₱ {(parseFloat(bill.item_price) * (bill.item_amount || 1)).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                  })}
+                                  {NumberFormatter.formatCurrency(parseFloat(bill.item_price) * (bill.item_amount || 1))}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -346,15 +338,15 @@ const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
                 <CardContent className="text-sm space-y-1">
                   <p>
                     <span className="font-semibold">Total Amount:</span>{" "}
-                    ₱ {totalCharges.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                    {NumberFormatter.formatCurrency(totalCharges)}
                   </p>
                   <p>
                     <span className="font-semibold">Downpayment:</span>{" "}
-                    ₱ {downpayment.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                    {NumberFormatter.formatCurrency(downpayment)}
                   </p>
                   <p>
                     <span className="font-semibold">Balance:</span>{" "}
-                    ₱ {balance.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                    {NumberFormatter.formatCurrency(balance)}
                   </p>
 
                 </CardContent>
@@ -404,7 +396,12 @@ const CustomerPayment = ({ customer, handlePrevious, handleNext }) => {
           </div>
         </div>
 
-     
+        <Button
+          onClick={onBack}
+          className="mt-4"
+        >
+          ← Back
+        </Button>
       </div>
 
 

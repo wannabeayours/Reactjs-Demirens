@@ -40,25 +40,151 @@ const AddWalkIn = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setWalkInData((prev) => ({ ...prev, [name]: value }));
+    
+    // Real-time validation and input sanitization
+    let sanitizedValue = value;
+    
+    switch (name) {
+      case 'customers_fname':
+      case 'customers_lname':
+        // Only allow letters, spaces, hyphens, and apostrophes
+        sanitizedValue = value.replace(/[^a-zA-Z\s'-]/g, '');
+        // Limit length
+        if (sanitizedValue.length > 50) {
+          sanitizedValue = sanitizedValue.substring(0, 50);
+        }
+        break;
+        
+      case 'customers_email':
+        // Convert to lowercase and remove extra spaces
+        sanitizedValue = value.toLowerCase().trim();
+        // Limit length
+        if (sanitizedValue.length > 100) {
+          sanitizedValue = sanitizedValue.substring(0, 100);
+        }
+        break;
+        
+      case 'customers_phone_number':
+        // Only allow numbers, spaces, hyphens, parentheses, and plus sign
+        sanitizedValue = value.replace(/[^0-9\s\-\(\)\+]/g, '');
+        // Limit length
+        if (sanitizedValue.length > 15) {
+          sanitizedValue = sanitizedValue.substring(0, 15);
+        }
+        break;
+        
+      case 'customers_address':
+        // Allow alphanumeric, spaces, and common address characters
+        sanitizedValue = value.replace(/[^a-zA-Z0-9\s\.,\-#\/]/g, '');
+        // Limit length
+        if (sanitizedValue.length > 200) {
+          sanitizedValue = sanitizedValue.substring(0, 200);
+        }
+        break;
+        
+      default:
+        sanitizedValue = value;
+    }
+    
+    setWalkInData((prev) => ({ ...prev, [name]: sanitizedValue }));
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const validateCustomerInfo = () => {
     const nextErrors = {};
 
-    if (!walkInData.customers_fname?.trim()) nextErrors.customers_fname = "First name is required";
-    if (!walkInData.customers_lname?.trim()) nextErrors.customers_lname = "Last name is required";
-
-    if (!walkInData.customers_email?.trim()) {
-      nextErrors.customers_email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(walkInData.customers_email.trim())) {
-      nextErrors.customers_email = "Enter a valid email address";
+    // First Name - Strict validation
+    if (!walkInData.customers_fname?.trim()) {
+      nextErrors.customers_fname = "First name is required";
+    } else if (walkInData.customers_fname.trim().length < 2) {
+      nextErrors.customers_fname = "First name must be at least 2 characters";
+    } else if (!/^[a-zA-Z\s'-]+$/.test(walkInData.customers_fname.trim())) {
+      nextErrors.customers_fname = "First name can only contain letters, spaces, hyphens, and apostrophes";
+    } else if (walkInData.customers_fname.trim().length > 50) {
+      nextErrors.customers_fname = "First name must be less than 50 characters";
     }
 
-    if (!walkInData.customers_phone_number?.trim()) nextErrors.customers_phone_number = "Phone number is required";
-    if (!walkInData.customers_address?.trim()) nextErrors.customers_address = "Address is required";
-    if (!walkInData.customers_date_of_birth?.toString().trim()) nextErrors.customers_date_of_birth = "Date of birth is required";
-    if (!walkInData.nationality_id?.toString().trim()) nextErrors.nationality_id = "Nationality is required";
+    // Last Name - Strict validation
+    if (!walkInData.customers_lname?.trim()) {
+      nextErrors.customers_lname = "Last name is required";
+    } else if (walkInData.customers_lname.trim().length < 2) {
+      nextErrors.customers_lname = "Last name must be at least 2 characters";
+    } else if (!/^[a-zA-Z\s'-]+$/.test(walkInData.customers_lname.trim())) {
+      nextErrors.customers_lname = "Last name can only contain letters, spaces, hyphens, and apostrophes";
+    } else if (walkInData.customers_lname.trim().length > 50) {
+      nextErrors.customers_lname = "Last name must be less than 50 characters";
+    }
+
+    // Email - Strict validation
+    if (!walkInData.customers_email?.trim()) {
+      nextErrors.customers_email = "Email is required";
+    } else {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(walkInData.customers_email.trim())) {
+        nextErrors.customers_email = "Please enter a valid email address";
+      } else if (walkInData.customers_email.trim().length > 100) {
+        nextErrors.customers_email = "Email must be less than 100 characters";
+      }
+    }
+
+    // Phone Number - Strict validation
+    if (!walkInData.customers_phone_number?.trim()) {
+      nextErrors.customers_phone_number = "Phone number is required";
+    } else {
+      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+      if (!phoneRegex.test(walkInData.customers_phone_number.trim())) {
+        nextErrors.customers_phone_number = "Please enter a valid phone number (10-15 digits)";
+      }
+    }
+
+    // Address - Strict validation
+    if (!walkInData.customers_address?.trim()) {
+      nextErrors.customers_address = "Address is required";
+    } else if (walkInData.customers_address.trim().length < 10) {
+      nextErrors.customers_address = "Address must be at least 10 characters";
+    } else if (walkInData.customers_address.trim().length > 200) {
+      nextErrors.customers_address = "Address must be less than 200 characters";
+    }
+
+    // Date of Birth - Strict validation
+    if (!walkInData.customers_date_of_birth?.toString().trim()) {
+      nextErrors.customers_date_of_birth = "Date of birth is required";
+    } else {
+      const birthDate = new Date(walkInData.customers_date_of_birth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        // Birthday hasn't occurred this year
+        const actualAge = age - 1;
+        if (actualAge < 18) {
+          nextErrors.customers_date_of_birth = "Customer must be at least 18 years old";
+        } else if (actualAge > 120) {
+          nextErrors.customers_date_of_birth = "Please enter a valid birth date";
+        }
+      } else {
+        if (age < 18) {
+          nextErrors.customers_date_of_birth = "Customer must be at least 18 years old";
+        } else if (age > 120) {
+          nextErrors.customers_date_of_birth = "Please enter a valid birth date";
+        }
+      }
+      
+      // Check if date is in the future
+      if (birthDate > today) {
+        nextErrors.customers_date_of_birth = "Birth date cannot be in the future";
+      }
+    }
+
+    // Nationality - Strict validation
+    if (!walkInData.nationality_id?.toString().trim()) {
+      nextErrors.nationality_id = "Nationality is required";
+    }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -75,7 +201,7 @@ const AddWalkIn = () => {
   return (
     <>
       <AdminHeader />
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="lg:ml-72 p-6 max-w-4xl mx-auto">
         <Card className="shadow-lg border rounded-2xl">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
@@ -96,8 +222,11 @@ const AddWalkIn = () => {
                     name="customers_fname"
                     value={walkInData.customers_fname || ""}
                     onChange={handleChange}
-                    placeholder="Enter first name"
+                    placeholder="Enter first name (letters only)"
                     className={errors.customers_fname ? "border-red-500" : ""}
+                    maxLength={50}
+                    pattern="[a-zA-Z\s\-']+"
+                    title="Only letters, spaces, hyphens, and apostrophes are allowed"
                   />
                   {errors.customers_fname && <p className="text-xs text-red-600 mt-1">{errors.customers_fname}</p>}
                 </div>
@@ -110,8 +239,11 @@ const AddWalkIn = () => {
                     name="customers_lname"
                     value={walkInData.customers_lname || ""}
                     onChange={handleChange}
-                    placeholder="Enter last name"
+                    placeholder="Enter last name (letters only)"
                     className={errors.customers_lname ? "border-red-500" : ""}
+                    maxLength={50}
+                    pattern="[a-zA-Z\s\-']+"
+                    title="Only letters, spaces, hyphens, and apostrophes are allowed"
                   />
                   {errors.customers_lname && <p className="text-xs text-red-600 mt-1">{errors.customers_lname}</p>}
                 </div>
@@ -131,8 +263,10 @@ const AddWalkIn = () => {
                     name="customers_email"
                     value={walkInData.customers_email || ""}
                     onChange={handleChange}
-                    placeholder="Enter email"
+                    placeholder="Enter valid email address"
                     className={errors.customers_email ? "border-red-500" : ""}
+                    maxLength={100}
+                    autoComplete="email"
                   />
                   {errors.customers_email && <p className="text-xs text-red-600 mt-1">{errors.customers_email}</p>}
                 </div>
@@ -145,8 +279,12 @@ const AddWalkIn = () => {
                     name="customers_phone_number"
                     value={walkInData.customers_phone_number || ""}
                     onChange={handleChange}
-                    placeholder="Enter phone number"
+                    placeholder="Enter phone number (10-15 digits)"
                     className={errors.customers_phone_number ? "border-red-500" : ""}
+                    maxLength={15}
+                    pattern="[\+]?[0-9\s\-\(\)]{10,15}"
+                    title="Enter a valid phone number (10-15 digits)"
+                    autoComplete="tel"
                   />
                   {errors.customers_phone_number && <p className="text-xs text-red-600 mt-1">{errors.customers_phone_number}</p>}
                 </div>
@@ -167,6 +305,8 @@ const AddWalkIn = () => {
                     value={walkInData.customers_date_of_birth || ""}
                     onChange={handleChange}
                     className={errors.customers_date_of_birth ? "border-red-500" : ""}
+                    max={new Date().toISOString().split('T')[0]}
+                    title="Must be at least 18 years old"
                   />
                   {errors.customers_date_of_birth && <p className="text-xs text-red-600 mt-1">{errors.customers_date_of_birth}</p>}
                 </div>
@@ -207,8 +347,10 @@ const AddWalkIn = () => {
                   name="customers_address"
                   value={walkInData.customers_address || ""}
                   onChange={handleChange}
-                  placeholder="Enter address"
+                  placeholder="Enter complete address (minimum 10 characters)"
                   className={errors.customers_address ? "border-red-500" : ""}
+                  maxLength={200}
+                  autoComplete="street-address"
                 />
                 {errors.customers_address && <p className="text-xs text-red-600 mt-1">{errors.customers_address}</p>}
               </div>

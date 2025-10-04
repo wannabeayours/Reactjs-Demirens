@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import AdminHeader from "../components/AdminHeader";
 import { useApproval } from "./ApprovalContext";
-import { formatDateOnly } from '@/lib/utils';
+import { DateFormatter } from '../Function_Files/DateFormatter';
+import { NumberFormatter } from '../Function_Files/NumberFormatter';
 
 export default function OnlineReqList() {
   const APIConn = `${localStorage.url}admin.php`;
@@ -134,7 +135,7 @@ export default function OnlineReqList() {
   return (
     <>
       <AdminHeader />
-      <div className="p-6">
+      <div className="lg:ml-72 p-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Online Booking Requests</h1>
@@ -203,15 +204,15 @@ export default function OnlineReqList() {
                             <td className="px-4 py-3 text-gray-900 dark:text-white">
                               <div className="flex flex-col">
                                 <span className="font-medium">
-                                  {formatDateOnly(booking.booking_checkin_dateandtime)}
+                                  {DateFormatter.formatDateOnly(booking.booking_checkin_dateandtime)}
                                 </span>
                                 <span className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                                  to {formatDateOnly(booking.booking_checkout_dateandtime)}
+                                  to {DateFormatter.formatDateOnly(booking.booking_checkout_dateandtime)}
                                 </span>
                               </div>
                             </td>
                             <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
-                              ₱{Number(booking.booking_downpayment || 0).toLocaleString()}
+                              {NumberFormatter.formatCurrency(booking.booking_downpayment || 0)}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex space-x-2">

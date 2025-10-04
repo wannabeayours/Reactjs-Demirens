@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -9,12 +9,11 @@ import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 
 function AdminModal({ isVisible, onClose, modalTitle, children }) {
+  const closeModal = useCallback((e) => {
+    if (e.target.id === "wrapper") onClose();
+  }, [onClose]);
 
   if (!isVisible) return null;
-
-  const closeModal = (e) => {
-    if (e.target.id === "wrapper") onClose();
-  }
 
   return (
     <div
@@ -37,7 +36,7 @@ function AdminModal({ isVisible, onClose, modalTitle, children }) {
           <CardHeader>
             <CardTitle>{modalTitle}</CardTitle>
           </CardHeader>
-          <CardContent className="grid text-3xl text-white">
+          <CardContent>
             <div>{children}</div>
           </CardContent>
         </Card>

@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Check, AlertCircle, Search, X } from "lucide-react";
 import axios from 'axios';
 import { formatDateTime } from '@/lib/utils';
+import { NumberFormatter } from '../Function_Files/NumberFormatter';
 
 function RoomChangeSheet({
   isOpen,
@@ -443,7 +444,7 @@ function RoomChangeSheet({
                       </div>
                       <div className="text-center mt-2">
                         <div className="font-bold text-lg text-green-600">
-                          ${parseFloat(room.roomtype_price).toFixed(2)}
+                          {NumberFormatter.formatCurrency(room.roomtype_price)}
                         </div>
                         <div className="text-xs text-gray-500">per night</div>
                       </div>
@@ -534,28 +535,28 @@ function RoomChangeSheet({
             <CardContent className="space-y-2 sm:space-y-3">
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Base Amount:</span>
-                <span className="font-medium">${paymentDetails.total.toFixed(2)}</span>
+                <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.total)}</span>
               </div>
               {selectedDiscount && (
                 <>
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Discount ({selectedDiscount.discounts_percent}%):</span>
-                    <span className="font-medium text-red-600">-${paymentDetails.discountAmount.toFixed(2)}</span>
+                    <span className="font-medium text-red-600">-{NumberFormatter.formatCurrency(paymentDetails.discountAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">After Discount:</span>
-                    <span className="font-medium">${paymentDetails.discountedAmount.toFixed(2)}</span>
+                    <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.discountedAmount)}</span>
                   </div>
                 </>
               )}
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">VAT (12%):</span>
-                <span className="font-medium">${paymentDetails.vat.toFixed(2)}</span>
+                <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.vat)}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Total with VAT:</span>
-                <span className="font-semibold">${paymentDetails.totalWithVat.toFixed(2)}</span>
+                <span className="font-semibold">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat)}</span>
               </div>
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Nights:</span>
@@ -563,11 +564,11 @@ function RoomChangeSheet({
               </div>
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Downpayment (50%):</span>
-                <span className="font-semibold text-blue-600">${paymentDetails.downpayment.toFixed(2)}</span>
+                <span className="font-semibold text-blue-600">{NumberFormatter.formatCurrency(paymentDetails.downpayment)}</span>
               </div>
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Balance (50%):</span>
-                <span className="font-semibold text-green-600">${(paymentDetails.totalWithVat - paymentDetails.downpayment).toFixed(2)}</span>
+                <span className="font-semibold text-green-600">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat - paymentDetails.downpayment)}</span>
               </div>
             </CardContent>
           </Card>

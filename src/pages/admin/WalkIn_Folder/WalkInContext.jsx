@@ -10,6 +10,7 @@ export const WalkInProvider = ({ children }) => {
     adult: 1,
     children: 0,
     selectedRooms: [], // Array of selected rooms
+    selectedRoomTypes: [], // Array of selected room type IDs
 
     // Step 2: Customer Info
     nationality_id: '',

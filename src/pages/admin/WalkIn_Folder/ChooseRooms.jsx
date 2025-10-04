@@ -19,12 +19,28 @@ const ChooseRooms = () => {
   const { walkInData, setWalkInData } = useWalkIn();
 
   const [rooms, setRooms] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRoomTypes, setSelectedRoomTypes] = useState([]);
 
-  // Booking details state
-  const [checkIn, setCheckIn] = useState(walkInData.checkIn || '');
-  const [checkOut, setCheckOut] = useState(walkInData.checkOut || '');
+  // Booking details state - extract date part from datetime strings
+  const [checkIn, setCheckIn] = useState(() => {
+    if (!walkInData.checkIn) return '';
+    // If it's a datetime string, extract just the date part
+    if (walkInData.checkIn.includes(' ')) {
+      return walkInData.checkIn.split(' ')[0];
+    }
+    return walkInData.checkIn;
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    if (!walkInData.checkOut) return '';
+    // If it's a datetime string, extract just the date part
+    if (walkInData.checkOut.includes(' ')) {
+      return walkInData.checkOut.split(' ')[0];
+    }
+    return walkInData.checkOut;
+  });
   const [adult, setAdult] = useState(walkInData.adult || 1);
   const [children, setChildren] = useState(walkInData.children || 0);
 
@@ -35,13 +51,36 @@ const ChooseRooms = () => {
   const [floor, setFloor] = useState('');
 
   // Availability helpers
-  const parseDate = (str) => (str ? new Date(str + 'T00:00:00') : null);
+  const parseDate = (str) => {
+    if (!str) return null;
+    try {
+      // Handle both date strings and datetime strings
+      const dateStr = str.includes(' ') ? str.split(' ')[0] : str;
+      const date = new Date(dateStr + 'T00:00:00');
+      if (isNaN(date.getTime())) return null;
+      return date;
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      return null;
+    }
+  };
   const addDays = (date, days) => {
     const d = new Date(date);
     d.setDate(d.getDate() + days);
     return d;
   };
-  const fmt = (date) => (date ? date.toISOString().slice(0, 10) : '');
+  const fmt = (date) => {
+    if (!date) return '';
+    try {
+      // Handle both Date objects and date strings
+      const dateObj = date instanceof Date ? date : new Date(date);
+      if (isNaN(dateObj.getTime())) return '';
+      return dateObj.toISOString().slice(0, 10);
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return '';
+    }
+  };
   const tomorrow = fmt(addDays(new Date(), 1));
   const rangesOverlap = (startA, endA, startB, endB) => {
     // Treat as half-open interval [start, end)
@@ -51,6 +90,11 @@ const ChooseRooms = () => {
     const start = parseDate(startStr);
     const end = parseDate(endStr);
     if (!start || !end) return true; // no dates selected yet
+    
+    // Check if room is currently occupied
+    if (room.status_name === 'Occupied') return false;
+    
+    // Check for booking conflicts
     const bookings = Array.isArray(room.bookings) ? room.bookings : [];
     for (const b of bookings) {
       const bStart = parseDate(b.checkin_date);
@@ -96,20 +140,52 @@ const ChooseRooms = () => {
     }
   };
 
+  const getRoomTypes = useCallback(async () => {
+    const roomTypeReq = new FormData();
+    roomTypeReq.append('method', 'view_room_types');
+
+    try {
+      const res = await axios.post(APIConn, roomTypeReq);
+      setRoomTypes(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Error fetching room types:', err);
+      setRoomTypes([]);
+    }
+  }, [APIConn]);
+
   const getRooms = useCallback(async () => {
+    if (selectedRoomTypes.length === 0) {
+      setRooms([]);
+      setLoading(false);
+      return;
+    }
+
     const roomReq = new FormData();
     roomReq.append('method', 'viewRooms');
 
     try {
       const res = await axios.post(APIConn, roomReq);
-      setRooms(Array.isArray(res.data) ? res.data : []);
+      const allRooms = Array.isArray(res.data) ? res.data : [];
+      
+      // Filter rooms by selected room types using roomtype_name
+      const filteredRooms = allRooms.filter(room => {
+        // Find the room type that matches this room's name
+        const matchingRoomType = roomTypes.find(rt => rt.roomtype_name === room.roomtype_name);
+        return matchingRoomType && selectedRoomTypes.includes(matchingRoomType.roomtype_id.toString());
+      });
+      
+      setRooms(filteredRooms);
     } catch (err) {
       console.error('Error fetching rooms:', err);
       setRooms([]);
     } finally {
       setLoading(false);
     }
-  }, [APIConn]);
+  }, [APIConn, selectedRoomTypes, roomTypes]);
+
+  useEffect(() => {
+    getRoomTypes();
+  }, [getRoomTypes]);
 
   useEffect(() => {
     setLoading(true);
@@ -122,10 +198,13 @@ const ChooseRooms = () => {
     if (exists) {
       setSelectedRooms(prev => prev.filter(r => r.id !== room.roomnumber_id));
     } else {
+      // Find the room type ID from the roomTypes array
+      const matchingRoomType = roomTypes.find(rt => rt.roomtype_name === room.roomtype_name);
+      
       setSelectedRooms(prev => [...prev, {
         id: room.roomnumber_id,
         roomnumber_id: room.roomnumber_id,
-        roomtype_id: room.roomtype_id,
+        roomtype_id: matchingRoomType ? matchingRoomType.roomtype_id : null,
         name: room.roomtype_name,
         roomtype_name: room.roomtype_name,
         price: Number(room.roomtype_price),
@@ -151,6 +230,10 @@ const ChooseRooms = () => {
   };
 
   const handleConfirm = () => {
+    if (selectedRoomTypes.length === 0) {
+      alert("Please select at least one room type before continuing.");
+      return;
+    }
     if (!checkIn || !checkOut) {
       alert("Please select both Check-In and Check-Out dates before continuing.");
       return;
@@ -160,16 +243,56 @@ const ChooseRooms = () => {
       return;
     }
 
+    // Set fixed times: 2:00 PM check-in, 12:00 PM check-out
+    const checkInDateTime = new Date(checkIn);
+    checkInDateTime.setHours(14, 0, 0, 0); // 2:00 PM
+    
+    const checkOutDateTime = new Date(checkOut);
+    checkOutDateTime.setHours(12, 0, 0, 0); // 12:00 PM
+
+    // Format dates manually to avoid timezone issues
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const formattedCheckIn = formatDateTime(checkInDateTime);
+    const formattedCheckOut = formatDateTime(checkOutDateTime);
+
+    console.log('ChooseRooms - Setting times:', {
+      originalCheckIn: checkIn,
+      originalCheckOut: checkOut,
+      formattedCheckIn,
+      formattedCheckOut
+    });
+
     setWalkInData({
       ...walkInData,
-      checkIn,
-      checkOut,
+      checkIn: formattedCheckIn,
+      checkOut: formattedCheckOut,
       adult,
       children,
       selectedRooms,
+      selectedRoomTypes,
     });
 
     navigate('/admin/add-walk-in');
+  };
+
+  // Toggle room type selection
+  const toggleRoomTypeSelection = (roomTypeId) => {
+    setSelectedRoomTypes(prev => {
+      if (prev.includes(roomTypeId)) {
+        return prev.filter(id => id !== roomTypeId);
+      } else {
+        return [...prev, roomTypeId];
+      }
+    });
   };
 
   // Clear all filters
@@ -178,6 +301,7 @@ const ChooseRooms = () => {
     setFloor('');
     setAdult(1);
     setChildren(0);
+    setSelectedRoomTypes([]);
   };
 
   // Total guests
@@ -205,7 +329,7 @@ const ChooseRooms = () => {
   return (
     <>
       <AdminHeader />
-      <div className="p-6 max-w-5xl mx-auto relative">
+      <div className="lg:ml-72 p-6 max-w-5xl mx-auto relative">
         {/* Floating Button */}
         <button
           type="button"
@@ -278,32 +402,91 @@ const ChooseRooms = () => {
           />
         </div>
 
-        {/* Filter Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Floor</label>
-            <select
-              value={floor}
-              onChange={(e) => setFloor(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="">All Floors</option>
-              {[...new Set(rooms.map(r => r.roomfloor))].map(f => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
+        {/* Room Type Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Select Room Types <span className="text-red-500">*</span>
+            <span className="text-sm text-gray-500 ml-2">(You can select multiple types)</span>
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {roomTypes.map(roomType => (
+              <div
+                key={roomType.roomtype_id}
+                onClick={() => toggleRoomTypeSelection(roomType.roomtype_id.toString())}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  selectedRoomTypes.includes(roomType.roomtype_id.toString())
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                      {roomType.roomtype_name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Capacity: {roomType.roomtype_capacity} | Beds: {roomType.roomtype_beds}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Size: {roomType.roomtype_sizes}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600 dark:text-green-400">
+                      ₱{roomType.roomtype_price}
+                    </p>
+                    {selectedRoomTypes.includes(roomType.roomtype_id.toString()) && (
+                      <span className="text-xs text-blue-600 dark:text-blue-400">Selected</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+                  {roomType.roomtype_description}
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="flex items-end">
-            <button
-              onClick={clearFilters}
-              className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-            >
-              Clear Filters
-            </button>
-          </div>
+          {selectedRoomTypes.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Selected: {selectedRoomTypes.length} room type(s)
+              </p>
+            </div>
+          )}
         </div>
 
-        {loading ? (
+        {/* Filter Controls - Only show when room types are selected */}
+        {selectedRoomTypes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Floor</label>
+              <select
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">All Floors</option>
+                {[...new Set(rooms.map(r => r.roomfloor))].map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        )}
+
+        {selectedRoomTypes.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">Please select at least one room type to view available rooms</p>
+          </div>
+        ) : loading ? (
           <p className="text-center text-gray-500">Loading rooms...</p>
         ) : filteredRooms.length === 0 ? (
           <p className="text-center text-red-500 font-semibold">No Available Rooms</p>
@@ -326,7 +509,7 @@ const ChooseRooms = () => {
                         imageArray.map((img, i) => (
                           <CarouselItem key={i}>
                             <img
-                              src={`http://localhost/demirenAPI/images/${img}`}
+                              src={`${localStorage.url}images/${img}`}
                               alt={room.roomtype_name}
                               className="w-full h-56 object-cover"
                             />
@@ -393,15 +576,17 @@ const ChooseRooms = () => {
           </div>
         )}
 
-        {/* Confirm button */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={handleConfirm}
-            className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
-          >
-            Continue to Customer Info
-          </button>
-        </div>
+        {/* Confirm button - Only show when room types are selected */}
+        {selectedRoomTypes.length > 0 && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleConfirm}
+              className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
+            >
+              Continue to Customer Info
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

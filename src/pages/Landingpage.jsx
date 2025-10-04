@@ -51,7 +51,7 @@ const schema = z.object({
 
 function Landingpage() {
   const [rooms, setRooms] = useState([]);
-  const [adultNumber, setAdultNumber] = useState(0);
+  const [adultNumber, setAdultNumber] = useState(1);
   const [childrenNumber, setChildrenNumber] = useState(0);
   const [isSearched, setIsSearched] = useState(false);
 
@@ -89,8 +89,8 @@ function Landingpage() {
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      checkIn: "",
-      checkOut: "",
+      checkIn: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow
+      checkOut: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Day after tomorrow
       adults: "1",
       children: "0",
 

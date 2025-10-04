@@ -42,7 +42,7 @@ const CustomerSidebar = ({ handleViewChange, activeIndex }) => {
     // { label: 'Invoice', icon: <ReceiptText className="w-5 h-5" /> },
     { label: 'Password and Security', icon: <Shield className="w-5 h-5" /> },
     { label: 'Archive', icon: <Archive className="w-5 h-5" /> },
-    { label: 'Activity Log', icon: <History className="w-5 h-5" /> },
+    // { label: 'Activity Log', icon: <History className="w-5 h-5" /> },
   ];
 
   const handleLogout = () => {
