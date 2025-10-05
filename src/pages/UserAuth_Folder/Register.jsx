@@ -125,7 +125,7 @@ const Register = () => {
       console.log(otpForm);
 
       const res = await axios.post(url, otpForm);
-
+      console.log("OTP Response:", res);
       if (res.data?.success) {
         toast.success("OTP sent to your email!");
         navigate("/verify", { state: { customer: formData } });
