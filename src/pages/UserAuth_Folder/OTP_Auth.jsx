@@ -9,11 +9,39 @@ import axios from "axios";
 const OTP_Auth = () => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
   const location = useLocation();
   const navigate = useNavigate();
   const customer = location.state?.customer;
+
+  // Check if user has valid session data
+  useEffect(() => {
+    const storedOTP = sessionStorage.getItem('registrationOTP');
+    const storedEmail = sessionStorage.getItem('registrationEmail');
+    const storedExpiry = sessionStorage.getItem('otpExpiry');
+
+    if (!storedOTP || !storedEmail || !storedExpiry) {
+      toast.error("No valid registration session found. Please register again.");
+      navigate("/register");
+      return;
+    }
+
+    // Check if OTP has already expired
+    if (Date.now() > parseInt(storedExpiry)) {
+      toast.error("OTP session has expired. Please register again.");
+      sessionStorage.removeItem('registrationOTP');
+      sessionStorage.removeItem('registrationEmail');
+      sessionStorage.removeItem('otpExpiry');
+      navigate("/register");
+      return;
+    }
+
+    // Calculate remaining time
+    const remainingTime = Math.max(0, Math.floor((parseInt(storedExpiry) - Date.now()) / 1000));
+    setTimeLeft(remainingTime);
+  }, [navigate]);
 
   // Countdown effect
   useEffect(() => {
@@ -37,6 +65,52 @@ const OTP_Auth = () => {
     setOtp(val);
   };
 
+  const handleResendOTP = async () => {
+    const storedEmail = sessionStorage.getItem('registrationEmail');
+    
+    if (!storedEmail) {
+      toast.error("No registration session found. Please register again.");
+      navigate("/register");
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      // Generate new OTP
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Encrypt new OTP
+      const encryptedOTP = btoa(newOtp + storedEmail);
+      
+      // Update sessionStorage with new OTP and reset timer
+      sessionStorage.setItem('registrationOTP', encryptedOTP);
+      sessionStorage.setItem('otpExpiry', Date.now() + 300000); // 5 minutes
+      setTimeLeft(300); // Reset timer to 5 minutes
+      setOtp(""); // Clear current OTP input
+
+      const url = localStorage.getItem("url") + "customer.php";
+      const otpForm = new FormData();
+      otpForm.append("operation", "checkAndSendOTP");
+      otpForm.append("json", JSON.stringify({ 
+        guest_email: storedEmail,
+        otp_code: newOtp 
+      }));
+
+      const res = await axios.post(url, otpForm);
+
+      if (res.data?.success) {
+        toast.success("New OTP sent to your email!");
+      } else {
+        toast.error(res.data?.message || "Failed to resend OTP");
+      }
+    } catch (err) {
+      toast.error("Something went wrong while resending OTP.");
+      console.error(err);
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (otp.length !== 6) {
@@ -48,8 +122,39 @@ const OTP_Auth = () => {
       return;
     }
 
-    setLoading(true);
+    // Get stored OTP data from sessionStorage
+    const storedOTP = sessionStorage.getItem('registrationOTP');
+    const storedEmail = sessionStorage.getItem('registrationEmail');
+    const storedExpiry = sessionStorage.getItem('otpExpiry');
+
+    if (!storedOTP || !storedEmail || !storedExpiry) {
+      toast.error("No OTP session found. Please register again.");
+      navigate("/register");
+      return;
+    }
+
+    // Check if OTP has expired
+    if (Date.now() > parseInt(storedExpiry)) {
+      toast.error("OTP has expired. Please register again.");
+      sessionStorage.removeItem('registrationOTP');
+      sessionStorage.removeItem('registrationEmail');
+      sessionStorage.removeItem('otpExpiry');
+      navigate("/register");
+      return;
+    }
+
+    // Verify OTP
     try {
+      const decryptedOTP = atob(storedOTP);
+      const originalOTP = decryptedOTP.substring(0, 6);
+      
+      if (otp !== originalOTP) {
+        toast.error("Invalid OTP. Please try again.");
+        return;
+      }
+
+      // OTP is valid, proceed with registration
+      setLoading(true);
       const url = localStorage.getItem("url") + "customer.php";
       const otpForm = new FormData();
       otpForm.append("operation", "customerRegistration");
@@ -57,17 +162,20 @@ const OTP_Auth = () => {
         "json",
         JSON.stringify({
           ...customer,
-          otp_code: otp,
         })
       );
 
       const res = await axios.post(url, otpForm);
 
-      if (res.data?.success) {
+      if (res.data === 1) {
         toast.success("Account verified and registered!");
+        // Clear sessionStorage after successful registration
+        sessionStorage.removeItem('registrationOTP');
+        sessionStorage.removeItem('registrationEmail');
+        sessionStorage.removeItem('otpExpiry');
         navigate("/login");
       } else {
-        toast.error(res.data?.message || "Invalid OTP. Please try again.");
+        toast.error("Registration failed. Please try again.");
       }
     } catch (error) {
       toast.error("Something went wrong.");
@@ -110,6 +218,26 @@ const OTP_Auth = () => {
           >
             {loading ? "Validating..." : timeLeft > 0 ? "Verify" : "Expired"}
           </Button>
+          
+          <div className="flex flex-col items-center space-y-2 mt-4">
+            <p className="text-sm text-gray-600">
+              Didn't receive the code?
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResendOTP}
+              disabled={resendLoading || timeLeft > 240} // Can resend after 1 minute (60 seconds)
+              className="text-[#769FCD] border-[#769FCD] hover:bg-[#769FCD] hover:text-white"
+            >
+              {resendLoading 
+                ? "Sending..." 
+                : timeLeft > 240 
+                  ? `Resend in ${Math.ceil((timeLeft - 240) / 60)} min`
+                  : "Resend OTP"
+              }
+            </Button>
+          </div>
         </form>
       </Card>
     </div>

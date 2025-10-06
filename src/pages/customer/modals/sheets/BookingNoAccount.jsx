@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { BedDouble, Info, MinusIcon, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Moreinfo from './Moreinfo'
 import { Input } from '@/components/ui/input'
 import { Stepper } from '@/components/ui/stepper'
@@ -114,6 +114,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       description: 'Review and confirm'
     }
   ];
+  const navigateTo = useNavigate();
 
   const customerBookingNoAccount = async () => {
     const childrenNumber = localStorage.getItem("children");
@@ -187,7 +188,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       console.log("res ni no account", res);
       if (res.data === 1) {
         toast.success("Booking successful");
-        setOpen(false);
+      //  setOpen(false);
         localStorage.removeItem('checkIn')
         localStorage.removeItem('checkOut')
         setSelectedRooms([]);
@@ -201,7 +202,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
         // Set a flag to trigger refresh in CustomerViewBookings
         // localStorage.setItem('refreshBookings', Date.now().toString());
         setTimeout(() => {
-          window.location.reload();
+          navigateTo('/');
         }, 1000);
       } else if (res.data === -1) {
         toast.error("The room is not available anymore");

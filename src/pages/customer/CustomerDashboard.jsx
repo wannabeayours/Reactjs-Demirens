@@ -193,6 +193,7 @@ function CustomerDashboard() {
                           pastAllowed={false}
                           futureAllowed={true}
                           withTime={false}
+                          
                         />
                       </FormItem>
                     )}
@@ -320,7 +321,7 @@ function CustomerDashboard() {
                   </div>
 
                   <div className="flex mt-auto pt-3 border-t border-blue-100 gap-2">
-                    <Moreinfo room={room} />
+                   
                     {room.status_id === 3 ? (
                       <BookingWaccount
                         rooms={rooms}
@@ -332,6 +333,7 @@ function CustomerDashboard() {
                     ) : (
                       <Button disabled className="w-full bg-gray-300 hover:bg-gray-300 text-gray-600 font-medium rounded-lg py-2 shadow-sm">Book Now</Button>
                     )}
+                     <Moreinfo room={room} />
                   </div>
                 </div>
 

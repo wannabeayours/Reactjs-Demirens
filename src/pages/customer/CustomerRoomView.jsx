@@ -4,10 +4,12 @@ import { Check, Dumbbell, HandPlatterIcon, SquareArrowOutDownRightIcon, WifiIcon
 import React, { useEffect, useState } from 'react';
 import RoomDialogs from './modals/RoomDialogs';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 function CustomerRoomView() {
   const [room, setRoom] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigateTo = useNavigate();
 
   useEffect(() => {
     // Scroll to top when component mounts
@@ -113,9 +115,7 @@ function CustomerRoomView() {
             {[
               'Iron / Ironing Board',
               'Complimentary Bottled Water',
-              'Coffee & Tea Making Amenities',
               'Electric Water Kettle',
-              'Mini Bar',
               'Air Conditioning',
               'In-room Safe',
               'Cable TV'
@@ -137,8 +137,7 @@ function CustomerRoomView() {
               'Bidet',
               'Air Conditioning',
               'Hot & Cold Shower',
-              'Hot & Cold Bathtub',
-              'Hair Dryer',
+                'Hair Dryer',
               'Room service'
             ].map((feature, index) => (
               <div key={index} className="flex items-center gap-3 py-2">
@@ -155,10 +154,7 @@ function CustomerRoomView() {
               Hotel Amenities
             </h2>
             {[
-              { icon: WineIcon, text: 'Bar/Lounge' },
               { icon: HandPlatterIcon, text: 'Restaurant' },
-              { icon: SquareArrowOutDownRightIcon, text: 'Outdoor Pool & Bar' },
-              { icon: Dumbbell, text: 'Fitness Center' },
               { icon: WifiIcon, text: 'Wi-Fi in Public Areas' }
             ].map((amenity, index) => (
               <div key={index} className="flex items-center gap-3 py-2">
@@ -217,16 +213,16 @@ function CustomerRoomView() {
         </div>
 
         {/* Dialog Section */}
-        <div className="w-full max-w-5xl mt-8">
+        {/* <div className="w-full max-w-5xl mt-8">
           <div className="bg-white rounded-lg p-6 border shadow-sm">
             <RoomDialogs />
           </div>
-        </div>
+        </div> */}
 
         {/* Back Button */}
         <div className="mt-8 mb-12 w-full max-w-5xl flex justify-start">
-          <Button className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium">
-            ← BACK TO ROOMS
+          <Button className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"  onClick={() => navigateTo("/")}>
+            ← BACK TO ROOM
           </Button>
         </div>
       </section>
