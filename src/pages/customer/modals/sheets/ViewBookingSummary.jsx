@@ -22,7 +22,7 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
     setBookingChargesId(bookingChargesId);
     console.log("bookingChargesId", bookingChargesId)
     // "This action cannot be undone. It will permanently delete the item and remove it from your list"
-    setAlertMessage("Kunwari alert message diri");
+    setAlertMessage("Are you sure you want to cancel this request?");
     setShowAlert(true);
   };
   const handleCloseAlert = (status) => {
@@ -79,9 +79,11 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
       formData.append("json", JSON.stringify(jsonData));
       formData.append("operation", "cancelReqAmenities");
       const res = await axios.post(url, formData);
+      console.log("res", res)
       if (res.data === -1) {
         toast.error("Cancellation period has expired. Please contact the front desk for assistance.");
       }else if (res.data === 1) {
+        getBookingSummary();
         toast.success("Request cancelled successfully");
       }
     } catch (error) {

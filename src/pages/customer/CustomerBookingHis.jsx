@@ -111,7 +111,7 @@ function CustomerBookingHis() {
       header: 'Total',
       accessor: 'booking_total',
       sortable: true,
-      
+
       headerClassName: "text-black",
       cell: (row) => (
         <span>₱{parseFloat(row.booking_total).toLocaleString('en-PH', {
@@ -128,16 +128,16 @@ function CustomerBookingHis() {
           className={
             row.booking_status === "Approved"
               ? "bg-green-500"
-              : row.booking_status === "Pending"
+              : row.booking_status === "Cancelled"
                 ? "bg-orange-500"
-                : row.booking_status === "Cancelled"
-                  ? "bg-gray-500"
+                : row.booking_status === "Checked-In"
+                  ? "bg-green-500"
                   : row.booking_status === "Checked-Out"
                     ? "bg-secondary text-black"
-                    : "bg-red-500"
+                    : "bg-gray-500"
           }
         >
-          {row.booking_status}
+          {row.booking_status ? row.booking_status : "Pending"}
         </Badge>
       )
     },
@@ -175,7 +175,7 @@ function CustomerBookingHis() {
           </div>
         </div>
       </div>
-      
+
       <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
         <div className="text-black overflow-x-auto w-full">
           <DataTable

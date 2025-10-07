@@ -299,9 +299,21 @@ function DiscountMaster() {
                         <div>
                           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Avg. Discount</p>
                           <p className="text-2xl font-bold text-green-600">
-                            {allDiscounts.length > 0 
-                              ? Math.round(allDiscounts.reduce((sum, disc) => sum + (disc.discounts_percentage || 0), 0) / allDiscounts.length)
-                              : 0}%
+                            {(() => {
+                              const discountsWithPercentage = allDiscounts.filter(disc => 
+                                disc.discounts_percentage !== null && 
+                                disc.discounts_percentage !== undefined && 
+                                !isNaN(parseFloat(disc.discounts_percentage))
+                              );
+                              
+                              if (discountsWithPercentage.length === 0) return '0%';
+                              
+                              const average = discountsWithPercentage.reduce((sum, disc) => 
+                                sum + parseFloat(disc.discounts_percentage), 0
+                              ) / discountsWithPercentage.length;
+                              
+                              return `${Math.round(average * 100) / 100}%`;
+                            })()}
                           </p>
                         </div>
                         <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">

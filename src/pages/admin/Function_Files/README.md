@@ -1,6 +1,6 @@
 # Admin Utility Functions
 
-This folder contains reusable utility classes for the admin panel to ensure consistency across all pages.
+This folder contains reusable utility classes and components for the admin panel to ensure consistency across all pages.
 
 ## 🔧 NumberFormatter
 
@@ -65,6 +65,49 @@ const formattedDates = DateFormatter.formatArray(dates, 'date')            // ['
 ```
 
 ## 🎯 Integration Examples
+
+### MoneyCard with Formatters:
+
+```javascript
+import { RevenueCard, TransactionCard } from './Function_Files/MoneyCard'
+import { NumberFormatter, DateFormatter } from './Function_Files'
+
+function DashboardStats({ stats }) {
+  const revenueBreakdown = [
+    {
+      label: "Room Bookings",
+      value: stats.roomRevenue,
+      count: stats.roomBookings,
+      countLabel: "bookings",
+      type: "revenue"
+    },
+    {
+      label: "Amenity Services",
+      value: stats.amenityRevenue,
+      count: stats.amenityRequests,
+      countLabel: "requests",
+      type: "revenue"
+    }
+  ]
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <RevenueCard
+        title="Total Revenue"
+        amount={stats.totalRevenue}
+        subtitle={`Generated ${DateFormatter.formatRelativeDate(stats.lastUpdated)}`}
+        breakdownItems={revenueBreakdown}
+      />
+      
+      <TransactionCard
+        title="Active Bookings"
+        amount={stats.activeBookings}
+        subtitle={`Check-ins: ${DateFormatter.formatDateOnly(stats.today)}`}
+      />
+    </div>
+  )
+}
+```
 
 ### In React Components:
 
@@ -202,12 +245,102 @@ function PaymentForm({ onSubmit }) {
 6. **Performance**: Optimized formatting methods
 7. **Typing**: Full TypeScript support (when implemented)
 
+## 💳 MoneyCard Component
+
+A reusable component for displaying monetary values in admin cards with overflow handling and detailed breakdown modals.
+
+### Usage Examples:
+
+```javascript
+import MoneyCard, { RevenueCard, TransactionCard, ProfitCard } from './Function_Files/MoneyCard'
+import { DollarSign, TrendingUp, Activity } from 'lucide-react'
+
+// Basic MoneyCard
+<MoneyCard
+  title="Total Revenue"
+  amount={2100000.75}
+  subtitle="All time revenue"
+  icon={DollarSign}
+/>
+
+// With breakdown modal
+<MoneyCard
+  title="Today's Revenue"
+  amount={125000.50}
+  subtitle="Today's transactions"
+  icon={DollarSign}
+  breakdownItems={[
+    { 
+      label: "Room Bookings", 
+      value: 100000, 
+      count: 25, 
+      countLabel: "bookings",
+      type: "revenue" 
+    },
+    { 
+      label: "Amenities", 
+      value: 25000.50, 
+      count: 12, 
+      countLabel: "requests",
+      type: "revenue" 
+    }
+  ]}
+/>
+
+// Specialized components
+<RevenueCard
+  title="Monthly Revenue"
+  amount={750000}
+  subtitle="This month"
+  breakdownItems={revenueBreakdown}
+/>
+
+<TransactionCard
+  title="Total Transactions"
+  amount={342}
+  subtitle="This month"
+  breakdownItems={transactionBreakdown}
+/>
+
+<ProfitCard
+  title="Net Profit"
+  amount={175000.50}
+  subtitle="After expenses"
+/>
+```
+
+### Props Available:
+
+- **title**: Card title text
+- **amount**: Numeric amount to display
+- **subtitle**: Subtitle text below amount
+- **icon**: Lucide React icon component
+- **iconColor**: Tailwind color class for icon
+- **amountColor**: Tailwind color class for amount text
+- **isLoading**: Boolean to show loading state
+- **breakdownItems**: Array of breakdown items for modal
+- **breakdownTitle**: Modal title for breakdown
+- **showExpandButton**: Boolean to show/hide expand button
+- **onClick**: Function to handle card click
+- **tooltip**: Tooltip text for expand button
+
+### Features:
+
+1. **Overflow Handling**: Long amounts are truncated with tooltips
+2. **Breakdown Modals**: Click expand button to see detailed breakdown
+3. **Loading States**: Built-in skeleton loading animation
+4. **Specialized Variants**: RevenueCard, TransactionCard, ProfitCard
+5. **Responsive Design**: Works on all screen sizes
+6. **Consistent Formatting**: Uses NumberFormatter for currency display
+
 ## 📁 File Structure
 
 ```
 Function_Files/
 ├── NumberFormatter.js      # Number and currency formatting
 ├── DateFormatter.js        # Date and time formatting
+├── MoneyCard.jsx           # Money display component with overflow handling
+├── MoneyCardExamples.jsx   # Usage examples and documentation
 └── README.md              # This documentation
 ```
 

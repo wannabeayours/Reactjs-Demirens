@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Search, Grid, List, SlidersHorizontal, Edit, X, ChevronLeft, ChevronRight, ArrowLeft, Calendar } from 'lucide-react'
-import { NumberFormatter } from './Function_Files/NumberFormatter'
-import { DateFormatter } from './Function_Files/DateFormatter'
+import { Search, Grid, List, SlidersHorizontal, Edit, X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
 
 // Card Components
 import {
@@ -93,45 +91,6 @@ function AdminRoomsList() {
   const [showRoomNumbersModal, setShowRoomNumbersModal] = useState(false)
   const [selectedRoomTypeForModal, setSelectedRoomTypeForModal] = useState(null)
   const [updatingRoomStatus, setUpdatingRoomStatus] = useState(null)
-  
-  // Modal filter state
-  const [modalSearch, setModalSearch] = useState('')
-  const [modalStatusFilter, setModalStatusFilter] = useState('all')
-  
-  // Date-based room type filtering
-  const [roomTypeCheckIn, setRoomTypeCheckIn] = useState('')
-  const [roomTypeCheckOut, setRoomTypeCheckOut] = useState('')
-  const [showDateFilter, setShowDateFilter] = useState(false)
-  
-  // Calendar state
-  const [showCalendar, setShowCalendar] = useState(false)
-  const [allBookings, setAllBookings] = useState([])
-  const [loadingBookings, setLoadingBookings] = useState(false)
-  const [currentMonth, setCurrentMonth] = useState(new Date())
-
-  // Fetch all bookings for calendar
-  const getAllBookings = async () => {
-    setLoadingBookings(true)
-    try {
-      const formData = new FormData()
-      formData.append('method', 'getAllBookings')
-      
-      const response = await axios.post(APIConn, formData)
-      const bookings = response.data
-      
-      if (Array.isArray(bookings)) {
-        setAllBookings(bookings)
-      } else {
-        console.error('Invalid bookings data:', bookings)
-        setAllBookings([])
-      }
-    } catch (error) {
-      console.error('Error fetching bookings:', error)
-      setAllBookings([])
-    } finally {
-      setLoadingBookings(false)
-    }
-  }
 
   const getRooms = async () => {
     setIsLoading(true)
@@ -170,13 +129,6 @@ function AdminRoomsList() {
   useEffect(() => {
     getRooms()
   }, [])
-
-  // Fetch bookings when calendar is opened
-  useEffect(() => {
-    if (showCalendar && allBookings.length === 0) {
-      getAllBookings()
-    }
-  }, [showCalendar])
 
   // Group rooms by type when rooms data changes
   useEffect(() => {
@@ -245,7 +197,9 @@ function AdminRoomsList() {
   const fmt = (date) => (date ? date.toISOString().slice(0, 10) : '')
 
   const getPhilippinesDate = () => {
-    return DateFormatter.getCurrentPhilippinesDate()
+    return new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
+    )
   }
 
   // Mode: Real-time monitoring (PH date)
@@ -413,116 +367,8 @@ function AdminRoomsList() {
   // Navigation functions for room type selection
   const handleViewRoomType = (roomType) => {
     setSelectedRoomTypeForModal(roomType);
-    setModalSearch(''); // Reset search when opening modal
-    setModalStatusFilter('all'); // Reset status filter when opening modal
     setShowRoomNumbersModal(true);
   };
-
-  // Calendar utility functions
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
-  };
-
-  const isDateBooked = (date) => {
-    const dateStr = formatDate(date);
-    return allBookings.some(booking => {
-      const checkIn = new Date(booking.checkin_date);
-      const checkOut = new Date(booking.checkout_date);
-      const currentDate = new Date(dateStr);
-      return currentDate >= checkIn && currentDate < checkOut;
-    });
-  };
-
-  const isDateInPast = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
-  };
-
-  const getDateStatus = (date) => {
-    if (isDateInPast(date)) return 'past';
-    if (isDateBooked(date)) return 'booked';
-    return 'available';
-  };
-
-  const handleDateClick = (date) => {
-    const dateStr = formatDate(date);
-    const status = getDateStatus(date);
-    
-    if (status === 'past' || status === 'booked') return;
-    
-    if (!roomTypeCheckIn) {
-      setRoomTypeCheckIn(dateStr);
-    } else if (!roomTypeCheckOut) {
-      if (new Date(dateStr) > new Date(roomTypeCheckIn)) {
-        setRoomTypeCheckOut(dateStr);
-      } else {
-        setRoomTypeCheckIn(dateStr);
-        setRoomTypeCheckOut('');
-      }
-    } else {
-      setRoomTypeCheckIn(dateStr);
-      setRoomTypeCheckOut('');
-    }
-  };
-
-  // Check if room type has available rooms for selected dates
-  const checkRoomTypeAvailability = (roomType) => {
-    if (!roomTypeCheckIn || !roomTypeCheckOut) return true; // Show all if no dates selected
-    
-    const checkInDate = new Date(roomTypeCheckIn + "T00:00:00");
-    const checkOutDate = new Date(roomTypeCheckOut + "T00:00:00");
-    
-    // Check if any room in this room type is available during the date range
-    return roomType.rooms.some(room => {
-      // Check if room is not booked during the selected period
-      if (room.bookings && room.bookings.length > 0) {
-        for (const booking of room.bookings) {
-          const bookingCheckIn = new Date(booking.checkin_date + "T00:00:00");
-          const bookingCheckOut = new Date(booking.checkout_date + "T00:00:00");
-          
-          // Check for overlap
-          if (checkInDate < bookingCheckOut && checkOutDate > bookingCheckIn) {
-            return false; // Room is booked during this period
-          }
-        }
-      }
-      
-      // Also check room status (must be vacant/available)
-      return room.room_status_id === 3; // 3 = Vacant
-    });
-  };
-
-  // Filter room types based on date availability
-  const filteredRoomTypesByDate = useMemo(() => {
-    if (!roomTypeCheckIn || !roomTypeCheckOut) return roomTypes;
-    
-    return roomTypes.filter(roomType => checkRoomTypeAvailability(roomType));
-  }, [roomTypes, roomTypeCheckIn, roomTypeCheckOut]);
-
-  // Filter rooms in modal
-  const filteredModalRooms = useMemo(() => {
-    if (!selectedRoomTypeForModal) return [];
-    
-    const q = modalSearch.toLowerCase();
-    return selectedRoomTypeForModal.rooms.filter((room) => {
-      // Search filter
-      const matchesSearch = 
-        room.roomnumber_id.toString().includes(q) ||
-        room.roomtype_name?.toLowerCase().includes(q) ||
-        room.roomfloor.toString().includes(q);
-
-      // Status filter
-      const status = monitoringMode
-        ? getCurrentRoomStatus(room)
-        : (isAvailableOnFilterRange(room) ? room.status_name : "Occupied");
-      
-      const matchesStatus = modalStatusFilter === 'all' || 
-        status.toLowerCase() === modalStatusFilter.toLowerCase();
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [selectedRoomTypeForModal, modalSearch, modalStatusFilter, monitoringMode, filterCheckIn, filterCheckOut]);
 
   const handleBackToRoomTypes = () => {
     setSelectedRoomType(null);
@@ -799,119 +645,6 @@ function AdminRoomsList() {
     );
   };
 
-  // Calendar component
-  const CalendarComponent = () => {
-    const today = new Date();
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    const days = [];
-    const currentDate = new Date(startDate);
-    
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    const navigateMonth = (direction) => {
-      setCurrentMonth(prev => {
-        const newMonth = new Date(prev);
-        newMonth.setMonth(newMonth.getMonth() + direction);
-        return newMonth;
-      });
-    };
-    
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h3 className="text-lg font-semibold">
-            {monthNames[month]} {year}
-          </h3>
-          <button
-            onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-              {day}
-            </div>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((date, index) => {
-            const status = getDateStatus(date);
-            const isCurrentMonth = date.getMonth() === month;
-            const isSelected = 
-              (roomTypeCheckIn && formatDate(date) === roomTypeCheckIn) ||
-              (roomTypeCheckOut && formatDate(date) === roomTypeCheckOut);
-            const isInRange = roomTypeCheckIn && roomTypeCheckOut && 
-              date >= new Date(roomTypeCheckIn) && date <= new Date(roomTypeCheckOut);
-            
-            return (
-              <button
-                key={index}
-                onClick={() => handleDateClick(date)}
-                disabled={status === 'past' || status === 'booked'}
-                className={`
-                  h-10 w-10 rounded-full text-sm transition-all duration-200
-                  ${!isCurrentMonth ? 'text-gray-300' : ''}
-                  ${status === 'past' ? 'text-gray-400 bg-gray-100 cursor-not-allowed' : ''}
-                  ${status === 'booked' ? 'text-white bg-red-500 cursor-not-allowed' : ''}
-                  ${status === 'available' && isCurrentMonth ? 'text-gray-700 hover:bg-green-100' : ''}
-                  ${isSelected ? 'bg-blue-500 text-white' : ''}
-                  ${isInRange && !isSelected ? 'bg-blue-100' : ''}
-                `}
-              >
-                {date.getDate()}
-              </button>
-            );
-          })}
-        </div>
-        
-        <div className="mt-4 flex items-center justify-center space-x-4 text-sm">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>Available</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span>Booked</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-            <span>Past</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
       <AdminHeader />
@@ -921,7 +654,7 @@ function AdminRoomsList() {
         onApplyFilters={handleApplyAdvancedFilters}
       />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="ml-0 lg:ml-72 p-6 max-w-7xl mx-auto">
+        <div className="p-6 max-w-7xl mx-auto">
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -947,16 +680,6 @@ function AdminRoomsList() {
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
-
-                {/* Date Filter Toggle Button */}
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:border-purple-800 dark:text-purple-400"
-                  onClick={() => setShowDateFilter(!showDateFilter)}
-                >
-                  <Search className="h-4 w-4" />
-                  {showDateFilter ? 'Hide' : 'Show'} Date Filter
-                </Button>
 
                 {/* Advanced Filters Button */}
                 <Button
@@ -987,57 +710,6 @@ function AdminRoomsList() {
                   </div>
                 )}
               </div>
-
-              {/* Room Type Date Filter */}
-              {showDateFilter && (
-                <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                        From:
-                      </label>
-                      <input
-                        type="date"
-                        value={roomTypeCheckIn}
-                        onChange={(e) => setRoomTypeCheckIn(e.target.value)}
-                        className="px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                        To:
-                      </label>
-                      <input
-                        type="date"
-                        value={roomTypeCheckOut}
-                        onChange={(e) => setRoomTypeCheckOut(e.target.value)}
-                        className="px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <button
-                      onClick={() => setShowCalendar(true)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Calendar</span>
-                    </button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setRoomTypeCheckIn('');
-                        setRoomTypeCheckOut('');
-                      }}
-                      className="text-purple-600 border-purple-300 hover:bg-purple-100 dark:text-purple-400 dark:border-purple-600 dark:hover:bg-purple-900/30"
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
-                    Only room types with available rooms for the selected dates will be shown
-                  </p>
-                </div>
-              )}
 
               {/* Toggle + View Mode */}
               <div className="flex items-center gap-4">
@@ -1077,7 +749,7 @@ function AdminRoomsList() {
 
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="font-medium text-blue-600 dark:text-blue-400">
-                    {!selectedRoomType ? filteredRoomTypesByDate.length : filteredRooms.length}
+                    {!selectedRoomType ? filteredRoomTypes.length : filteredRooms.length}
                   </span> of{' '}
                   <span className="font-medium">
                     {!selectedRoomType ? roomTypes.length : selectedRoomType.rooms.length}
@@ -1098,27 +770,21 @@ function AdminRoomsList() {
           ) : !selectedRoomType ? (
             /* Room Types View */
             <>
-              {filteredRoomTypesByDate.length === 0 ? (
+              {filteredRoomTypes.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-gray-400 dark:text-gray-500 mb-4">
                     <Search className="h-12 w-12 mx-auto" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    {roomTypeCheckIn && roomTypeCheckOut 
-                      ? 'No room types available for selected dates'
-                      : 'No room types found'
-                    }
+                    No room types found
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
-                    {roomTypeCheckIn && roomTypeCheckOut 
-                      ? 'Try selecting different dates or clear the date filter'
-                      : 'Try adjusting your search or filter criteria'
-                    }
+                    Try adjusting your search or filter criteria
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredRoomTypesByDate.map((roomType, index) => (
+                  {filteredRoomTypes.map((roomType, index) => (
                     <Card 
                       key={index} 
                       className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
@@ -1219,7 +885,7 @@ function AdminRoomsList() {
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-green-600 dark:text-green-400">
-                            {NumberFormatter.formatCurrency(roomType.price)}
+                            ₱{Number(roomType.price).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </span>
                           <p className="text-xs text-muted-foreground">
                             {roomType.capacity} {roomType.capacity > 1 ? 'persons' : 'person'} • {roomType.beds} bed{roomType.beds > 1 ? 's' : ''}
@@ -1418,74 +1084,27 @@ function AdminRoomsList() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {selectedRoomTypeForModal.name} - Room Numbers
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {filteredModalRooms.length} of {selectedRoomTypeForModal.rooms.length} rooms
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowRoomNumbersModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {selectedRoomTypeForModal.name} - Room Numbers
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {selectedRoomTypeForModal.rooms.length} rooms available
+                </p>
               </div>
-              
-              {/* Filter Controls */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search Input */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <input
-                      type="text"
-                      placeholder="Search by room number, floor..."
-                      value={modalSearch}
-                      onChange={(e) => setModalSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                
-                {/* Status Filter */}
-                <div className="sm:w-48">
-                  <select
-                    value={modalStatusFilter}
-                    onChange={(e) => setModalStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="vacant">Vacant</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="under-maintenance">Under-Maintenance</option>
-                    <option value="dirty">Dirty</option>
-                  </select>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowRoomNumbersModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
 
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {filteredModalRooms.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 dark:text-gray-500 mb-4">
-                    <Search className="h-12 w-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    No rooms found
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Try adjusting your search or filter criteria
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredModalRooms.map((room, index) => {
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {selectedRoomTypeForModal.rooms.map((room, index) => {
                   const status = monitoringMode
                     ? getCurrentRoomStatus(room)
                     : (isAvailableOnFilterRange(room) ? room.status_name : "Occupied")
@@ -1546,16 +1165,13 @@ function AdminRoomsList() {
                     </Card>
                   )
                 })}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Modal Footer */}
             <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 <span className="font-medium text-blue-600 dark:text-blue-400">
-                  {filteredModalRooms.length}
-                </span> of <span className="font-medium text-gray-600 dark:text-gray-400">
                   {selectedRoomTypeForModal.rooms.length}
                 </span> rooms in {selectedRoomTypeForModal.name}
               </div>
@@ -1569,47 +1185,7 @@ function AdminRoomsList() {
           </div>
         </div>
       )}
-      </div>
-
-      {/* Calendar Modal */}
-      {showCalendar && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">Select Dates</h3>
-              <button
-                onClick={() => setShowCalendar(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4">
-              {loadingBookings ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <CalendarComponent />
-              )}
-              <div className="mt-4 flex justify-end space-x-2">
-                <button
-                  onClick={() => setShowCalendar(false)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setShowCalendar(false)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                >
-                  Apply Dates
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    </div>
     </>
   )
 }

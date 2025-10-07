@@ -69,8 +69,8 @@ import AdminVisitorsLog from './pages/admin/VisitorsLog';
 function App() {
 
   useEffect(() => {
-    if (localStorage.getItem("url") !== "http://localhost/demirenAPI/") {
-      localStorage.setItem("url", "http://localhost/demirenAPI/");
+    if (localStorage.getItem("url") !== "http://localhost/demirenAPI/api/") {
+      localStorage.setItem("url", "http://localhost/demirenAPI/api/");
     }
 
     // localStorage.setItem("userId", 2);

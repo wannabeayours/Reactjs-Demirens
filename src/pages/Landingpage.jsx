@@ -100,17 +100,18 @@ function Landingpage() {
   const getRooms = async () => {
     try {
       const url = localStorage.getItem('url') + "customer.php";
+      console.log("url ni get roomssss", url)
       const formData = new FormData();
       formData.append("operation", "getRooms");
       const res = await axios.post(url, formData);
       console.log("res ni get roomssss", res)
 
       // Ensure rooms is always an array
-      const data = Array.isArray(res.data) ? res.data : [];
-      setRooms(data);
+      // const data = Array.isArray(res.data) ? res.data : [];
+      setRooms(res.data);
     } catch (error) {
       toast.error("Something went wrong");
-      console.error(error);
+      console.log(error);
       setRooms([]); // fallback
     }
   }

@@ -715,27 +715,25 @@ function InvoiceManagementSubpage({
                                 <TableRow className="bg-blue-50 dark:bg-blue-900/20">
                                   <TableHead>Room Type</TableHead>
                                   <TableHead>Room Number</TableHead>
-                                  <TableHead>Adults</TableHead>
-                                  <TableHead>Children</TableHead>
-                                  <TableHead>Capacity</TableHead>
-                                  <TableHead>Beds</TableHead>
-                                  <TableHead>Size</TableHead>
-                                  <TableHead className="text-right">Price</TableHead>
+                                  <TableHead>Category</TableHead>
+                                  <TableHead className="text-right">Unit Price</TableHead>
+                                  <TableHead className="text-center">Quantity</TableHead>
+                                  <TableHead className="text-right">Total</TableHead>
+                                  <TableHead>Description</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {detailedCharges.room_charges.map((room, index) => (
                                   <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
                                     <TableCell>{room.charge_name}</TableCell>
-                                    <TableCell>{room.roomnumber_name || 'Not Assigned'}</TableCell>
-                                    <TableCell className="text-center">{room.bookingRoom_adult}</TableCell>
-                                    <TableCell className="text-center">{room.bookingRoom_children}</TableCell>
-                                    <TableCell className="text-center">{room.max_capacity}</TableCell>
-                                    <TableCell className="text-center">{room.roomtype_beds}</TableCell>
-                                    <TableCell>{room.roomtype_sizes}</TableCell>
+                                    <TableCell>{room.room_number || 'Not Assigned'}</TableCell>
+                                    <TableCell>{room.category}</TableCell>
+                                    <TableCell className="text-right font-mono">₱{(parseFloat(room.unit_price) || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-center">{room.quantity}</TableCell>
                                     <TableCell className="text-right font-bold font-mono">
-                                      ₱{(parseFloat(room.unit_price) || 0).toFixed(2)}
+                                      ₱{(parseFloat(room.total_amount) || 0).toFixed(2)}
                                     </TableCell>
+                                    <TableCell>{room.charges_master_description || '-'}</TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
@@ -793,11 +791,52 @@ function InvoiceManagementSubpage({
                         </div>
                       )}
 
-                      {/* Grand Total */}
-                      <div className="mt-6 p-5 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg text-center">
-                        <span className="font-bold text-xl">
-                          💰 GRAND TOTAL: ₱{detailedCharges.summary.grand_total.toFixed(2)}
-                        </span>
+                      {/* Summary Section */}
+                      <div className="mt-6 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <h6 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Subtotal Breakdown</h6>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span>Room Charges:</span>
+                                <span>₱{detailedCharges.summary.room_total.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Additional Charges:</span>
+                                <span>₱{detailedCharges.summary.charges_total.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t pt-1">
+                                <span>Subtotal:</span>
+                                <span>₱{detailedCharges.summary.subtotal.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <h6 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Tax & Payment</h6>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span>VAT ({(detailedCharges.summary.vat_rate * 100).toFixed(0)}%):</span>
+                                <span>₱{detailedCharges.summary.vat_amount.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Downpayment:</span>
+                                <span className="text-green-600">-₱{detailedCharges.summary.downpayment.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t pt-1 text-lg">
+                                <span>Balance Due:</span>
+                                <span className="text-red-600">₱{detailedCharges.summary.balance.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Grand Total */}
+                        <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg text-center">
+                          <span className="font-bold text-xl">
+                            💰 GRAND TOTAL: ₱{detailedCharges.summary.grand_total.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { FileText, Settings, CheckCircle, XCircle, Eye, Search, Filter, X } from "lucide-react";
+import { FileText, Settings, CheckCircle, XCircle, Eye, Search, Filter, X, Info } from "lucide-react";
 import AdminHeader from "./components/AdminHeader";
 import InvoiceManagementSubpage from "./SubPages/InvoiceManagementSubpage";
 import { DateFormatter } from './Function_Files/DateFormatter';
@@ -16,6 +16,7 @@ function CreateInvoice() {
   const [loading] = useState(false);
   const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [modalAnimating, setModalAnimating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -37,7 +38,20 @@ function CreateInvoice() {
 
   const handleBookingAction = (booking) => {
     setSelectedBooking(booking);
+    setModalAnimating(true);
     setShowInvoiceManagement(true);
+    // Reset animation state after modal opens
+    setTimeout(() => setModalAnimating(false), 300);
+  };
+
+  const handleCloseModal = () => {
+    setModalAnimating(true);
+    // Delay closing to allow animation
+    setTimeout(() => {
+      setShowInvoiceManagement(false);
+      setSelectedBooking(null);
+      setModalAnimating(false);
+    }, 200);
   };
 
   const handleInvoiceCreated = () => {
@@ -55,7 +69,7 @@ function CreateInvoice() {
         booking.booking_id.toString().includes(query) ||
         booking.reference_no.toLowerCase().includes(query) ||
         (booking.customer_name && booking.customer_name.toLowerCase().includes(query)) ||
-        booking.customer_name === null && "walk-in".includes(query)
+        (booking.customer_name === null && "walk-in".includes(query))
       );
     }
 
@@ -339,42 +353,89 @@ function CreateInvoice() {
       {/* Invoice Management Modal */}
       {showInvoiceManagement && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 lg:p-4">
-          {/* Backdrop */}
+          {/* Backdrop with animation */}
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setShowInvoiceManagement(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-300 ease-out"
+            onClick={handleCloseModal}
           />
           
-          {/* Modal Content */}
-          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-7xl max-h-[98vh] w-full overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <FileText className="h-4 w-4 lg:h-5 lg:w-5 text-[#34699a] flex-shrink-0" />
-                <h2 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-white truncate">
-                  Invoice Management - Booking #{selectedBooking?.booking_id}
-                </h2>
+          {/* Modal Content with enhanced styling */}
+          <div className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-7xl max-h-[95vh] w-full overflow-hidden border border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-out ${
+            modalAnimating ? 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-4' : 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4'
+          }`}>
+            {/* Enhanced Modal Header */}
+            <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-[#34699a]/5 to-[#34699a]/10 dark:from-[#34699a]/10 dark:to-[#34699a]/20">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="p-2 bg-[#34699a]/10 dark:bg-[#34699a]/20 rounded-lg">
+                  <FileText className="h-5 w-5 lg:h-6 lg:w-6 text-[#34699a] flex-shrink-0" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white truncate">
+                    Invoice Management
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    Booking #{selectedBooking?.booking_id} - {selectedBooking?.reference_no}
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={() => setShowInvoiceManagement(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0 ml-2"
-              >
-                <svg className="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-          </div>
+              
+              {/* Enhanced Close Button */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseModal}
+                  className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <X className="h-4 w-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                </Button>
+              </div>
+            </div>
             
-            {/* Modal Body */}
-            <div className="overflow-y-auto max-h-[calc(98vh-80px)]">
-              {selectedBooking && (
-                <InvoiceManagementSubpage
-                  selectedBooking={selectedBooking}
-                  onClose={() => setShowInvoiceManagement(false)}
-                  onInvoiceCreated={handleInvoiceCreated}
-                />
-              )}
+            {/* Information Banner */}
+            {selectedBooking && (
+              <div className="px-4 lg:px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                  <Info className="h-4 w-4 flex-shrink-0" />
+                  <span>
+                    Managing invoice for <strong>{selectedBooking.customer_name || 'Walk-in Customer'}</strong> 
+                    {' '}(Booking #{selectedBooking.booking_id})
+                  </span>
+                </div>
               </div>
+            )}
+
+            {/* Enhanced Modal Body with better scrolling */}
+            <div className="overflow-y-auto max-h-[calc(95vh-140px)] bg-gray-50/30 dark:bg-gray-800/30">
+              {selectedBooking && (
+                <div className="p-4 lg:p-6">
+                  <InvoiceManagementSubpage
+                    selectedBooking={selectedBooking}
+                    onClose={handleCloseModal}
+                    onInvoiceCreated={handleInvoiceCreated}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Modal Footer with enhanced styling */}
+            <div className="flex items-center justify-between p-4 lg:p-6 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-700/50">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Invoice management system active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCloseModal}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Close
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
