@@ -83,6 +83,7 @@ function Login() {
             }
             const url = localStorage.getItem('url') + "customer.php";
             const jsonData = { username: values.email, password: values.password };
+            console.log("=== LOGIN ATTEMPT ===");
             console.log("Sending login data:", jsonData);
             console.log("API URL:", url);
             const formData = new FormData();
@@ -94,29 +95,95 @@ function Login() {
             console.log("Response Status:", res.status);
 
             // Parse the JSON string response
-            // const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-            // console.log("Response Data (parsed):", responseData);
-            // console.log("Success check:", responseData.success);
-            // console.log("User check:", responseData.user);
+            const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+            console.log("Response Data (parsed):", responseData);
+            console.log("Success check:", responseData.success);
+            console.log("User check:", responseData.user);
+            console.log("User type check:", responseData.user_type);
 
-            if (res.data !== 0) {
-                toast.success("Successfully log in");
-                const user = res.data;
-                localStorage.setItem("userId", user.customers_id);
-                localStorage.setItem("customerOnlineId", user.customers_online_id);
-                localStorage.setItem("fname", user.customers_fname);
-                localStorage.setItem("lname", user.customers_lname);
-                setTimeout(() => {
-                    navigateTo("/customer");
-                }, 1500);
+            if (responseData && responseData.success && responseData.user) {
+                const user = responseData.user;
+                const userType = responseData.user_type;
+                
+                console.log("=== LOGIN SUCCESS ===");
+                console.log("User Type:", userType);
+                console.log("User Data:", user);
+                
+                if (userType === "customer") {
+                    toast.success("Successfully logged in as Customer");
+                    localStorage.setItem("userId", user.customers_id);
+                    localStorage.setItem("customerOnlineId", user.customers_online_id);
+                    localStorage.setItem("fname", user.customers_fname);
+                    localStorage.setItem("lname", user.customers_lname);
+                    localStorage.setItem("userType", "customer");
+                    setTimeout(() => {
+                        navigateTo("/customer");
+                    }, 1500);
+                } else if (userType === "employee") {
+                    toast.success("Successfully logged in as Employee");
+                    console.log("=== EMPLOYEE LOGIN INFO ===");
+                    console.log("Employee ID:", user.employee_id);
+                    console.log("Employee Name:", user.employee_fname, user.employee_lname);
+                    console.log("Employee Username:", user.employee_username);
+                    console.log("Employee Email:", user.employee_email);
+                    console.log("Employee Phone:", user.employee_phone);
+                    console.log("Employee User Level:", user.userlevel_name);
+                    console.log("Employee Status:", user.employee_status);
+                    console.log("Employee Address:", user.employee_address);
+                    console.log("Employee Birthdate:", user.employee_birthdate);
+                    console.log("Employee Gender:", user.employee_gender);
+                    console.log("Employee Created At:", user.employee_created_at);
+                    console.log("Employee Updated At:", user.employee_updated_at);
+                    
+                    localStorage.setItem("userId", user.employee_id);
+                    localStorage.setItem("fname", user.employee_fname);
+                    localStorage.setItem("lname", user.employee_lname);
+                    localStorage.setItem("userType", "employee");
+                    localStorage.setItem("userLevel", user.userlevel_name);
+                    setTimeout(() => {
+                        navigateTo("/frontdesk/dashboard");
+                    }, 1500);
+                } else if (userType === "admin") {
+                    toast.success("Successfully logged in as Admin");
+                    console.log("=== ADMIN LOGIN INFO ===");
+                    console.log("Admin ID:", user.employee_id);
+                    console.log("Admin Name:", user.employee_fname, user.employee_lname);
+                    console.log("Admin Username:", user.employee_username);
+                    console.log("Admin Email:", user.employee_email);
+                    console.log("Admin Phone:", user.employee_phone);
+                    console.log("Admin User Level:", user.userlevel_name);
+                    console.log("Admin Status:", user.employee_status);
+                    console.log("Admin Address:", user.employee_address);
+                    console.log("Admin Birthdate:", user.employee_birthdate);
+                    console.log("Admin Gender:", user.employee_gender);
+                    console.log("Admin Created At:", user.employee_created_at);
+                    console.log("Admin Updated At:", user.employee_updated_at);
+                    
+                    localStorage.setItem("userId", user.employee_id);
+                    localStorage.setItem("fname", user.employee_fname);
+                    localStorage.setItem("lname", user.employee_lname);
+                    localStorage.setItem("userType", "admin");
+                    localStorage.setItem("userLevel", user.userlevel_name);
+                    setTimeout(() => {
+                        navigateTo("/admin/dashboard");
+                    }, 1500);
+                }
             }
             else {
-                toast.error("Invalid Credentials")
+                console.log("=== LOGIN FAILED ===");
+                console.log("Login failed - Response structure:", responseData);
+                console.log("Why login failed - success:", responseData?.success, "user:", responseData?.user);
+                if (responseData && responseData.message) {
+                    toast.error(responseData.message);
+                } else {
+                    toast.error("Invalid username or password");
+                }
             }
 
         } catch (error) {
+            console.log("=== LOGIN ERROR ===");
+            console.log("Network error:", error);
             toast.error("Network error");
-            console.log(error);
         }
     }
 
@@ -319,5 +386,7 @@ function Login() {
       
     )
 }
+
+
 
 export default Login
