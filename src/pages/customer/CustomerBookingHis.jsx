@@ -129,12 +129,12 @@ function CustomerBookingHis() {
             row.booking_status === "Approved"
               ? "bg-green-500"
               : row.booking_status === "Cancelled"
-                ? "bg-orange-500"
+                ? "bg-gray-500"
                 : row.booking_status === "Checked-In"
                   ? "bg-green-500"
                   : row.booking_status === "Checked-Out"
                     ? "bg-secondary text-black"
-                    : "bg-gray-500"
+                    : "bg-orange-500"
           }
         >
           {row.booking_status ? row.booking_status : "Pending"}

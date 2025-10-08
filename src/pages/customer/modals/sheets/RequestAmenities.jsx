@@ -14,6 +14,7 @@ function RequestAmenities({ bookingId, bookingRoomId, getBookingSummary, isAddBe
   const [amenities, setAmenities] = useState([])
   const [selectedItems, setSelectedItems] = useState([])
   const [selectedAmenities, setSelectedAmenities] = useState([])
+  const [notes, setNotes] = useState("")
 
   // 🔹 Fetch master amenities
   const getAmenitiesMaster = useCallback(async () => {
@@ -112,6 +113,7 @@ function RequestAmenities({ bookingId, bookingRoomId, getBookingSummary, isAddBe
     // build payload for PHP
     const payload = {
       bookingId: parseInt(bookingId),
+      notes: notes,
       charges: selectedAmenities.map(item => ({
         booking_room_id: parseInt(bookingRoomId),
         charges_master_id: item.id,
@@ -181,6 +183,8 @@ function RequestAmenities({ bookingId, bookingRoomId, getBookingSummary, isAddBe
               <textarea
                 placeholder="Add notes here..."
                 className="mt-6 w-full h-24 p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0b04e0]"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
 
               <Button type="submit" className="w-full mt-4 font-semibold">
