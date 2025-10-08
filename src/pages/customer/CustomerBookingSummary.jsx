@@ -46,10 +46,6 @@ function CustomerBookingSummary() {
   useEffect(() => {
     getBookingSummary();
   }, [])
-
-
-
-
   return (
 
     <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
