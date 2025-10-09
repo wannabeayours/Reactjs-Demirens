@@ -46,7 +46,7 @@ function CustomerProfile() {
 
   return (
     <>
-  <div className="flex items-center pl-4">
+      <div className="flex items-center pl-4">
         <h1 className="text-4xl font-bold flex items-center gap-2 ">
           <User className="w-6 h-6" />
           Profile Information
@@ -59,7 +59,7 @@ function CustomerProfile() {
 
         <Card className="px-8 py-8 mt-10 w-full shadow-xl min-h-[600px]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+
             <div className="flex flex-col items-center md:items-start md:border-r md:pr-6 border-blue-400">
               <Avatar className="w-40 h-40">
                 <AvatarImage src="https://github.com/shadcn.png" alt="profile" />
@@ -67,18 +67,18 @@ function CustomerProfile() {
               </Avatar>
 
               <div className="w-full flex mt-4 gap-7">
-              <h2 className="text-lg font-semibold p-2 font-playfair">
+                <h2 className="text-lg font-semibold p-2 font-playfair">
                   {userData.customers_online_username}
                 </h2>
                 <UpdateProfile data={userData} getProfile={getProfile} />
-                
+
               </div>
-            
+
             </div>
             {/* <Separator orientation="vertical" className="hidden md:block h-auto" /> */}
 
             <div>
-              
+
               <CardTitle className="text-lg font-semibold mb-6 text-black  ">Personal Details</CardTitle>
               <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
                 <div>
@@ -95,7 +95,7 @@ function CustomerProfile() {
                 </div>
                 <div>
                   <Label className="mb-2">Phone Number:</Label>
-                  <Input readOnly value={userData.customers_phone_number || ''} />
+                  <Input readOnly value={userData.customers_online_phone || ''} />
                 </div>
                 <div>
                   <Label className="mb-2">Nationality:</Label>
@@ -103,7 +103,7 @@ function CustomerProfile() {
                 </div>
                 <div>
                   <Label className="mb-2">Date of Birth:</Label>
-                  <Input readOnly value={userData.customers_date_of_birth || ''} />
+                  <Input readOnly value={userData.customers_birthdate || ''} />
                 </div>
               </div>
             </div>

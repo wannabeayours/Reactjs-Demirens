@@ -127,12 +127,13 @@ function AdminBookingList() {
     try {
       setIsLoading(true);
       const formData = new FormData();
-      formData.append('method', 'viewBookings');
+      formData.append('method', 'viewBookingsEnhanced');
       const res = await axios.post(APIConn, formData);
 
       // Ensure we always set an array, even if the response is unexpected
       if (Array.isArray(res.data)) {
         setBookings(res.data);
+        console.log('Enhanced bookings loaded:', res.data);
       } else if (res.data === 0 || res.data === null || res.data === undefined) {
         setBookings([]);
       } else {
@@ -425,12 +426,6 @@ function AdminBookingList() {
       const res = await axios.post(APIConn, formData);
       if (res?.data?.success) {
         toast.success(`Status updated to ${newStatus} for booking ${selectedBooking.reference_no}`);
-        
-        // Send email notification if status changed to "Checked-In"
-        if (newStatus === 'Checked-In') {
-          await sendCheckInEmail(selectedBooking);
-        }
-        
         setShowStatusChange(false);
         setSelectedBooking(null);
         setNewStatus('');
@@ -444,30 +439,6 @@ function AdminBookingList() {
       toast.error('Failed to connect');
     }
   }
-
-  // Function to send check-in email notification
-  const sendCheckInEmail = async (booking) => {
-    try {
-      const emailData = {
-        booking_id: booking.booking_id
-      };
-
-      const formData = new FormData();
-      formData.append('method', 'sendCheckInEmail');
-      formData.append('json', JSON.stringify(emailData));
-
-      const res = await axios.post(APIConn, formData);
-      if (res?.data?.success) {
-        toast.success(`Check-in email sent to ${booking.customer_email}`);
-      } else {
-        console.error('Failed to send check-in email:', res?.data?.message);
-        toast.warning('Status updated but email notification failed');
-      }
-    } catch (err) {
-      console.error('Error sending check-in email:', err);
-      toast.warning('Status updated but email notification failed');
-    }
-  };
 
   const calculateExtensionPayment = () => {
     console.log('=== CALCULATE EXTENSION PAYMENT START ===');
@@ -1468,7 +1439,13 @@ function AdminBookingList() {
                               {(() => {
                                 // ONLY use balance from database
                                 const balance = parseFloat(b.balance);
-                                return balance === 0 ? "Fully Paid" : NumberFormatter.formatCurrency(balance);
+                                if (balance === 0) {
+                                  return "Fully Paid";
+                                } else if (balance > 0) {
+                                  return NumberFormatter.formatCurrency(balance);
+                                } else {
+                                  return "₱0";
+                                }
                               })()}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -1618,7 +1595,13 @@ function AdminBookingList() {
                           {(() => {
                             // ONLY use balance from database
                             const balance = parseFloat(selectedBooking.balance);
-                            return balance === 0 ? "Fully Paid" : NumberFormatter.formatCurrencyDecimals(balance, 0, { showCurrency: false });
+                            if (balance === 0) {
+                              return "Fully Paid";
+                            } else if (balance > 0) {
+                              return NumberFormatter.formatCurrencyDecimals(balance, 0, { showCurrency: false });
+                            } else {
+                              return "₱0";
+                            }
                           })()}
                         </p>
                     </div>

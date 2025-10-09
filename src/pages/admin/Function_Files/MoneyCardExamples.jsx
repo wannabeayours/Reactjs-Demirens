@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import MoneyCard, { RevenueCard, TransactionCard, ProfitCard } from './MoneyCard'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, TrendingUp, Calendar, DollarSign, Activity, Bed, Coffee } from "lucide-react"
+import { Clock, TrendingUp, Calendar, DollarSign as DollarSignIcon, Activity, Bed, Coffee } from "lucide-react"
 
 /**
  * MoneyCard Examples and Usage Guide
@@ -264,3 +264,5 @@ const MoneyCardExamples = () => {
 }
 
 export default MoneyCardExamples
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>

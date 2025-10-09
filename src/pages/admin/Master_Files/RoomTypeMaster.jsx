@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Trash, Search, Filter, MoreHorizontal, Edit, Trash2, Bed, DollarSign, FileText } from 'lucide-react';
+import { Pencil, Trash, Search, Filter, MoreHorizontal, Edit, Trash2, Bed, DollarSign as DollarSignIcon, FileText } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -596,3 +596,5 @@ function RoomTypeMaster() {
 }
 
 export default RoomTypeMaster
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>

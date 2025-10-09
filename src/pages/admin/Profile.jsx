@@ -58,6 +58,65 @@ function AdminProfile() {
     confirm_password: ''
   });
 
+  // Inline field-level errors and hints for password inputs
+  const [passwordErrors, setPasswordErrors] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+    strength: ''
+  });
+
+  useEffect(() => {
+    const { current_password, new_password, confirm_password } = editData;
+    const isChanging = !!(current_password || new_password || confirm_password);
+
+    const errors = { current_password: '', new_password: '', confirm_password: '', strength: '' };
+
+    if (isChanging) {
+      if (!current_password) {
+        errors.current_password = 'Current password is required to change your password';
+      }
+
+      if (!new_password) {
+        errors.new_password = 'New password is required';
+      } else {
+        if (/\s/.test(new_password)) {
+          errors.new_password = 'New password cannot contain spaces';
+        } else {
+          const hasLower = /[a-z]/.test(new_password);
+          const hasUpper = /[A-Z]/.test(new_password);
+          const hasNumber = /\d/.test(new_password);
+          const hasSpecial = /[\W_]/.test(new_password);
+          const lengthOk = new_password.length >= 8;
+
+          const criteriaCount = [hasLower, hasUpper, hasNumber, hasSpecial, lengthOk].filter(Boolean).length;
+          let strength = 'Weak';
+          if (criteriaCount >= 4 && new_password.length >= 10) strength = 'Strong';
+          else if (criteriaCount >= 3) strength = 'Medium';
+          errors.strength = `Strength: ${strength}`;
+
+          if (!(hasLower && hasUpper && hasNumber && hasSpecial && lengthOk)) {
+            errors.new_password = 'Must be at least 8 characters and include uppercase, lowercase, number, and special character';
+          } else if (current_password && current_password === new_password) {
+            errors.new_password = 'New password must be different from current password';
+          } else {
+            errors.new_password = '';
+          }
+        }
+      }
+
+      if (!confirm_password) {
+        errors.confirm_password = 'Please confirm your new password';
+      } else if (new_password && confirm_password && new_password !== confirm_password) {
+        errors.confirm_password = 'New passwords do not match';
+      }
+    } else {
+      errors.strength = '';
+    }
+
+    setPasswordErrors(errors);
+  }, [editData.current_password, editData.new_password, editData.confirm_password]);
+
   const APIConn = localStorage.getItem('url') + "admin.php";
 
   // Fetch admin data
@@ -109,15 +168,40 @@ function AdminProfile() {
   // Update admin profile
   const updateProfile = async () => {
     try {
-      // Validate passwords if changing
-      if (editData.new_password && editData.new_password !== editData.confirm_password) {
-        toast.error('New passwords do not match');
-        return;
-      }
+      // Password validation
+      const isChangingPassword = !!(editData.current_password || editData.new_password || editData.confirm_password);
 
-      if (editData.new_password && editData.new_password.length < 6) {
-        toast.error('New password must be at least 6 characters');
-        return;
+      if (isChangingPassword) {
+        if (!editData.current_password) {
+          toast.error('Current password is required to change your password');
+          return;
+        }
+        if (!editData.new_password) {
+          toast.error('New password is required');
+          return;
+        }
+        if (!editData.confirm_password) {
+          toast.error('Please confirm your new password');
+          return;
+        }
+        if (/\s/.test(editData.new_password)) {
+          toast.error('New password cannot contain spaces');
+          return;
+        }
+        if (editData.new_password !== editData.confirm_password) {
+          toast.error('New passwords do not match');
+          return;
+        }
+        // Strong password: min 8 chars, includes uppercase, lowercase, number, and special character
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!strongPasswordRegex.test(editData.new_password)) {
+          toast.error('New password must be at least 8 characters and include uppercase, lowercase, number, and special character');
+          return;
+        }
+        if (editData.current_password === editData.new_password) {
+          toast.error('New password must be different from current password');
+          return;
+        }
       }
 
       const userId = localStorage.getItem('userId');
@@ -134,7 +218,7 @@ function AdminProfile() {
       };
 
       // Add password fields if changing password
-      if (editData.new_password) {
+      if (isChangingPassword) {
         updateData.current_password = editData.current_password;
         updateData.new_password = editData.new_password;
       }
@@ -329,6 +413,9 @@ function AdminProfile() {
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
+                        <p className={`text-xs mt-1 ${passwordErrors.current_password ? 'text-red-600' : 'text-muted-foreground'}`}>
+                          {passwordErrors.current_password || 'Enter your current password to authorize the change'}
+                        </p>
                       </div>
 
                       <div>
@@ -351,6 +438,12 @@ function AdminProfile() {
                             {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
+                        <p className={`text-xs mt-1 ${passwordErrors.new_password ? 'text-red-600' : 'text-muted-foreground'}`}>
+                          {passwordErrors.new_password || 'Use a strong password: at least 8 characters, include uppercase, lowercase, number, and special character. No spaces.'}
+                        </p>
+                        {passwordErrors.strength && (
+                          <p className="text-xs mt-1 text-muted-foreground">{passwordErrors.strength}</p>
+                        )}
                       </div>
 
                       <div>
@@ -373,6 +466,9 @@ function AdminProfile() {
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
+                        <p className={`text-xs mt-1 ${passwordErrors.confirm_password ? 'text-red-600' : 'text-muted-foreground'}`}>
+                          {passwordErrors.confirm_password || 'Retype your new password to confirm'}
+                        </p>
                       </div>
                     </div>
                   </div>

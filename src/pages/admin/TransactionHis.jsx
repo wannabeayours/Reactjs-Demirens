@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DollarSign as DollarSignIcon } from 'lucide-react'
 
 // Icons
 import { 
@@ -27,8 +28,7 @@ import {
   Coffee,
   ChevronLeft,
   ChevronRight,
-  Activity,
-  DollarSign
+  Activity
 } from "lucide-react"
 
 // Utils
@@ -465,12 +465,6 @@ function AdminTransactionHis() {
               <Button onClick={clearFilters} variant="outline" className="flex items-center gap-2">
                 Clear Filters
               </Button>
-              <Button onClick={testAPI} variant="outline" className="flex items-center gap-2">
-                Test API
-              </Button>
-              <Button onClick={addSampleBooking} variant="outline" className="flex items-center gap-2">
-                Add Sample Booking
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -676,3 +670,5 @@ function AdminTransactionHis() {
 }
 
 export default AdminTransactionHis
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>

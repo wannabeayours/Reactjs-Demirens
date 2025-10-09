@@ -653,8 +653,9 @@ function AdminRoomsList() {
         onOpenChange={setShowAdvancedFilters}
         onApplyFilters={handleApplyAdvancedFilters}
       />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="p-6 max-w-7xl mx-auto">
+      {/* Main container with responsive margin for fixed sidebar */}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 md:ml-72">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto">
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -783,45 +784,45 @@ function AdminRoomsList() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                   {filteredRoomTypes.map((roomType, index) => (
                     <Card 
                       key={index} 
-                      className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
+                      className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer flex flex-col sm:flex-row sm:gap-4 items-stretch"
                       onClick={() => handleViewRoomType(roomType)}
                     >
-                      <div className="relative">
+                      <div className="relative w-full sm:w-2/5 xl:w-1/3">
                         <CardContent className="p-0">
                           <div className="relative">
                             {(() => {
                               const imageArray = toImagesArray(roomType.images);
                               
                               return imageArray.length === 0 ? (
-                                <div className="w-full h-56 flex items-center justify-center bg-muted">
+                                <div className="w-full h-40 sm:h-48 md:h-52 lg:h-56 xl:h-64 flex items-center justify-center bg-muted">
                                   <span className="text-muted-foreground">No Image</span>
                                 </div>
                               ) : imageArray.length === 1 ? (
-                                <div className="w-full h-56 flex items-center justify-center bg-muted">
+                                <div className="w-full h-40 sm:h-48 md:h-52 lg:h-56 xl:h-64 flex items-center justify-center bg-muted">
                                   <img
                                     src={`${localStorage.url}images/${imageArray[0]}`}
                                     alt={`${roomType.name}`}
-                                    className="w-full h-56 object-cover"
+                                    className="w-full h-full object-cover"
                                     onClick={(e) => { e.stopPropagation(); openImageModal(roomType); }}
                                   />
                                 </div>
                               ) : (
-                                <div className="relative w-full">
+                                <div className="relative w-full h-40 sm:h-48 md:h-52 lg:h-56 xl:h-64">
                                   <div className="relative overflow-hidden">
                                     <div 
-                                      className="flex transition-transform duration-300 ease-in-out"
+                                      className="flex transition-transform duration-300 ease-in-out h-full"
                                       style={{ transform: `translateX(-${(currentImageIndices[roomType.name] || 0) * 100}%)` }}
                                     >
                                       {imageArray.map((imgName, idx) => (
-                                        <div key={idx} className="w-full flex-shrink-0">
+                                        <div key={idx} className="w-full flex-shrink-0 h-full">
                                           <img
                                             src={`${localStorage.url}images/${imgName}`}
                                             alt={`${roomType.name} ${idx + 1}`}
-                                            className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-200 cursor-zoom-in"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 cursor-zoom-in"
                                             onClick={(e) => { e.stopPropagation(); openImageModal(roomType); }}
                                           />
                                         </div>
@@ -871,23 +872,23 @@ function AdminRoomsList() {
                         </CardContent>
                       </div>
 
-                      <div className="p-4">
+                      <div className="p-4 sm:flex-1 flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-2">
-                          <h2 className="text-lg font-semibold text-foreground">
+                          <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                             {roomType.name}
                           </h2>
                           <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
                             {roomType.rooms.length} rooms
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2 sm:line-clamp-3">
                           {roomType.description}
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-green-600 dark:text-green-400">
                             ₱{Number(roomType.price).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </span>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="hidden sm:block text-xs text-muted-foreground">
                             {roomType.capacity} {roomType.capacity > 1 ? 'persons' : 'person'} • {roomType.beds} bed{roomType.beds > 1 ? 's' : ''}
                           </p>
                         </div>

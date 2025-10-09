@@ -101,7 +101,7 @@ function CustomerArchieve() {
             row.booking_status === "Approved"
               ? "bg-green-500 text-xs sm:text-sm px-2 py-1"
               : row.booking_status === "Cancelled"
-                ? "bg-orange-500 text-xs sm:text-sm px-2 py-1"
+                ? "bg-gray-500 text-xs sm:text-sm px-2 py-1"
                 : row.booking_status === "Checked-Out"
                   ? "bg-secondary text-black text-xs sm:text-sm px-2 py-1"
                   : "bg-red-500 text-xs sm:text-sm px-2 py-1"
@@ -116,7 +116,7 @@ function CustomerArchieve() {
       headerClassName: "text-[#113f67] font-medium text-sm sm:text-base",
       cellClassName: "py-2",
       cell: (row) => (
-        <div className="flex gap-2 sm:gap-4 justify-center">
+        <div className="flex gap-2 sm:gap-4 justify-start">
           <SelectedBooking selectedData={row} />
           <ArchiveRestore className="cursor-pointer hover:text-[#34699A] text-black w-4 h-4 sm:w-5 sm:h-5"
             onClick={() => handleShowAlert(row)} />

@@ -32,7 +32,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import AdminHeader from '../components/AdminHeader'
-import { Search, Filter, MoreHorizontal, Edit, Trash2, DollarSign, CreditCard, TrendingUp, Package } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Edit, Trash2, DollarSign as DollarSignIcon, CreditCard, TrendingUp, Package } from 'lucide-react';
 
 import {
   Form,
@@ -679,3 +679,5 @@ function ChargeMaster() {
 }
 
 export default ChargeMaster;
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>

@@ -171,7 +171,7 @@ function Sidebar({ onCollapse }) {
   const mainLinks = [
     { path: "/admin/dashboard", icon: <Home className="w-4 h-4" />, label: "Dashboard" },
     { path: "/admin/profile", icon: <User className="w-4 h-4" />, label: "Profile" },
-    { path: "/admin/employeemanagement", icon: <User className="w-4 h-4" />, label: "Employee Management" },
+    { path: "/admin/employeelist", icon: <User className="w-4 h-4" />, label: "Employee List" },
     { path: "/admin/roomslist", icon: <BedIcon className="w-4 h-4" />, label: "Rooms List" },
     { path: "/admin/bookinglist", icon: <File className="w-4 h-4" />, label: "Bookings List" },
     { path: "/admin/guestprofile", icon: <User className="w-4 h-4" />, label: "Guest Profiles" },

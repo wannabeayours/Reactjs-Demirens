@@ -17,7 +17,7 @@ import AdminChargesCategory from './Master_Files/ChargesCategory'
 import AdminChargeMaster from './Master_Files/ChargeMaster'
 import AdminDiscountMaster from './Master_Files/DiscountMaster'
 import AdminRoomtype from './Master_Files/RoomTypeMaster'
-import EmployeeManagement from './EmployeeManagement'
+import EmployeeManagement from './EmployeeList'
 
 export const AdminMain = () => {
 

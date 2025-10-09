@@ -25,7 +25,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import AdminHeader from '../components/AdminHeader'
-import { Search, Filter, MoreHorizontal, Edit, Trash2, Percent, Calendar, DollarSign } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Edit, Trash2, Percent, Calendar, DollarSign as DollarSignIcon } from 'lucide-react';
 
 import {
   Form,
@@ -658,3 +658,5 @@ function DiscountMaster() {
 }
 
 export default DiscountMaster;
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>

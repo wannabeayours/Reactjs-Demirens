@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Plus, CheckCircle, AlertCircle, Calculator, Receipt, CreditCard, DollarSign, Eye, X } from "lucide-react";
+import { FileText, Plus, CheckCircle, AlertCircle, Calculator, Receipt, CreditCard, DollarSign as DollarSignIcon, Eye, X } from "lucide-react";
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>
 
 function InvoiceManagementSubpage({ 
   selectedBooking, 
@@ -278,22 +279,42 @@ function InvoiceManagementSubpage({
       return;
     }
 
+    let billingId = selectedBooking.billing_id;
+
     // If no billing_id, try to create one first
-    if (!selectedBooking.billing_id) {
+    if (!billingId) {
       const billingCreated = await createBillingRecord(selectedBooking.booking_id);
       if (!billingCreated) {
         toast.error("Failed to create billing record");
         return;
       }
-      toast.info("Billing record created. Please try creating invoice again.");
-      return;
+      toast.success("Billing record created successfully! Creating invoice now...");
+      
+      // Fetch the newly created billing_id
+      try {
+        const url = localStorage.getItem("url") + "transactions.php";
+        const formData = new FormData();
+        formData.append("operation", "getBookingBillingId");
+        formData.append("json", JSON.stringify({ booking_id: selectedBooking.booking_id }));
+        
+        const res = await axios.post(url, formData);
+        if (res.data.success && res.data.billing_id) {
+          billingId = res.data.billing_id;
+        } else {
+          toast.error("Failed to get billing ID after creation");
+          return;
+        }
+      } catch (err) {
+        toast.error("Error fetching billing ID: " + err.message);
+        return;
+      }
     }
 
     try {
       setLoading(true);
 
       const jsonData = {
-        billing_ids: [selectedBooking.billing_id],
+        billing_ids: [billingId],
         employee_id: 1, // Replace with session value
         payment_method_id: invoiceForm.payment_method_id,
         invoice_status_id: invoiceForm.invoice_status_id,

@@ -16,7 +16,6 @@ import {
   XCircle, 
   Clock, 
   Package, 
-  DollarSign,
   Search,
   Eye,
   CheckCircle2,
@@ -25,6 +24,8 @@ import {
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useLocation } from 'react-router-dom';
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>
 
 function AdminRequestedAmenities() {
   const [amenityRequests, setAmenityRequests] = useState([]);

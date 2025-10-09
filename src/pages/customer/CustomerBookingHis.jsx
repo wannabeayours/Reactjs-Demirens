@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import DataTable from '@/components/ui/data-table';
 import ShowAlert from '@/components/ui/show-alert';
 import axios from 'axios';
-import { ArchiveIcon, Book, Eye, HistoryIcon } from 'lucide-react';
+import { ArchiveIcon, Book, Eye, History, HistoryIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { SelectedBooking } from './modals/SelectedBooking';
@@ -177,14 +177,18 @@ function CustomerBookingHis() {
       </div>
 
       <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
-        <div className="text-black overflow-x-auto w-full">
-          <DataTable
-            columns={col}
-            data={history}
-            // itemsPerPage={isMobile ? 5 : 10} 
-            // hideSearch={isMobile}
-            showNoData={true}
-          />
+        <div className="overflow-x-auto py-4">
+          <div className="mb-4 text-lg font-medium text-[#113f67]">Booking History Records</div>
+          {history.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <History  className="w-12 h-12 text-gray-300 mb-2" />
+              <p className="text-gray-500 text-sm sm:text-base">No booking history found</p>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">Booking History will appear here</p>
+            </div>
+          ) : (
+            <DataTable columns={col} data={history} itemsPerPage={10} />
+          )}
+
         </div>
       </Card>
       <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} duration={1} />

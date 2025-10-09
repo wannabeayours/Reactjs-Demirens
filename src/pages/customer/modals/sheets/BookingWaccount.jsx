@@ -177,7 +177,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-    } 
+    }
   };
 
   const getPaymentMethod = async () => {
@@ -490,11 +490,12 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <>
                     <div className="flex justify-between items-center text-sm">
                       <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="font-bold">₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+
+                      {/* <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> */}
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
-                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
                     </div>
                   </>
                 )}
@@ -905,7 +906,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               </Form>
             </CardContent>
           </Card>
-    
+
           {/* Room Details */}
           <Card className="bg-white shadow-md">
             <CardContent className="p-6">

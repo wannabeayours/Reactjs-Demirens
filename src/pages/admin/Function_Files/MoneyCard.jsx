@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Maximize2, DollarSign, TrendingUp, TrendingDown, Activity } from "lucide-react"
+import { Maximize2, DollarSign as DollarSignIcon, TrendingUp, TrendingDown, Activity } from "lucide-react"
 import { NumberFormatter } from './NumberFormatter'
 
 /**
@@ -236,3 +236,5 @@ export const ProfitCard = ({ amount, ...props }) => {
 }
 
 export default MoneyCard
+
+const DollarSign = ({ className = "" }) => <span className={className}>₱</span>
