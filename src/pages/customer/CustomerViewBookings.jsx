@@ -186,6 +186,12 @@ function CustomerViewBookings() {
                     <span className="text-right text-xs sm:text-sm">₱ {item.booking_totalAmount}</span>
                   </div>
 
+                  <div className="mb-2 flex flex-wrap justify-between text-black">
+                    <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Balance:</span>
+                    <span className="text-right text-xs sm:text-sm">₱ 590</span>
+                  </div>
+
+
                   {/* Rooms List */}
                   <div className="mt-2 flex-1">
                     <h3 className="text-sm font-semibold mb-1 text-[#113F67]">
@@ -221,7 +227,7 @@ function CustomerViewBookings() {
                             <span><strong>Size:</strong> {room.room_sizes}</span>
                             <span><strong>Beds:</strong> {room.room_beds}</span>
                             <span><strong>Capacity:</strong> {room.max_capacity}</span>
-                            <span><strong>Price:</strong> ₱ {room.roomtype_price}</span>
+                            {/* <span><strong>Price:</strong> ₱ {room.roomtype_price}</span> */}
                           </div>
                         </div>
                       ))}

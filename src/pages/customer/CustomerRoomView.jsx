@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Check, Dumbbell, HandPlatterIcon, SquareArrowOutDownRightIcon, WifiIcon, WineIcon } from 'lucide-react';
+import { Check, Dumbbell, HandPlatterIcon, SquareArrowOutDownRightIcon, WifiIcon, WineIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import RoomDialogs from './modals/RoomDialogs';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 function CustomerRoomView() {
   const [room, setRoom] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [allImages, setAllImages] = useState([]);
   const navigateTo = useNavigate();
 
   useEffect(() => {
@@ -16,22 +17,57 @@ function CustomerRoomView() {
     window.scrollTo(0, 0);
     
     const stored = sessionStorage.getItem('viewRoomDetails');
+    console.log("Stored Room Details:", stored);
     if (stored) {
-      setRoom(JSON.parse(stored));
-      console.log("Room Details :", room);
+      const roomData = JSON.parse(stored);
+      setRoom(roomData);
+      
+      // Process images
+      const imagesList = [];
+      const baseUrl = localStorage.getItem("url") + "images/";
+      
+      // Add main image first
+      if (roomData.roomtype_image) {
+        imagesList.push({
+          src: baseUrl + roomData.roomtype_image,
+          alt: `${roomData.roomtype_name} - Main View`,
+          isMain: true
+        });
+      }
+      
+      // Add additional images
+      if (roomData.images) {
+        const additionalImages = roomData.images.split(',');
+        additionalImages.forEach((img, index) => {
+          if (img.trim()) {
+            imagesList.push({
+              src: baseUrl + img.trim(),
+              alt: `${roomData.roomtype_name} - View ${index + 2}`,
+              isMain: false
+            });
+          }
+        });
+      }
+      
+      setAllImages(imagesList);
+      console.log("Processed Images:", imagesList);
     }
   }, []);
 
   const nextImage = () => {
-    if (room?.images?.length) {
-      setCurrentIndex((prev) => (prev + 1) % room.images.length);
+    if (allImages.length > 0) {
+      setCurrentIndex((prev) => (prev + 1) % allImages.length);
     }
   };
 
   const prevImage = () => {
-    if (room?.images?.length) {
-      setCurrentIndex((prev) => (prev - 1 + room.images.length) % room.images.length);
+    if (allImages.length > 0) {
+      setCurrentIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
     }
+  };
+
+  const goToImage = (index) => {
+    setCurrentIndex(index);
   };
 
   if (!room) {
@@ -48,14 +84,100 @@ function CustomerRoomView() {
 
   return (
     <div className="w-full bg-white min-h-screen">
-      {/* Image Carousel */}
-      <section className="relative h-[60vh] w-full overflow-hidden bg-blue-600">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h2 className="text-2xl font-semibold mb-2">Room Gallery</h2>
-            <p className="text-blue-100">View room photos and details</p>
+      {/* Image Gallery */}
+      <section className="relative h-[60vh] w-full overflow-hidden bg-gray-900">
+        {allImages.length > 0 ? (
+          <>
+            {/* Main Image Display */}
+            <div className="relative w-full h-full">
+              <img
+                src={allImages[currentIndex]?.src}
+                alt={allImages[currentIndex]?.alt}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              {/* Fallback when image fails to load */}
+              <div className="absolute inset-0 flex items-center justify-center bg-blue-600 text-white" style={{display: 'none'}}>
+                <div className="text-center">
+                  <h2 className="text-2xl font-semibold mb-2">Room Gallery</h2>
+                  <p className="text-blue-100">Image not available</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={prevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+
+            {/* Image Counter */}
+            <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+              {currentIndex + 1} / {allImages.length}
+            </div>
+
+            {/* Image Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                {allImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToImage(index)}
+                    className={`w-16 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      index === currentIndex 
+                        ? 'border-white shadow-lg' 
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                    <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white text-xs" style={{display: 'none'}}>
+                      {index + 1}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Image Title Overlay */}
+            <div className="absolute bottom-20 left-4 text-white">
+              <h2 className="text-xl font-semibold mb-1">{allImages[currentIndex]?.alt}</h2>
+              {allImages[currentIndex]?.isMain && (
+                <Badge className="bg-blue-600 text-white">Main View</Badge>
+              )}
+            </div>
+          </>
+        ) : (
+          // Fallback when no images available
+          <div className="absolute inset-0 flex items-center justify-center bg-blue-600">
+            <div className="text-center text-white">
+              <h2 className="text-2xl font-semibold mb-2">Room Gallery</h2>
+              <p className="text-blue-100">No images available</p>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Room Info */}

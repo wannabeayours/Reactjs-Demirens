@@ -115,10 +115,15 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const childrenNumberLS = localStorage.getItem("children") || 0;
       const adultNumberLS = localStorage.getItem("adult") || 1;
 
-      const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0);
+      const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
+      const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+      const total = subtotal + extraBedCharges;
+
       const displayedVat = subtotal - (subtotal / 1.12);
-      const totalAmount = subtotal.toFixed(2);
-      const downPayment = (subtotal * 0.5).toFixed(2);
+      const totalAmount = total.toFixed(2);
+      // const downPayment = (subtotal * 0.5).toFixed(2);
+      const down = total * 0.5;
+      const downPayment = down.toFixed(2);
 
       const { totalPay, paymentMethod } = form.getValues();
 
@@ -867,46 +872,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     return (
       <ScrollArea className="h-[calc(100vh-400px)]">
         <div className="space-y-4">
-          <Card>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
-                  <FormField
-                    name="paymentMethod"
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <div>
-                          <ComboBox
-                            list={paymentMethod}
-                            subject="payment method"
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="totalPay"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Pay</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Enter your total pay" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
           {/* Room Details */}
           <Card className="bg-white shadow-md">
             <CardContent className="p-6">
@@ -987,6 +952,45 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
+                  <FormField
+                    name="paymentMethod"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <div>
+                          <ComboBox
+                            list={paymentMethod}
+                            subject="payment method"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="totalPay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Pay</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="Enter your total pay" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
             </CardContent>
           </Card>
 

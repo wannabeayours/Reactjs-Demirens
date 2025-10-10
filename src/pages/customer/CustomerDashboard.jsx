@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { BedDoubleIcon, MinusIcon, Moon, Plus, Smile, User } from 'lucide-react'
+import { BedDoubleIcon, MinusIcon, Moon, Plus, Smile, User, Search, Calendar, Users } from 'lucide-react'
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -57,6 +57,8 @@ function CustomerDashboard() {
   const [adultNumber, setAdultNumber] = useState(0);
   const [childrenNumber, setChildrenNumber] = useState(0);
   const [isSearched, setIsSearched] = useState(false);
+  const [fname, setFname] = useState("");
+  const [lname, setLname] = useState("");
 
   // Utility at top of component
   const getTomorrowAndNextDay = () => {
@@ -95,15 +97,11 @@ function CustomerDashboard() {
     setIsSearched(true);
   }, []); // runs once on mount
 
-
-
-
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       checkIn: "",
       checkOut: "",
-
     },
   })
 
@@ -124,9 +122,9 @@ function CustomerDashboard() {
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-
     }
   }
+
   const handleClearData = () => {
     form.reset({ checkIn: "", checkOut: "" })
     setAdultNumber(0);
@@ -153,202 +151,318 @@ function CustomerDashboard() {
     setIsSearched(true);
   }
 
+  useEffect(() => {
+    const fname = localStorage.getItem("fname");
+    const lname = localStorage.getItem("lname");
+    setFname(fname);
+    setLname(lname);
+  }, []);
+
   return (
-
-    <div className=" min-h-screen text-white">
-
-
-      <div className="flex items-center justify-center min-h-[10vh] w-full py-10 px-4">
-        <Card className=" w-full max-w-6xl">
-          <CardContent>
-            <Form {...form}>
-
-              <form onSubmit={form.handleSubmit(onSubmit)} >
-                <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="checkIn"
-                    render={({ field }) => (
-                      <FormItem>
-                        <DatePicker
-                          form={form}
-                          name={field.name}
-                          label="Check-in"
-                          pastAllowed={false}
-                          futureAllowed={true}
-                          withTime={false}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="checkOut"
-                    render={({ field }) => (
-                      <FormItem>
-                        <DatePicker
-                          form={form}
-                          name={field.name}
-                          label="Check-out"
-                          pastAllowed={false}
-                          futureAllowed={true}
-                          withTime={false}
-                          
-                        />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div>
-                    <Label className={"mb-2 items-center justify-center"}>Adults</Label>
-                    <div className="flex items-center justify-center space-x-2">
-
-                      <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber - 1)} disabled={adultNumber === 0}><MinusIcon /></Button>
-                      <div>
-                        {adultNumber}
-                      </div>
-                      {/* <Input
-                        className="w-1/4"
-                        type="number"
-                        readOnly
-                        value={adultNumber}
-                      /> */}
-                      <Button type="button" variant="outline" onClick={() => setAdultNumber(adultNumber + 1)}><Plus /></Button>
-
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className={"mb-2 "}>Children</Label>
-                    <div className="flex items-center justify-start space-x-2">
-
-                      <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber - 1)} disabled={childrenNumber === 0}><MinusIcon /></Button>
-                      <div>
-                        {childrenNumber}
-                      </div>
-
-                      {/* <Input
-                        className="w-1/4"
-                        type="number"
-                        readOnly
-                        value={childrenNumber}
-                      /> */}
-                      <Button type="button" variant="outline" onClick={() => setChildrenNumber(childrenNumber + 1)}><Plus /></Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Button type="submit" className="w-full">Search</Button>
-
-
-                  </div>
-                </div>
-
-
-
-              </form>
-
-            </Form>
-          </CardContent>
-
-        </Card>
-
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Enhanced Header */}
+      <div className="w-full bg-white/80 backdrop-blur-sm border-b border-gray-200/60 sticky top-0 z-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 mb-2 sm:mb-0">
+            <div className="p-2 bg-gradient-to-r from-[#113f67] to-[#226597] rounded-xl shadow-lg">
+              <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#113f67]">Find Your Perfect Room</h1>
+              <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Discover comfort and luxury</p>
+            </div>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-600 font-medium bg-white/60 px-3 py-2 rounded-full border border-gray-200/60">
+            Welcome back, <span className="font-semibold text-[#113f67]">{fname} {lname}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center py-10 px-4 ">
-        {!isSearched ? (
-          <p className="text-center text-lg font-semibold text-gray-600 mt-10">
-            Please check in and check out first.
-          </p>
-        ) : rooms.length === 0 ? (
-          <p className="text-center text-lg font-semibold text-gray-600 mt-10">
-            No rooms available for {Number(adultNumber) + Number(childrenNumber)} guest(s).
-          </p>
-        ) : (
+      {/* Enhanced Search Form */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-[#113f67] via-[#226597] to-[#2980b9] h-1"></div>
+          <CardContent className="p-6 sm:p-8">
+            <div className="mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-[#113f67] mb-2">Search Available Rooms</h2>
+              <p className="text-sm text-gray-600">Find the perfect accommodation for your stay</p>
+            </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full">
-            {rooms.map((room, index) => (
-              <Card key={index} className="flex flex-col h-full rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-100 bg-gradient-to-b from-white to-sky-50 overflow-hidden transform hover:-translate-y-1">
-
-                {/* Image Section */}
-                <div className="w-full h-56 overflow-hidden relative">
-                  <img
-                    src={localStorage.getItem("url") + "images/" + room.roomtype_image}
-                    alt="Room"
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                  <div className="absolute top-0 right-0 m-2">
-                    <Badge className="bg-blue-600 text-white font-medium px-3 py-1">
-                      Available
-                    </Badge>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+                  {/* Check-in Date */}
+                  <div className="lg:col-span-1">
+                    <FormField
+                      control={form.control}
+                      name="checkIn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-[#113f67]" />
+                              Check-in
+                            </Label>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label=""
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={false}
+                            />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
 
-                {/* Info Section */}
-                <div className="flex flex-col p-5 flex-1">
-                  <h5 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-900 tracking-tight">{room.roomtype_name}</h5>
+                  {/* Check-out Date */}
+                  <div className="lg:col-span-1">
+                    <FormField
+                      control={form.control}
+                      name="checkOut"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-[#113f67]" />
+                              Check-out
+                            </Label>
+                            <DatePicker
+                              form={form}
+                              name={field.name}
+                              label=""
+                              pastAllowed={false}
+                              futureAllowed={true}
+                              withTime={false}
+                            />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                  <p
-                    className="text-sm md:text-base text-gray-700 mb-4 overflow-hidden leading-relaxed font-light"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3, // bilang sa lines na ipakita
-                      WebkitBoxOrient: 'vertical',
-                    }}
-                  >
-                    {room.roomtype_description}
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                    {/* Price + Bed icon */}
-                    <h2 className="flex-col text-sm font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
-                      ₱ {Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
-
-                    </h2>
-
-                    {/* Room Details in Badge Row */}
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 px-3 py-1 rounded-full transition-colors shadow-sm">{room.roomtype_sizes}</Badge>
-                      <Badge className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 px-3 py-1 rounded-full transition-colors shadow-sm">
-                        {room.roomtype_capacity}
-                        <User size={16} className="ml-1 text-blue-600" />
-                      </Badge>
-                      <Badge className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 px-3 py-1 rounded-full transition-colors shadow-sm">
-                        {room.roomtype_beds}
-                        <BedDoubleIcon size={16} className="ml-1 text-blue-600" />
-                      </Badge>
+                  {/* Adults Counter */}
+                  <div className="lg:col-span-1">
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-[#113f67]" />
+                      Adults
+                    </Label>
+                    <div className="flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAdultNumber(Math.max(0, adultNumber - 1))}
+                        disabled={adultNumber === 0}
+                        className="h-8 w-8 p-0 hover:bg-[#113f67]/10"
+                      >
+                        <MinusIcon className="w-4 h-4" />
+                      </Button>
+                      <div className="mx-4 min-w-[2rem] text-center font-semibold text-[#113f67]">
+                        {adultNumber}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAdultNumber(adultNumber + 1)}
+                        className="h-8 w-8 p-0 hover:bg-[#113f67]/10"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="flex mt-auto pt-3 border-t border-blue-100 gap-2">
-                   
-                    {room.status_id === 3 ? (
-                      <BookingWaccount
-                        rooms={rooms}
-                        selectedRoom={room}
-                        handleClearData={handleClearData}
-                        adultNumber={adultNumber}
-                        childrenNumber={childrenNumber}
-                      />
-                    ) : (
-                      <Button disabled className="w-full bg-gray-300 hover:bg-gray-300 text-gray-600 font-medium rounded-lg py-2 shadow-sm">Book Now</Button>
-                    )}
-                     <Moreinfo room={room} />
+                  {/* Children Counter */}
+                  <div className="lg:col-span-1">
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4 text-[#113f67]" />
+                      Children
+                    </Label>
+                    <div className="flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setChildrenNumber(Math.max(0, childrenNumber - 1))}
+                        disabled={childrenNumber === 0}
+                        className="h-8 w-8 p-0 hover:bg-[#113f67]/10"
+                      >
+                        <MinusIcon className="w-4 h-4" />
+                      </Button>
+                      <div className="mx-4 min-w-[2rem] text-center font-semibold text-[#113f67]">
+                        {childrenNumber}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setChildrenNumber(childrenNumber + 1)}
+                        className="h-8 w-8 p-0 hover:bg-[#113f67]/10"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Search Button */}
+                  <div className="lg:col-span-1 flex items-end">
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-[#113f67] to-[#226597] hover:from-[#0d2f4f] hover:to-[#1a4f7a] text-white font-semibold py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Search Rooms
+                    </Button>
                   </div>
                 </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
 
+      {/* Results Section */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {!isSearched ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-4">
+              <Search className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl sm:text-2xl font-semibold text-gray-700 mb-2">Ready to Find Your Room?</h3>
+            <p className="text-gray-500 text-sm sm:text-base max-w-md">
+              Please select your check-in and check-out dates to see available rooms.
+            </p>
+          </div>
+        ) : rooms.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center">
+                <Smile className="w-10 h-10 text-orange-400" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-yellow-600 text-sm">!</span>
+              </div>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-semibold text-gray-700 mb-2">No Rooms Available</h3>
+            <p className="text-gray-500 text-sm sm:text-base max-w-md mb-6">
+              Sorry, no rooms are available for {Number(adultNumber) + Number(childrenNumber)} guest(s) on your selected dates.
+            </p>
+            <Button
+              onClick={handleClearData}
+              variant="outline"
+              className="border-[#113f67]/20 text-[#113f67] hover:bg-[#113f67]/5"
+            >
+              Try Different Dates
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#113f67] mb-2">Available Rooms</h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {rooms.length} room{rooms.length !== 1 ? 's' : ''} available for {Number(adultNumber) + Number(childrenNumber)} guest{Number(adultNumber) + Number(childrenNumber) !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-white/60 px-4 py-2 rounded-full border border-gray-200/60">
+                <Calendar className="w-4 h-4" />
+                {rooms.length} result{rooms.length !== 1 ? 's' : ''}
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {rooms.map((room, index) => (
+                <Card key={index} className="group h-full shadow-lg hover:shadow-2xl transition-all duration-500 border-0 rounded-2xl overflow-hidden bg-white hover:bg-gradient-to-br hover:from-white hover:to-blue-50/30 transform hover:scale-[1.02] hover:-translate-y-2">
+                  <div className="bg-gradient-to-r from-[#113f67] via-[#226597] to-[#2980b9] h-2"></div>
 
+                  {/* Enhanced Image Section */}
+                  <div className="relative w-full h-48 sm:h-56 overflow-hidden">
+                    <img
+                      src={localStorage.getItem("url") + "images/" + room.roomtype_image}
+                      alt={room.roomtype_name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-green-500/90 backdrop-blur-sm text-white font-medium px-3 py-1 shadow-lg">
+                        Available
+                      </Badge>
+                    </div>
+                    <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="backdrop-blur-sm rounded-full px-2 py-1">
+                        <Moreinfo room={room} />
+                      </div>
+                    </div>
+                  </div>
 
-              </Card>
-            ))}
+                  {/* Enhanced Info Section */}
+                  <div className="flex flex-col p-5 sm:p-6 flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <h5 className="text-xl sm:text-2xl font-bold text-[#113f67] tracking-tight leading-tight">
+                        {room.roomtype_name}
+                      </h5>
+                      <div className="ml-2 flex-shrink-0">
+                        <div className="text-right">
+                          <div className="text-lg sm:text-xl font-bold text-[#113f67]">
+                            ₱{Number(room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 0 })}
+                          </div>
+                          <div className="text-xs text-gray-500">per night</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-3 group-hover:text-gray-700 transition-colors duration-300">
+                      {room.roomtype_description}
+                    </p>
+
+                    {/* Enhanced Room Features */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Badge className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1 rounded-full transition-all duration-300 text-xs font-medium">
+                        {room.roomtype_sizes}
+                      </Badge>
+                      <Badge className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1 rounded-full transition-all duration-300 text-xs font-medium flex items-center gap-1">
+                        <User size={12} />
+                        {room.roomtype_capacity}
+                      </Badge>
+                      <Badge className="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1 rounded-full transition-all duration-300 text-xs font-medium flex items-center gap-1">
+                        <BedDoubleIcon size={12} />
+                        {room.roomtype_beds}
+                      </Badge>
+                    </div>
+
+                    {/* Enhanced Action Buttons */}
+                    <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
+                      {room.status_id === 3 ? (
+                        <div className="flex-1">
+                          <BookingWaccount
+                            rooms={rooms}
+                            selectedRoom={room}
+                            handleClearData={handleClearData}
+                            adultNumber={adultNumber}
+                            childrenNumber={childrenNumber}
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          disabled
+                          className="flex-1 bg-gray-100 hover:bg-gray-100 text-gray-500 font-medium rounded-lg py-2 cursor-not-allowed"
+                        >
+                          Unavailable
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
-
-
-
       </div>
     </div>
   )
 }
+
 export default CustomerDashboard

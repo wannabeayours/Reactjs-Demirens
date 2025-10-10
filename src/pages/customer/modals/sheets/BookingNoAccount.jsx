@@ -9,7 +9,6 @@ import { BedDouble, Info, MinusIcon, Plus, Trash2, ChevronLeft, ChevronRight } f
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
-import Moreinfo from './Moreinfo'
 import { Input } from '@/components/ui/input'
 import { Stepper } from '@/components/ui/stepper'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +20,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ShowAlert from '@/components/ui/show-alert'
+import Moreinfo from './Moreinfo'
 
 const schema = z.object({
   walkinfirstname: z.string().min(1, { message: "First name is required" }),
@@ -190,7 +190,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       console.log("res ni no account", res);
       if (res.data === 1) {
         toast.success("Booking successful");
-      //  setOpen(false);
+        //  setOpen(false);
         localStorage.removeItem('checkIn')
         localStorage.removeItem('checkOut')
         setSelectedRooms([]);
@@ -524,18 +524,17 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
               <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span>Subtotal:</span>
+                  <span>Subtotalss:</span>
                   <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 {selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) > 0 && (
                   <>
                     <div className="flex justify-between items-center text-sm">
                       <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
-                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </>
                 )}
@@ -584,7 +583,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                   min={tomorrowStr}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-
               </div>
 
               <div className="space-y-2">
@@ -641,16 +639,14 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                               {room.roomtype_name}
                             </h1>
                             <h1>{room.roomtype_description}</h1>
-                            <Link>
-                              <div className="flex flex-row space-x-2 mt-2 mb-2">
-                                <div>
-                                  <Moreinfo room={room} />
-                                </div>
-                                <div>
-                                  <Info />
-                                </div>
+                            <div className="flex flex-row space-x-2 mt-2 mb-2">
+                              <div>
+                                <Moreinfo room={room} />
                               </div>
-                            </Link>
+                              <div>
+                                <Info />
+                              </div>
+                            </div>
                             <h1 className="flex items-center gap-2 font-semibold text-[#113F67]">
                               <BedDouble size={20} />
                               ₱{" "}
@@ -813,7 +809,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                       }
                                     }}
                                     disabled={
-                                      (bedCounts[room.room_type] || 0) >= 
+                                      (bedCounts[room.room_type] || 0) >=
                                       (room.roomtype_maxbeds || 1)
                                     }
                                   >
@@ -1025,45 +1021,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     return (
       <ScrollArea className="h-[calc(100vh-400px)]">
         <div className="space-y-4">
-          <Card>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
-                  <FormField
-                    name="paymentMethod"
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <div>
-                          <ComboBox
-                            list={paymentMethod}
-                            subject="payment method"
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="totalPay"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Pay</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Enter your total pay" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+
           {/* Guest Information */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
             <Card className="bg-white shadow-md">
@@ -1201,6 +1159,45 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
+                  <FormField
+                    name="paymentMethod"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <div>
+                          <ComboBox
+                            list={paymentMethod}
+                            subject="payment method"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="totalPay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Pay</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="Enter your total pay" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
             </CardContent>
           </Card>
 

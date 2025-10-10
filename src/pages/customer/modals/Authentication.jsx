@@ -23,7 +23,7 @@ function Authentication() {
             formData.append("json", JSON.stringify(jsonData));
             formData.append("operation", "getCustomerAuthenticationStatus")
             const res = await axios.post(url, formData)
-            console.log("res ni onSubmit", res);
+            console.log("getCustomerAuthenticationStatus res", res);
             setStatus(res.data === 1 ? true : false);
 
         } catch (error) {

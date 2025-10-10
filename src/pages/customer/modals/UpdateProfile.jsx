@@ -124,9 +124,9 @@ function UpdateProfile({ data, getProfile }) {
                 lastName: data.customers_lname,
                 email: data.customers_email,
                 username: data.customers_online_username,
-                phone: data.customers_phone_number,
+                phone: data.customers_online_phone,
                 nationality: data.nationality_id,
-                dob: data.customers_date_of_birth
+                dob: data.customers_birthdate
             })
         }
     }, [form, data, open])

@@ -97,6 +97,7 @@ function CustomerArchieve() {
       cellClassName: "py-2",
       cell: (row) => (
         <Badge
+          size="sm"
           className={
             row.booking_status === "Approved"
               ? "bg-green-500 text-xs sm:text-sm px-2 py-1"
