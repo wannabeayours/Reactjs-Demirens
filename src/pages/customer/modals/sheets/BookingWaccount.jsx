@@ -1,15 +1,14 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import React, { useEffect, useState } from 'react'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Sheet, SheetContent, SheetFooter, SheetTrigger } from '@/components/ui/sheet'
+import React, { useEffect, useRef, useState } from 'react'
 import RoomsList from './RoomsList'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { BedDouble, Info, MinusIcon, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
-import Moreinfo from './Moreinfo'
+import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Stepper } from '@/components/ui/stepper'
 import { Badge } from '@/components/ui/badge'
@@ -21,16 +20,86 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ShowAlert from '@/components/ui/show-alert'
+import Moreinfo from './Moreinfo'
 
 const schema = z.object({
-  totalPay: z.string().min(1, { message: "Total pay is required" }),
-  paymentMethod: z.number().min(1, { message: "Payment method is required" }),
+  // Payment type toggle (gcash | bank)
+  payType: z.enum(['gcash', 'bank']).default(''),
+  // GCash fields
+  gcashNumber: z.string().optional(),
+  gcashName: z.string().optional(),
+  // Bank Transfer fields
+  bankName: z.string().optional(),
+  bankAccountName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankReferenceNumber: z.string().optional(),
+  // Proof of payment (file)
+  proofOfPayment: z.any().optional(),
+  // Amount to pay
+  totalPay: z.string().min(1, { message: 'Total pay is required' }),
 })
 
 function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+  const [proofOfPayment, setProofOfPayment] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const fileInputRef = useRef(null)
 
-  // Form states
-  const [paymentMethod, setPaymentMethod] = useState([]);
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method)
+    try { form.setValue('payType', method, { shouldValidate: false }) } catch { }
+    setSuccess(false)
+    setError('')
+  }
+
+  // Inputs now managed via react-hook-form; local input state removed
+
+  const handleRemoveFile = () => {
+    setProofOfPayment(null)
+    setPreviewUrl('')
+    try { form.setValue('proofOfPayment', null, { shouldValidate: true }) } catch { }
+    try { form.clearErrors('proofOfPayment') } catch { }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null
+    }
+  }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    console.log('[ProofOfPayment] Selected file:', file)
+    if (file) {
+      console.log('[ProofOfPayment] name:', file.name, 'size:', file.size, 'type:', file.type)
+      if (file.type.match('image.*')) {
+        setProofOfPayment(file)
+        try { form.setValue('proofOfPayment', file, { shouldValidate: true }) } catch { }
+        try { form.clearErrors('proofOfPayment') } catch { }
+
+        // Create a preview URL for the image
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setPreviewUrl(e.target.result)
+          console.log('[ProofOfPayment] preview URL generated')
+        }
+        reader.readAsDataURL(file)
+
+        // Clear any previous errors
+        setError('')
+      } else {
+        console.warn('[ProofOfPayment] Invalid file type:', file.type)
+        setError('Please upload an image file (JPG, PNG, etc.)')
+        setProofOfPayment(null)
+        setPreviewUrl('')
+        try {
+          form.setValue('proofOfPayment', null, { shouldValidate: true })
+          form.setError('proofOfPayment', { type: 'manual', message: 'Please upload an image file (JPG, PNG, etc.)' })
+        } catch { }
+        e.target.value = null
+      }
+    }
+  }
 
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
@@ -62,6 +131,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       return;
     }
 
+    // Validate payment-specific fields and proof of payment
+    if (!validatePaymentFields()) {
+      return;
+    }
+
     setAlertMessage("All payments are non-refundable. However, bookings may be canceled within 24 hours of confirmation.");
     setShowAlert(true);
   };
@@ -81,8 +155,20 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      totalPay: "",
-      paymentMethod: 0,
+      walkinfirstname: "",
+      walkinlastname: "",
+      email: "",
+      contactNumber: "",
+      // Payment defaults
+      payType: 'gcash',
+      gcashNumber: '',
+      gcashName: '',
+      bankName: '',
+      bankAccountName: '',
+      bankAccountNumber: '',
+      bankReferenceNumber: '',
+      proofOfPayment: null,
+      totalPay: '',
     },
   })
 
@@ -101,6 +187,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       description: 'Review and confirm'
     }
   ];
+  const navigateTo = useNavigate();
 
   const customerBookingWithAccount = async () => {
     try {
@@ -158,7 +245,22 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const formData = new FormData();
       formData.append("operation", "customerBookingWithAccount");
       formData.append("json", JSON.stringify(jsonData));
-      const res = await axios.post(url, formData);
+
+      // Attach proof of payment file in a simple way
+      const file = form.getValues().proofOfPayment;
+      if (file) {
+        formData.append('file', file, file.name);
+        console.log('[customerBookingWithAccount] file appended:', file.name);
+      } else {
+        console.log('[customerBookingWithAccount] No file to append');
+      }
+
+      const res = await axios({
+        url,
+        data: formData,
+        method: 'post',
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       console.log("res ni customerBookingWithAccount", res);
       if (res.data === -1) {
         toast.error("The room is not available anymore");
@@ -184,6 +286,83 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       console.error(error);
     }
   };
+
+  // Helper: simple validators for payment fields
+  const normalizePhone = (raw) => (raw || '').replace(/[^0-9]/g, '');
+  const isValidPHMobile = (raw) => {
+    const d = normalizePhone(raw);
+    // Accept 11-digit starting 09, or 12-digit starting 639
+    if (/^09\d{9}$/.test(d)) return true;
+    if (/^639\d{9}$/.test(d)) return true;
+    return false;
+  };
+  const isValidEmail = (email) => {
+    const v = (email || '').trim();
+    // Lightweight email check
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  };
+  const isDigitsBetween = (raw, min = 10, max = 20) => {
+    const d = normalizePhone(raw);
+    return new RegExp(`^\\d{${min},${max}}$`).test(d);
+  };
+
+  // Helper: validate payment-specific required fields and proof of payment using form values
+  const validatePaymentFields = () => {
+    const values = form.getValues();
+    const payType = values.payType || paymentMethod;
+
+    // Ensure a proof of payment image is uploaded
+    if (!values.proofOfPayment) {
+      toast.error("Please upload proof of payment.");
+      try { form.setError('proofOfPayment', { type: 'manual', message: 'Proof of payment is required.' }) } catch { }
+      return false;
+    }
+
+    if (payType === 'gcash') {
+      if (!values.gcashNumber || !values.gcashName) {
+        toast.error("Please complete all GCash details.");
+        if (!values.gcashNumber) form.setError('gcashNumber', { type: 'manual', message: 'GCash number is required.' });
+        if (!values.gcashName) form.setError('gcashName', { type: 'manual', message: 'Account name is required.' });
+        return false;
+      }
+      if (!isValidPHMobile(values.gcashNumber)) {
+        toast.error("Enter a valid PH mobile number (e.g., 09XXXXXXXXX or +639XXXXXXXXX).");
+        form.setError('gcashNumber', { type: 'manual', message: 'Invalid PH mobile number.' });
+        return false;
+      }
+      if ((values.gcashName || '').trim().length < 2) {
+        toast.error("Account name looks too short.");
+        form.setError('gcashName', { type: 'manual', message: 'Account name looks too short.' });
+        return false;
+      }
+    } else if (payType === 'bank') {
+      if (!values.bankName || !values.bankAccountName || !values.bankAccountNumber || !values.bankReferenceNumber) {
+        toast.error("Please complete all Bank Transfer details.");
+        if (!values.bankName) form.setError('bankName', { type: 'manual', message: 'Bank name is required.' });
+        if (!values.bankAccountName) form.setError('bankAccountName', { type: 'manual', message: 'Account holder name is required.' });
+        if (!values.bankAccountNumber) form.setError('bankAccountNumber', { type: 'manual', message: 'Account number is required.' });
+        if (!values.bankReferenceNumber) form.setError('bankReferenceNumber', { type: 'manual', message: 'Reference number is required.' });
+        return false;
+      }
+      if ((values.bankAccountName || '').trim().length < 2) {
+        toast.error("Account holder name looks too short.");
+        form.setError('bankAccountName', { type: 'manual', message: 'Account holder name looks too short.' });
+        return false;
+      }
+      if (!isDigitsBetween(values.bankAccountNumber, 10, 20)) {
+        toast.error("Account number must be 10–20 digits.");
+        form.setError('bankAccountNumber', { type: 'manual', message: 'Account number must be 10–20 digits.' });
+        return false;
+      }
+      if (!/^[A-Za-z0-9-]{6,}$/.test((values.bankReferenceNumber || '').trim())) {
+        toast.error("Reference number must be at least 6 characters (letters, numbers, dashes).");
+        form.setError('bankReferenceNumber', { type: 'manual', message: 'Reference number must be at least 6 characters.' });
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   const getPaymentMethod = async () => {
     try {
@@ -394,6 +573,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     localStorage.setItem('checkOut', newDateStr);
   };
 
+
+
   const handleRemoveRoom = (indexRemove) => {
     const roomToRemove = selectedRooms[indexRemove];
     const updated = selectedRooms.filter((_, i) => i !== indexRemove);
@@ -488,19 +669,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span>Subtotal:</span>
+                  <span>Subtotalss:</span>
                   <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 {selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) > 0 && (
                   <>
                     <div className="flex justify-between items-center text-sm">
                       <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span className="font-bold">₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-
-                      {/* <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> */}
+                      <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
+                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
                     </div>
                   </>
                 )}
@@ -605,16 +784,14 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                               {room.roomtype_name}
                             </h1>
                             <h1>{room.roomtype_description}</h1>
-                            <Link>
-                              <div className="flex flex-row space-x-2 mt-2 mb-2">
-                                <div>
-                                  <Moreinfo room={room} />
-                                </div>
-                                <div>
-                                  <Info />
-                                </div>
+                            <div className="flex flex-row space-x-2 mt-2 mb-2">
+                              <div>
+                                <Moreinfo room={room} />
                               </div>
-                            </Link>
+                              <div>
+                                <Info />
+                              </div>
+                            </div>
                             <h1 className="flex items-center gap-2 font-semibold text-[#113F67]">
                               <BedDouble size={20} />
                               ₱{" "}
@@ -818,48 +995,12 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       <div className="lg:col-span-1">
         <div className="sticky top-4">
           <BookingSummary />
-          {/* Navigation Controls - Top Right */}
-          <div className="flex justify-end items-center gap-3 mt-20">
-            <div className="text-sm text-gray-500 hidden md:block">
-              Step {currentStep} of {steps.length}
-            </div>
 
-            <Button
-              variant="outline"
-              onClick={handlePrevStep}
-              disabled={currentStep === 1}
-              className="flex items-center gap-2"
-              size="sm"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-
-            {currentStep < steps.length ? (
-              <Button
-                onClick={handleNextStep}
-                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
-                size="sm"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleShowAlert}
-                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                size="sm"
-              >
-                Confirm Booking
-              </Button>
-            )}
-          </div>
         </div>
       </div>
 
     </div>
-  );
-
+  )
   const BookingConfirmationStep = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
     const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
@@ -870,168 +1011,507 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
 
     return (
-      <ScrollArea className="h-[calc(100vh-400px)]">
-        <div className="space-y-4">
-          {/* Room Details */}
-          <Card className="bg-white shadow-md">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Selected Rooms</h3>
-                <Badge variant="secondary">{selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''}</Badge>
-              </div>
+      <div className="h-[calc(100vh-400px)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ScrollArea className="h-[calc(100vh-400px)]">
 
-              <div className="space-y-3">
-                {selectedRooms.map((room, index) => (
-                  <Card key={index} className="bg-gray-50 border">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-medium text-lg">{room.roomtype_name}</h4>
-                          <p className="text-sm text-gray-600">{room.roomtype_description}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                          <p className="text-sm text-gray-600">per night</p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <div className="flex gap-4">
-                          <span>Adults: {adultCounts[room.room_type] || 0}</span>
-                          <span>Children: {childrenCounts[room.room_type] || 0}</span>
-                          <span>Extra Beds: {bedCounts[room.room_type] || 0}</span>
-                        </div>
-                        <div className="font-medium">
-                          {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} × ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Summary */}
-          <Card className="bg-white shadow-md border-2 border-blue-200">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span>Subtotal:</span>
-                  <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>VAT (12%) included:</span>
-                  <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                {extraBedCharges > 0 && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            {/* Guest Information */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+              <Card className="bg-white shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">First Name</p>
+                      <p className="font-medium">{formValues.walkinfirstname}</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
-                      <span>₱{extraBedCharges.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <div>
+                      <p className="text-sm text-gray-600">Last Name</p>
+                      <p className="font-medium">{formValues.walkinlastname}</p>
                     </div>
-                  </>
-                )}
-                <Separator />
-                <div className="flex justify-between items-center text-lg font-semibold">
-                  <span>Total Amount:</span>
-                  <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between items-center text-lg font-bold text-blue-600">
-                  <span>Down Payment (50%):</span>
-                  <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> A 50% down payment is required to confirm your booking.
-                    The remaining balance will be collected upon check-in.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleConfirmBooking)} className="space-y-4">
-                  <FormField
-                    name="paymentMethod"
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <div>
-                          <ComboBox
-                            list={paymentMethod}
-                            subject="payment method"
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="totalPay"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Pay</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Enter your total pay" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium">{formValues.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Contact Number</p>
+                        <p className="font-medium">{formValues.contactNumber}</p>
+                      </div>
 
-          {/* Navigation Controls - Top Right */}
-          <div className="flex items-center justify-end gap-3 ">
-            <div className="text-sm text-gray-500 hidden md:block">
-              Step {currentStep} of {steps.length}
+                    </div>
+
+
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Booking Details */}
+              <Card className="bg-white shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Check-in Date</p>
+                      <p className="font-medium">{format(checkIn, 'PPP')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Check-out Date</p>
+                      <p className="font-medium">{format(checkOut, 'PPP')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Number of Nights</p>
+                      <p className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Guests</p>
+                      <p className="font-medium">{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0)} guest{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <Button
-              variant="outline"
-              onClick={handlePrevStep}
-              disabled={currentStep === 1}
-              className="flex items-center gap-2"
-              size="sm"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
+            {/* Room Details */}
+            <Card className="bg-white shadow-md">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Selected Rooms</h3>
+                  <Badge variant="secondary">{selectedRooms.length} Room{selectedRooms.length !== 1 ? 's' : ''}</Badge>
+                </div>
 
-            {currentStep < steps.length ? (
-              <Button
-                onClick={handleNextStep}
-                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
-                size="sm"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleShowAlert}
-                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                size="sm"
-              >
-                Confirm Booking
-              </Button>
-            )}
-          </div>
+                <div className="space-y-3">
+                  {selectedRooms.map((room, index) => (
+                    <Card key={index} className="bg-gray-50 border">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-medium text-lg">{room.roomtype_name}</h4>
+                            <p className="text-sm text-gray-600">{room.roomtype_description}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-sm text-gray-600">per night</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex gap-4">
+                            <span>Adults: {adultCounts[room.room_type] || 0}</span>
+                            <span>Children: {childrenCounts[room.room_type] || 0}</span>
+                            <span>Extra Beds: {bedCounts[room.room_type] || 0}</span>
+                          </div>
+                          <div className="font-medium">
+                            {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} × ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Summary */}
+            <Card className="bg-white shadow-md border-2 border-blue-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span>Subtotal:</span>
+                    <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>VAT (12%) included:</span>
+                    <span>₱{vat.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  {extraBedCharges > 0 && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
+                        <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
+                        <span>₱{extraBedCharges.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    </>
+                  )}
+                  <Separator />
+                  <div className="flex justify-between items-center text-lg font-semibold">
+                    <span>Total Amount:</span>
+                    <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-lg font-bold text-blue-600">
+                    <span>Down Payment (50%):</span>
+                    <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> A 50% down payment is required to confirm your booking.
+                      The remaining balance will be collected upon check-in.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </ScrollArea>
+
+          <ScrollArea className="h-[calc(100vh-400px)]">
+            <Card className="bg-white shadow-md rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gray-50">
+                <CardTitle>Select Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Form {...form}>
+                  <div className="flex space-x-4 mb-6">
+                    <Button
+                      variant={paymentMethod === 'gcash' ? 'default' : 'outline'}
+                      onClick={() => handlePaymentMethodChange('gcash')}
+                      className="flex-1"
+                    >
+                      GCash
+                    </Button>
+                    <Button
+                      variant={paymentMethod === 'bank' ? 'default' : 'outline'}
+                      onClick={() => handlePaymentMethodChange('bank')}
+                      className="flex-1"
+                    >
+                      Bank Transfer
+                    </Button>
+                  </div>
+
+                  {/* Payment Form */}
+                  {paymentMethod === 'gcash' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">Please complete your payment using GCash.</p>
+
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="gcashNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="gcash-number">GCash Number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="gcash-number"
+                                  type="text"
+                                  placeholder="09XX XXX XXXX"
+                                  className="mt-1"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="gcashName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="gcash-name">Account Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="gcash-name"
+                                  type="text"
+                                  placeholder="Full Name"
+                                  className="mt-1"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+
+                      </div>
+
+                      <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                        <h3 className="font-medium text-center mb-2">Payment Instructions</h3>
+                        <ol className="list-decimal list-inside text-sm space-y-2 text-gray-700">
+                          <li>Open your GCash app on your mobile device</li>
+                          <li>Tap on "Send Money"</li>
+                          <li>Enter the hotel's GCash number: <span className="font-medium">0917 123 4567</span></li>
+                          <li>Enter the amount: ₱ {down.toLocaleString('en-PH')}</li>
+                          <li>In the message field, include your booking reference</li>
+                          <li>Complete the payment in your GCash app</li>
+                          <li>Take a screenshot of your payment confirmation</li>
+                          <li>Upload the screenshot below and click "Continue to Payment"</li>
+                        </ol>
+                      </div>
+
+                      <div className="mt-6">
+                        <FormField
+                          control={form.control}
+                          name="proofOfPayment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="proof-of-payment" className="font-medium">Upload Proof of Payment</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="proof-of-payment"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    field.onChange(file);
+                                    handleFileChange(e);
+                                  }}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  onBlur={field.onBlur}
+                                  className="mt-1"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-xs text-gray-600 mt-1">Selected file: {field.value?.name || 'No file chosen'}</p>
+                              <p className="text-xs text-gray-500 mt-1">Upload a screenshot of your payment confirmation (JPG, PNG)</p>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {previewUrl && (
+                        <div className="mt-4 relative">
+                          <div className="border rounded-md overflow-hidden">
+                            <img
+                              src={previewUrl}
+                              alt="Payment proof"
+                              className="max-h-48 mx-auto"
+                            />
+                          </div>
+                          <button
+                            onClick={handleRemoveFile}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            type="button"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      <div className="mt-6">
+                        <FormField
+                          control={form.control}
+                          name="totalPay"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="total-pay-gcash">Amount to Pay</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="total-pay-gcash"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="Enter amount (₱)"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {paymentMethod === 'bank' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">Please complete your payment using Bank Transfer.</p>
+
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="bankName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="bank-name">Bank Name</FormLabel>
+                              <FormControl>
+                                <select
+                                  id="bank-name"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  {...field}
+                                >
+                                  <option value="">Select your bank</option>
+                                  <option value="bdo">BDO</option>
+                                  <option value="bpi">BPI</option>
+                                  <option value="metrobank">Metrobank</option>
+                                  <option value="landbank">Landbank</option>
+                                  <option value="pnb">PNB</option>
+                                  <option value="securitybank">Security Bank</option>
+                                </select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="bankAccountName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="account-name">Account Holder Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="account-name"
+                                  type="text"
+                                  placeholder="Full Name"
+                                  className="mt-1"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="bankAccountNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="account-number">Account Number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="account-number"
+                                  type="text"
+                                  placeholder="XXXX-XXXX-XXXX"
+                                  className="mt-1"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="bankReferenceNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="reference-number">Reference Number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="reference-number"
+                                  type="text"
+                                  placeholder="Transaction Reference"
+                                  className="mt-1"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                        <h3 className="font-medium text-center mb-2">Hotel Bank Details</h3>
+                        <div className="text-sm space-y-2 text-gray-700">
+                          <p><span className="font-medium">Bank:</span> BDO (Banco de Oro)</p>
+                          <p><span className="font-medium">Account Name:</span> Demiren Hotel and Restaurant</p>
+                          <p><span className="font-medium">Account Number:</span> 1234-5678-9012</p>
+                          <p><span className="font-medium">Branch:</span> Main Branch</p>
+                          <p className="mt-3 text-xs">Please include your name and booking date in the reference/notes section when making the transfer.</p>
+                          <p className="mt-3 text-xs">After completing your transfer, take a screenshot of the confirmation and upload it below.</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <FormField
+                          control={form.control}
+                          name="proofOfPayment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="proof-of-payment-bank" className="font-medium">Upload Proof of Payment</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="proof-of-payment-bank"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    field.onChange(file);
+                                    handleFileChange(e);
+                                  }}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  onBlur={field.onBlur}
+                                  className="mt-1"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-xs text-gray-600 mt-1">Selected file: {field.value?.name || 'No file chosen'}</p>
+                              <p className="text-xs text-gray-500 mt-1">Upload a screenshot of your payment confirmation (JPG, PNG)</p>
+                            </FormItem>
+                          )}
+                        />
+
+                        {previewUrl && (
+                          <div className="mt-4 relative">
+                            <div className="border rounded-md overflow-hidden">
+                              <img
+                                src={previewUrl}
+                                alt="Payment proof"
+                                className="max-h-48 mx-auto"
+                              />
+                            </div>
+                            <button
+                              onClick={handleRemoveFile}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                              type="button"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-6">
+                        <FormField
+                          control={form.control}
+                          name="totalPay"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel htmlFor="total-pay-bank">Amount to Pay</FormLabel>
+                              <FormControl>
+                                <Input
+                                  id="total-pay-bank"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="Enter amount (₱)"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <p className="text-xs text-gray-500 mt-1">Minimum is 50% of total. See summary above.</p>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )
+                  }
+                </Form>
+              </CardContent>
+              <CardFooter className="bg-gray-50 flex flex-col">
+                {error && (
+                  <div className="w-full mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-md text-sm">
+                    {error}
+                  </div>
+                )}
+              </CardFooter>
+            </Card>
+          </ScrollArea>
         </div>
-      </ScrollArea>
+      </div>
     );
   };
 
@@ -1050,8 +1530,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           Book Now
         </Button>
       </SheetTrigger>
-      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full p-6 rounded-t-3xl">
-        <div className="flex flex-col h-full mt-5">
+      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full rounded-t-3xl p-3">
+        <div className="flex flex-col h-full">
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
@@ -1073,6 +1553,44 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           </div>
         </div>
         <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
+        <SheetFooter>
+          {/* Navigation Controls */}
+          <div className={`flex justify-end items-center gap-3 ${currentStep === 1 ? 'mt-20' : 'mt-4'}`}>
+            <div className="text-sm text-gray-500 hidden md:block">
+              Step {currentStep} of {steps.length}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNextStep}
+                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+                size="sm"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleShowAlert}
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                size="sm"
+              >
+                Confirm Booking
+              </Button>
+            )}
+          </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
