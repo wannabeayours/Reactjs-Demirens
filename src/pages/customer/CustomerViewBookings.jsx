@@ -186,10 +186,10 @@ function CustomerViewBookings() {
                     <span className="text-right text-xs sm:text-sm">₱ {item.booking_totalAmount}</span>
                   </div>
 
-                    {/* <div className="mb-2 flex flex-wrap justify-between text-black">
+                    <div className="mb-2 flex flex-wrap justify-between text-black">
                       <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Balance:</span>
-                      <span className="text-right text-xs sm:text-sm">₱ 590</span>
-                    </div> */}
+                      <span className="text-right text-xs sm:text-sm">₱ {item.balance}</span>
+                    </div>
 
 
                   {/* Rooms List */}

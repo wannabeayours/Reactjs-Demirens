@@ -212,7 +212,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const down = total * 0.5;
       const downPayment = down.toFixed(2);
 
-      const { totalPay, paymentMethod } = form.getValues();
+      const { totalPay, payType } = form.getValues();
 
 
       const bookingDetails = {
@@ -224,7 +224,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         children: childrenNumberLS,
         adult: adultNumberLS,
         totalPay: totalPay,
-        payment_method_id: paymentMethod,
+        payment_method_id: payType === 'gcash' ? 1 : 2,
       };
 
       const roomDetails = selectedRooms.map((room) => {
@@ -255,32 +255,32 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         console.log('[customerBookingWithAccount] No file to append');
       }
 
-      const res = await axios({
-        url,
-        data: formData,
-        method: 'post',
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log("res ni customerBookingWithAccount", res);
-      if (res.data === -1) {
-        toast.error("The room is not available anymore");
-      } else if (res.data === 1) {
-        toast.success("Booking successful");
-        setOpen(false);
-        localStorage.removeItem('checkIn');
-        localStorage.removeItem('checkOut');
-        setSelectedRooms([]);
-        setAdultCounts({});
-        setChildrenCounts({});
-        setGuestCounts({});
-        handleClearData();
-        localStorage.setItem('refreshBookings', Date.now().toString());
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast.error("Booking error");
-      }
+      // const res = await axios({
+      //   url,
+      //   data: formData,
+      //   method: 'post',
+      //   headers: { 'Content-Type': 'multipart/form-data' },
+      // });
+      // console.log("res ni customerBookingWithAccount", res);
+      // if (res.data === -1) {
+      //   toast.error("The room is not available anymore");
+      // } else if (res.data === 1) {
+      //   toast.success("Booking successful");
+      //   setOpen(false);
+      //   localStorage.removeItem('checkIn');
+      //   localStorage.removeItem('checkOut');
+      //   setSelectedRooms([]);
+      //   setAdultCounts({});
+      //   setChildrenCounts({});
+      //   setGuestCounts({});
+      //   handleClearData();
+      //   localStorage.setItem('refreshBookings', Date.now().toString());
+      //   setTimeout(() => {
+      //     window.location.reload();
+      //   }, 1000);
+      // } else {
+      //   toast.error("Booking error");
+      // }
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -1014,63 +1014,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       <div className="h-[calc(100vh-400px)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ScrollArea className="h-[calc(100vh-400px)]">
-
-            {/* Guest Information */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              <Card className="bg-white shadow-md">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">First Name</p>
-                      <p className="font-medium">{formValues.walkinfirstname}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Last Name</p>
-                      <p className="font-medium">{formValues.walkinlastname}</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium">{formValues.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Contact Number</p>
-                        <p className="font-medium">{formValues.contactNumber}</p>
-                      </div>
-
-                    </div>
-
-
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Booking Details */}
-              <Card className="bg-white shadow-md">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Check-in Date</p>
-                      <p className="font-medium">{format(checkIn, 'PPP')}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Check-out Date</p>
-                      <p className="font-medium">{format(checkOut, 'PPP')}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Number of Nights</p>
-                      <p className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Total Guests</p>
-                      <p className="font-medium">{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0)} guest{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Room Details */}
             <Card className="bg-white shadow-md">

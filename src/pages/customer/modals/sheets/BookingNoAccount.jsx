@@ -117,7 +117,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     }
 
     const formValues = form.getValues();
-    const { totalPay, paymentMethod } = formValues;
+    const { totalPay, payType } = formValues;
     const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
     const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
     const totalWithBeds = subtotal + extraBedCharges;
@@ -228,7 +228,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       return;
     }
     const formValues = form.getValues();
-    const { walkinfirstname, walkinlastname, email, contactNumber, totalPay, paymentMethod } = formValues;
+    const { walkinfirstname, walkinlastname, email, contactNumber, totalPay } = formValues;
     try {
       const url = localStorage.getItem('url') + "customer.php";
 
@@ -241,7 +241,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
-        "payment_method_id": paymentMethod,
+        "payment_method_id": payType === 'gcash' ? 1 : 2,
       }
 
       console.log("selected rooms", selectedRooms)
