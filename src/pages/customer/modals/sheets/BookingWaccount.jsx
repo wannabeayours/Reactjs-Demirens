@@ -255,32 +255,32 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         console.log('[customerBookingWithAccount] No file to append');
       }
 
-      // const res = await axios({
-      //   url,
-      //   data: formData,
-      //   method: 'post',
-      //   headers: { 'Content-Type': 'multipart/form-data' },
-      // });
-      // console.log("res ni customerBookingWithAccount", res);
-      // if (res.data === -1) {
-      //   toast.error("The room is not available anymore");
-      // } else if (res.data === 1) {
-      //   toast.success("Booking successful");
-      //   setOpen(false);
-      //   localStorage.removeItem('checkIn');
-      //   localStorage.removeItem('checkOut');
-      //   setSelectedRooms([]);
-      //   setAdultCounts({});
-      //   setChildrenCounts({});
-      //   setGuestCounts({});
-      //   handleClearData();
-      //   localStorage.setItem('refreshBookings', Date.now().toString());
-      //   setTimeout(() => {
-      //     window.location.reload();
-      //   }, 1000);
-      // } else {
-      //   toast.error("Booking error");
-      // }
+      const res = await axios({
+        url,
+        data: formData,
+        method: 'post',
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      console.log("res ni customerBookingWithAccount", res);
+      if (res.data === -1) {
+        toast.error("The room is not available anymore");
+      } else if (res.data === 1) {
+        toast.success("Booking successful");
+        setOpen(false);
+        localStorage.removeItem('checkIn');
+        localStorage.removeItem('checkOut');
+        setSelectedRooms([]);
+        setAdultCounts({});
+        setChildrenCounts({});
+        setGuestCounts({});
+        handleClearData();
+        localStorage.setItem('refreshBookings', Date.now().toString());
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast.error("Booking error");
+      }
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);

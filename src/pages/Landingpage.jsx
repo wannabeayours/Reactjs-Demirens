@@ -48,6 +48,13 @@ const schema = z.object({
   path: ["checkIn"],
 });
 
+// Contact form schema (separate from booking schema)
+const contactSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  email: z.string().email({ message: "Please enter a valid email" }),
+  message: z.string().min(1, { message: "Message is required" }),
+});
+
 
 function Landingpage() {
   const [rooms, setRooms] = useState([]);
@@ -65,8 +72,6 @@ function Landingpage() {
     navigateTo('/customer/roomview');
   }
 
-
-
   const scroll = (scrollOffset) => {
     if (scroll.current) {
       scroll.current.scrollBy({
@@ -77,7 +82,7 @@ function Landingpage() {
   };
 
   const contactform = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -140,12 +145,25 @@ function Landingpage() {
   }
 
   const onContactSubmit = async (data) => {
+    const loading = toast.loading("Sending message...");
     try {
       console.log("Contact form submitted", data);
-      toast.success("Message sent successfully!");
-      contactform.reset();
+      const url = localStorage.getItem('url') + "customer.php";
+      const formData = new FormData();
+      formData.append("operation", "sendMessageEmail");
+      formData.append("json", JSON.stringify(data));
+      const res = await axios.post(url, formData);
+      console.log("res ni contact", res)
+      if (res.data === 1) {
+        toast.success("Message sent successfully!");
+      } else {
+        toast.error("Failed to send message.");
+      }
+      // contactform.reset();
     } catch (error) {
       toast.error("Failed to send message.");
+    } finally {
+      toast.dismiss(loading);
     }
   };
 
