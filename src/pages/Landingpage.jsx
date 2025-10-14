@@ -156,10 +156,10 @@ function Landingpage() {
       console.log("res ni contact", res)
       if (res.data === 1) {
         toast.success("Message sent successfully!");
+        contactform.reset();
       } else {
         toast.error("Failed to send message.");
       }
-      // contactform.reset();
     } catch (error) {
       toast.error("Failed to send message.");
     } finally {

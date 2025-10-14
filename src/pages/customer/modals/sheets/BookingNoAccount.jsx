@@ -21,6 +21,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import ShowAlert from '@/components/ui/show-alert'
 import Moreinfo from './Moreinfo'
+import ShowQRCode from '../CreditCard'
+import CreditCard from '../CreditCard'
 
 const schema = z.object({
   walkinfirstname: z.string().min(1, { message: "First name is required" }),
@@ -32,11 +34,6 @@ const schema = z.object({
   // GCash fields
   gcashNumber: z.string().optional(),
   gcashName: z.string().optional(),
-  // Bank Transfer fields
-  bankName: z.string().optional(),
-  bankAccountName: z.string().optional(),
-  bankAccountNumber: z.string().optional(),
-  bankReferenceNumber: z.string().optional(),
   // Proof of payment (file)
   proofOfPayment: z.any().optional(),
   // Amount to pay
@@ -124,7 +121,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     const downPayment = (totalWithBeds * 0.5).toFixed(2)
 
     // Additional payment validations
-    if (paymentMethod === 0) {
+    if (payType === 0) {
       toast.error("Please select a payment method");
       return;
     } else if (totalPay === "") {
@@ -143,6 +140,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     setAlertMessage("All payments are non-refundable. However, bookings may be canceled within 24 hours of confirmation.");
     setShowAlert(true);
   };
+
   const handleCloseAlert = async (status) => {
     if (status === 1) {
       // Validate the form before proceeding
@@ -167,11 +165,6 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       payType: 'gcash',
       gcashNumber: '',
       gcashName: '',
-      bankName: '',
-      bankAccountName: '',
-      bankAccountNumber: '',
-      bankReferenceNumber: '',
-      proofOfPayment: null,
       totalPay: '',
     },
   })
@@ -211,11 +204,11 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     const totalAmount = totalWithBeds.toFixed(2)
 
     // Validate ALL form fields including payment fields
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast.error("Please fill all required fields correctly");
-      return;
-    }
+    // const isValid = await form.trigger();
+    // if (!isValid) {
+    //   toast.error("Please fill all required fields correctly");
+    //   return;
+    // }
 
     const payType = form.getValues('payType');
     if (!payType) {
@@ -224,9 +217,9 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     }
 
     // Also validate payment-specific inputs before submitting
-    if (!validatePaymentFields()) {
-      return;
-    }
+    // if (!validatePaymentFields()) {
+    //   return;
+    // }
     const formValues = form.getValues();
     const { walkinfirstname, walkinlastname, email, contactNumber, totalPay } = formValues;
     try {
@@ -1305,7 +1298,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                       onClick={() => handlePaymentMethodChange('bank')}
                       className="flex-1"
                     >
-                      Bank Transfer
+                      Paypal
                     </Button>
                   </div>
 
@@ -1355,7 +1348,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                           )}
                         />
 
-                       
+
                       </div>
 
                       <div className="bg-blue-50 p-4 rounded-lg mt-4">
@@ -1373,7 +1366,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                       </div>
 
                       <div className="mt-6">
-                          <FormField
+                        <FormField
                           control={form.control}
                           name="proofOfPayment"
                           render={({ field }) => (
@@ -1448,184 +1441,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                     </div>
                   )}
                   {paymentMethod === 'bank' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-600">Please complete your payment using Bank Transfer.</p>
-
-                      <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="bankName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="bank-name">Bank Name</FormLabel>
-                              <FormControl>
-                                <select
-                                  id="bank-name"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  {...field}
-                                >
-                                  <option value="">Select your bank</option>
-                                  <option value="bdo">BDO</option>
-                                  <option value="bpi">BPI</option>
-                                  <option value="metrobank">Metrobank</option>
-                                  <option value="landbank">Landbank</option>
-                                  <option value="pnb">PNB</option>
-                                  <option value="securitybank">Security Bank</option>
-                                </select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="bankAccountName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="account-name">Account Holder Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="account-name"
-                                  type="text"
-                                  placeholder="Full Name"
-                                  className="mt-1"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="bankAccountNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="account-number">Account Number</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="account-number"
-                                  type="text"
-                                  placeholder="XXXX-XXXX-XXXX"
-                                  className="mt-1"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="bankReferenceNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="reference-number">Reference Number</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="reference-number"
-                                  type="text"
-                                  placeholder="Transaction Reference"
-                                  className="mt-1"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                        <h3 className="font-medium text-center mb-2">Hotel Bank Details</h3>
-                        <div className="text-sm space-y-2 text-gray-700">
-                          <p><span className="font-medium">Bank:</span> BDO (Banco de Oro)</p>
-                          <p><span className="font-medium">Account Name:</span> Demiren Hotel and Restaurant</p>
-                          <p><span className="font-medium">Account Number:</span> 1234-5678-9012</p>
-                          <p><span className="font-medium">Branch:</span> Main Branch</p>
-                          <p className="mt-3 text-xs">Please include your name and booking date in the reference/notes section when making the transfer.</p>
-                          <p className="mt-3 text-xs">After completing your transfer, take a screenshot of the confirmation and upload it below.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-6">
-                        <FormField
-                          control={form.control}
-                          name="proofOfPayment"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="proof-of-payment-bank" className="font-medium">Upload Proof of Payment</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="proof-of-payment-bank"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    field.onChange(file);
-                                    handleFileChange(e);
-                                  }}
-                                  name={field.name}
-                                  ref={field.ref}
-                                  onBlur={field.onBlur}
-                                  className="mt-1"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <p className="text-xs text-gray-600 mt-1">Selected file: {field.value?.name || 'No file chosen'}</p>
-                              <p className="text-xs text-gray-500 mt-1">Upload a screenshot of your payment confirmation (JPG, PNG)</p>
-                            </FormItem>
-                          )}
-                        />
-
-                        {previewUrl && (
-                          <div className="mt-4 relative">
-                            <div className="border rounded-md overflow-hidden">
-                              <img
-                                src={previewUrl}
-                                alt="Payment proof"
-                                className="max-h-48 mx-auto"
-                              />
-                            </div>
-                            <button
-                              onClick={handleRemoveFile}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                              type="button"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-6">
-                        <FormField
-                          control={form.control}
-                          name="totalPay"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="total-pay-bank">Amount to Pay</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="total-pay-bank"
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="Enter amount (₱)"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <p className="text-xs text-gray-500 mt-1">Minimum is 50% of total. See summary above.</p>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
+                    <CreditCard onSubmit={customerBookingNoAccount} totalAmount={total} />
                   )
                   }
                 </Form>
@@ -1721,6 +1537,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
             )}
           </div>
         </SheetFooter>
+
       </SheetContent>
     </Sheet>
   );
