@@ -62,12 +62,15 @@ const PaymentMethod = () => {
   // Set default amount to 50% of total when method changes
   useEffect(() => {
     if (method && !amountPaid) {
-      setAmountPaid(NumberFormatter.formatCurrencyDecimals(total * 0.5, 0, { showCurrency: false }));
+      const fiftyPercent = total * 0.5;
+      setAmountPaid(Number.isFinite(fiftyPercent) ? fiftyPercent.toFixed(2) : '');
     }
   }, [method, total]);
 
   const handleNext = () => {
-    if (!method || !amountPaid) {
+    const numericAmountPaid = parseFloat(String(amountPaid).replace(/,/g, ''));
+
+    if (!method || !amountPaid || !Number.isFinite(numericAmountPaid)) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -78,7 +81,7 @@ const PaymentMethod = () => {
     }
 
     const minimumPayment = total * 0.5; // 50% of total
-    if (Number(amountPaid) < minimumPayment) {
+    if (numericAmountPaid < minimumPayment) {
       alert(`The amount paid must be at least 50% of the total (₱${minimumPayment.toLocaleString()})`);
       return;
     }
@@ -87,8 +90,8 @@ const PaymentMethod = () => {
       ...walkInData,
       payment: {
         method,
-        amountPaid: Number(amountPaid),
-        discount: Number(discount) || 0,
+        amountPaid: numericAmountPaid,
+        discount: parseFloat(discount) || 0,
         referenceNumber: referenceNumber.trim(),
       },
       billing: {
@@ -200,7 +203,8 @@ const PaymentMethod = () => {
             disabled={
               !method ||
               !amountPaid ||
-              Number(amountPaid) < (total * 0.5) ||
+              !Number.isFinite(parseFloat(String(amountPaid).replace(/,/g, ''))) ||
+              parseFloat(String(amountPaid).replace(/,/g, '')) < (total * 0.5) ||
               (method && method.toLowerCase() !== 'cash' && !referenceNumber.trim())
             }
           >

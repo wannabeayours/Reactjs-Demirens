@@ -16,17 +16,20 @@ export default function Confirmation() {
 
   const handleConfirm = async () => {
     // Validate payment fields
-    const amountPaid = walkInData.payment?.amountPaid || 0;
+    const amountPaidRaw = walkInData.payment?.amountPaid;
     const paymentMethod = walkInData.payment?.method || '';
     const referenceNumber = walkInData.payment?.referenceNumber || '';
+
+    const totalAmount = walkInData.billing?.total || 0;
+    const numericAmountPaid = Number(amountPaidRaw);
 
     console.log('🔍 Confirmation.jsx - handleConfirm called');
     console.log('📊 Current walkInData:', walkInData);
     console.log('💰 Payment details:', {
-      amountPaid,
+      amountPaid: numericAmountPaid,
       paymentMethod,
       referenceNumber,
-      total: walkInData.billing?.total || 0
+      total: totalAmount
     });
 
     if (!paymentMethod) {
@@ -39,8 +42,14 @@ export default function Confirmation() {
       return;
     }
 
-    if (amountPaid <= 0) {
+    if (!Number.isFinite(numericAmountPaid) || numericAmountPaid <= 0) {
       alert('Please enter a valid amount paid.');
+      return;
+    }
+
+    const minimumPayment = totalAmount * 0.5;
+    if (numericAmountPaid < minimumPayment) {
+      alert(`The amount paid must be at least 50% of the total (₱${minimumPayment.toLocaleString()})`);
       return;
     }
 
@@ -132,6 +141,9 @@ export default function Confirmation() {
         phone: cleanedData.customers_phone_number
       });
 
+      // Attach current employee_id for backend attribution
+      cleanedData.employee_id = Number(localStorage.getItem('userId')) || 1;
+
       // Prepare and send data
       const formData = new FormData();
       formData.append('method', 'finalizeBooking');
@@ -168,9 +180,9 @@ export default function Confirmation() {
     }
   };
 
-  const amountPaid = walkInData.payment?.amountPaid || 0;
+  const amountPaid = Number(walkInData.payment?.amountPaid) || 0;
   const total = walkInData.billing?.total || 0;
-  const change = amountPaid - total;
+  const change = Number.isFinite(amountPaid) ? amountPaid - total : 0;
 
   return (
     <div className="lg:ml-72 max-w-3xl mx-auto p-6 space-y-8 bg-white dark:bg-gray-900 rounded-md">

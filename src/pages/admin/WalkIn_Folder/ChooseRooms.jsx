@@ -13,7 +13,8 @@ import {
 import { Search, ChevronDown } from 'lucide-react';
 
 const ChooseRooms = () => {
-  const APIConn = `${localStorage.url}admin.php`;
+  const baseUrl = (typeof window !== 'undefined' && window.localStorage) ? (localStorage.getItem('url') || `${window.location.origin}/`) : '';
+  const APIConn = `${baseUrl}admin.php`;
   const navigate = useNavigate();
 
   const { walkInData, setWalkInData } = useWalkIn();
@@ -23,6 +24,8 @@ const ChooseRooms = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoomTypes, setSelectedRoomTypes] = useState([]);
+  // NEW: available counts per room type
+  const [availableCounts, setAvailableCounts] = useState({});
 
   // Booking details state - extract date part from datetime strings
   const [checkIn, setCheckIn] = useState(() => {
@@ -49,6 +52,10 @@ const ChooseRooms = () => {
 
   // Extra filter state
   const [floor, setFloor] = useState('');
+
+  // Incremental loading config
+  const LOAD_STEP = 6;
+  const [visibleCount, setVisibleCount] = useState(LOAD_STEP);
 
   // Availability helpers
   const parseDate = (str) => {
@@ -91,14 +98,17 @@ const ChooseRooms = () => {
     const end = parseDate(endStr);
     if (!start || !end) return true; // no dates selected yet
     
-    // Check if room is currently occupied
-    if (room.status_name === 'Occupied') return false;
-    
-    // Check for booking conflicts
+    // Do NOT blanket-exclude currently occupied rooms; evaluate based on booking overlaps
+    // Consider only active booking statuses
+    const ACTIVE_STATUS = new Set(['Pending', 'Approved', 'Checked-In', 'Confirmed']);
     const bookings = Array.isArray(room.bookings) ? room.bookings : [];
     for (const b of bookings) {
-      const bStart = parseDate(b.checkin_date);
-      const bEnd = parseDate(b.checkout_date);
+      const statusName = b.status_name || b.booking_status || b.booking_status_name;
+      if (statusName && !ACTIVE_STATUS.has(String(statusName))) continue; // ignore non-active bookings
+      const bStartRaw = b.checkin_date || b.booking_checkin_dateandtime || b.booking_checkin || b.booking_checkin_date;
+      const bEndRaw = b.checkout_date || b.booking_checkout_dateandtime || b.booking_checkout || b.booking_checkout_date;
+      const bStart = parseDate(bStartRaw);
+      const bEnd = parseDate(bEndRaw);
       if (!bStart || !bEnd) continue;
       if (rangesOverlap(start, end, bStart, bEnd)) return false;
     }
@@ -142,16 +152,119 @@ const ChooseRooms = () => {
 
   const getRoomTypes = useCallback(async () => {
     const roomTypeReq = new FormData();
-    roomTypeReq.append('method', 'view_room_types');
+    roomTypeReq.append('method', 'viewRoomTypes');
 
     try {
       const res = await axios.post(APIConn, roomTypeReq);
-      setRoomTypes(Array.isArray(res.data) ? res.data : []);
+      let data = res.data;
+      // Handle cases where backend returns a JSON string
+      try {
+        if (typeof data === 'string') {
+          data = JSON.parse(data);
+        }
+      } catch (e) {
+        console.error('Failed to parse room types JSON:', e, data);
+        data = [];
+      }
+
+      // If no room types returned, fallback to deriving from viewRooms
+      if (!Array.isArray(data) || data.length === 0) {
+        const roomReq = new FormData();
+        roomReq.append('method', 'viewRooms');
+        try {
+          const roomsRes = await axios.post(APIConn, roomReq);
+          let roomsData = roomsRes.data;
+          if (typeof roomsData === 'string') {
+            try { roomsData = JSON.parse(roomsData); } catch { roomsData = []; }
+          }
+          if (Array.isArray(roomsData)) {
+            const byType = {};
+            roomsData.forEach(r => {
+              const id = r.roomtype_id ?? r.room_type_id;
+              if (!id) return;
+              if (!byType[id]) {
+                byType[id] = {
+                  roomtype_id: id,
+                  roomtype_name: r.roomtype_name,
+                  roomtype_description: r.roomtype_description,
+                  roomtype_price: Number(r.roomtype_price),
+                  roomtype_capacity: r.roomtype_capacity,
+                  roomtype_beds: r.roomtype_beds,
+                  roomtype_sizes: r.roomtype_sizes,
+                };
+              }
+            });
+            const derived = Object.values(byType);
+            setRoomTypes(derived);
+            return;
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback fetch rooms failed:', fallbackErr);
+        }
+      }
+
+      setRoomTypes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching room types:', err);
       setRoomTypes([]);
     }
   }, [APIConn]);
+
+  // NEW: Fetch available rooms count per room type (same source as Dashboard)
+  const fetchAvailableRoomsCounts = useCallback(async () => {
+    try {
+      const formData = new FormData();
+      formData.append('method', 'getAvailableRoomsCount');
+      // Include selected dates for accurate, date-aware availability
+      if (checkIn && checkOut) {
+        const payload = { check_in: `${checkIn} 14:00:00`, check_out: `${checkOut} 12:00:00` };
+        formData.append('json', JSON.stringify(payload));
+      }
+      const res = await axios.post(APIConn, formData);
+      let payload = res.data;
+      if (typeof payload === 'string') {
+        try { payload = JSON.parse(payload); } catch { payload = {}; }
+      }
+
+      // Prefer the new by_roomtype mapping from backend if present
+      const byType = payload && payload.by_roomtype ? payload.by_roomtype : null;
+      if (byType && typeof byType === 'object') {
+        setAvailableCounts(byType);
+        return;
+      }
+
+      // Fallback to legacy named fields
+      const colMap = {
+        1: 'standard_twin_available',
+        2: 'single_available',
+        3: 'double_available',
+        4: 'triple_available',
+        5: 'quadruple_available',
+        6: 'family_a_available',
+        7: 'family_b_available',
+        8: 'family_c_available',
+      };
+      const counts = {};
+      Object.entries(colMap).forEach(([id, col]) => {
+        counts[id] = Number(payload?.[col]) || 0;
+      });
+      setAvailableCounts(counts);
+    } catch (error) {
+      console.error('Failed to fetch available rooms counts:', error);
+      setAvailableCounts({});
+    }
+  }, [APIConn, checkIn, checkOut]);
+
+  useEffect(() => {
+    getRoomTypes();
+    fetchAvailableRoomsCounts();
+    const interval = setInterval(fetchAvailableRoomsCounts, 30000);
+    return () => clearInterval(interval);
+  }, [getRoomTypes, fetchAvailableRoomsCounts]);
+
+  useEffect(() => {
+    fetchAvailableRoomsCounts();
+  }, [checkIn, checkOut, fetchAvailableRoomsCounts]);
 
   const getRooms = useCallback(async () => {
     if (selectedRoomTypes.length === 0) {
@@ -167,11 +280,20 @@ const ChooseRooms = () => {
       const res = await axios.post(APIConn, roomReq);
       const allRooms = Array.isArray(res.data) ? res.data : [];
       
-      // Filter rooms by selected room types using roomtype_name
+      // Build a fallback mapping from room type name -> id (as string) using loaded roomTypes
+      const nameToId = new Map(
+        (Array.isArray(roomTypes) ? roomTypes : []).map(rt => [rt.roomtype_name, String(rt.roomtype_id)])
+      );
+      
+      // Filter rooms by selected room types using roomtype_id when present,
+      // and fallback to mapping via roomtype_name -> roomtype_id when id is missing
       const filteredRooms = allRooms.filter(room => {
-        // Find the room type that matches this room's name
-        const matchingRoomType = roomTypes.find(rt => rt.roomtype_name === room.roomtype_name);
-        return matchingRoomType && selectedRoomTypes.includes(matchingRoomType.roomtype_id.toString());
+        const roomTypeIdRaw = room.roomtype_id ?? room.room_type_id;
+        let roomTypeId = roomTypeIdRaw != null ? String(roomTypeIdRaw) : null;
+        if (!roomTypeId && room.roomtype_name && nameToId.has(room.roomtype_name)) {
+          roomTypeId = nameToId.get(room.roomtype_name);
+        }
+        return roomTypeId && selectedRoomTypes.includes(roomTypeId);
       });
       
       setRooms(filteredRooms);
@@ -198,13 +320,19 @@ const ChooseRooms = () => {
     if (exists) {
       setSelectedRooms(prev => prev.filter(r => r.id !== room.roomnumber_id));
     } else {
-      // Find the room type ID from the roomTypes array
-      const matchingRoomType = roomTypes.find(rt => rt.roomtype_name === room.roomtype_name);
+      // Use the roomtype_id directly from the room object
+      const roomTypeId = room.roomtype_id ?? room.room_type_id;
+      // Rely on date-based availability check rather than aggregate counts
+      const canSelect = isRoomAvailableForRange(room, checkIn, checkOut);
+      if (!canSelect) {
+        alert("This room is not available for the selected dates. Please choose a different room or adjust your dates.");
+        return;
+      }
       
       setSelectedRooms(prev => [...prev, {
         id: room.roomnumber_id,
         roomnumber_id: room.roomnumber_id,
-        roomtype_id: matchingRoomType ? matchingRoomType.roomtype_id : null,
+        roomtype_id: roomTypeId,
         name: room.roomtype_name,
         roomtype_name: room.roomtype_name,
         price: Number(room.roomtype_price),
@@ -219,7 +347,8 @@ const ChooseRooms = () => {
         roomtype_sizes: room.roomtype_sizes,
         description: room.roomtype_description,
         roomtype_description: room.roomtype_description,
-        status_name: room.status_name
+        status_name: room.status_name,
+        images: room.images
       }]);
     }
   };
@@ -320,6 +449,14 @@ const ChooseRooms = () => {
 
     return matchesSearch && matchesGuests && matchesFloor && availableOnDates;
   });
+
+  // Visible subset of rooms
+  const visibleRooms = filteredRooms.slice(0, visibleCount);
+
+  // Reset visible rooms when filters / inputs change
+  useEffect(() => {
+    setVisibleCount(LOAD_STEP);
+  }, [searchTerm, floor, checkIn, checkOut, adult, children, selectedRoomTypes, rooms.length]);
 
   // Scroll to bottom handler
   const scrollToBottom = () => {
@@ -491,8 +628,8 @@ const ChooseRooms = () => {
         ) : filteredRooms.length === 0 ? (
           <p className="text-center text-red-500 font-semibold">No Available Rooms</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredRooms.map((room, index) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleRooms.map((room, index) => {
               const imageArray = room.images
                 ? room.images.split(",").map(img => img.trim())
                 : [];
@@ -508,71 +645,87 @@ const ChooseRooms = () => {
                       {imageArray.length > 0 ? (
                         imageArray.map((img, i) => (
                           <CarouselItem key={i}>
-                            <img
-                              src={`${localStorage.url}images/${img}`}
-                              alt={room.roomtype_name}
-                              className="w-full h-56 object-cover"
-                            />
+                            <div className="relative">
+                              <img
+                                src={`${localStorage.url}images/${img}`}
+                                alt={room.roomtype_name}
+                                className="w-full h-56 object-cover"
+                              />
+                              {/* Room number overlay */}
+                              <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                Room #{room.roomnumber_id}
+                              </span>
+                            </div>
                           </CarouselItem>
                         ))
                       ) : (
                         <CarouselItem>
-                          <div className="w-full h-56 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
-                            <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                              Images Unavailable
+                          <div className="relative w-full h-56 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500">
+                            {/* Room number overlay */}
+                            <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              Room #{room.roomnumber_id}
                             </span>
+                            No Image
                           </div>
                         </CarouselItem>
                       )}
                     </CarouselContent>
-
-                    <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 rounded-full shadow p-1 hover:bg-white dark:hover:bg-gray-700" />
-                    <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 rounded-full shadow p-1 hover:bg-white dark:hover:bg-gray-700" />
+                    <CarouselPrevious />
+                    <CarouselNext />
                   </Carousel>
 
                   {/* Room Info */}
                   <div className="p-4">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                        {room.roomtype_name} - Room #{room.roomnumber_id} (Floor {room.roomfloor})
-                      </h2>
-                      <p className="text-green-600 dark:text-green-400 font-bold text-lg">
-                        ₱{room.roomtype_price}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{room.roomtype_name}</h3>
+                      <span className="text-green-600 dark:text-green-400 font-bold">₱{Number(room.roomtype_price)}</span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Capacity: {room.roomtype_capacity} | Beds: {room.roomtype_beds} | Size: {room.roomtype_sizes}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-2">
                       {room.roomtype_description}
                     </p>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      Capacity: {room.roomtype_capacity}
-                    </p>
 
-                    {/* Availability/Conflict badge */}
-                    {checkIn && checkOut && (
-                      <div className="mt-2">
-                        {isRoomAvailableForRange(room, checkIn, checkOut) ? (
-                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">
-                            Available on selected dates
-                          </span>
-                        ) : (
-                          <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">
-                            Conflict with existing booking
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => toggleRoomSelection(room)}
-                      className={`mt-3 px-4 py-2 rounded text-white ${isRoomSelected(room) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 hover:bg-gray-500'
-                        }`}
-                    >
-                      {isRoomSelected(room) ? 'Selected' : 'Select Room'}
-                    </button>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        Floor: {room.roomfloor}
+                      </span>
+                      <button
+                        onClick={() => toggleRoomSelection(room)}
+                        disabled={!isRoomAvailableForRange(room, checkIn, checkOut) && !isRoomSelected(room)}
+                        className={`${isRoomSelected(room) ? 'bg-red-600 hover:bg-red-700' : (!isRoomAvailableForRange(room, checkIn, checkOut) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700')} text-white px-4 py-2 rounded`}
+                      >
+                        {isRoomSelected(room) ? 'Remove' : (!isRoomAvailableForRange(room, checkIn, checkOut) ? 'Fully Booked' : 'Select')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
+
+            {(visibleCount > LOAD_STEP || visibleCount < filteredRooms.length) && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center gap-3">
+                {visibleCount > LOAD_STEP && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount(prev => Math.max(LOAD_STEP, prev - LOAD_STEP))}
+                    className="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+                  >
+                    Show Less
+                  </button>
+                )}
+                {visibleCount < filteredRooms.length && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount(prev => Math.min(prev + LOAD_STEP, filteredRooms.length))}
+                    className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+                  >
+                    See More Rooms
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

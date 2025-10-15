@@ -153,7 +153,22 @@ export class DateFormatter {
    * @returns {string} Formatted short date string
    */
   static formatShortDate(dateValue) {
-    return this.formatDate(dateValue, { format: 'shortDate' });
+    try {
+      const normalized = typeof dateValue === 'string' ? dateValue.replace(' ', 'T') : dateValue;
+      const date = typeof normalized === 'string' ? new Date(normalized) : new Date(normalized);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString(this.defaults.locale, {
+        timeZone: this.defaults.timeZone,
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('DateFormatter.formatShortDate() error:', error);
+      return 'Invalid Date';
+    }
   }
 
   /**
@@ -162,7 +177,22 @@ export class DateFormatter {
    * @returns {string} Formatted long date string
    */
   static formatLongDate(dateValue) {
-    return this.formatDate(dateValue, { format: 'longDate' });
+    try {
+      const normalized = typeof dateValue === 'string' ? dateValue.replace(' ', 'T') : dateValue;
+      const date = typeof normalized === 'string' ? new Date(normalized) : new Date(normalized);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString(this.defaults.locale, {
+        timeZone: this.defaults.timeZone,
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('DateFormatter.formatLongDate() error:', error);
+      return 'Invalid Date';
+    }
   }
 
   /**
@@ -182,7 +212,7 @@ export class DateFormatter {
       } else if (diffDays === 1) {
         return 'Yesterday';
       } else if (diffDays === -1) {
-        return 'Tomorrowe';
+        return 'Tomorrow';
       } else if (diffDays > 0) {
         return `${diffDays} days ago`;
       } else {
@@ -326,19 +356,32 @@ export class DateFormatter {
    * @returns {string} Formatted string
    */
   static formatWithCustomFormat(date, format) {
+    const locale = this.defaults.locale;
+    const timeZone = this.defaults.timeZone;
+
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
 
     switch (format) {
       case 'shortDate':
-        return this.formatShortDate(date);
+        return date.toLocaleDateString(locale, {
+          timeZone,
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        });
       case 'longDate':
-        return this.formatLongDate(date);
+        return date.toLocaleDateString(locale, {
+          timeZone,
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
       case 'compact':
         return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year.toString().slice(-2)}`;
       default:
-        return date.toLocaleDateString('en-US');
+        return date.toLocaleDateString(locale, { timeZone });
     }
   }
 

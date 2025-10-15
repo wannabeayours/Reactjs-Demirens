@@ -26,6 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import AdminHeader from '../components/AdminHeader'
 import { Search, Filter, MoreHorizontal, Edit, Trash2, Percent, Calendar, DollarSign as DollarSignIcon } from 'lucide-react';
+import DateFormatter from '@/pages/admin/Function_Files/DateFormatter';
 
 import {
   Form,
@@ -52,6 +53,8 @@ function DiscountMaster() {
     discountPercentage: z.string().optional(),
     discountAmount: z.string().optional(),
     discountDescription: z.string().optional(),
+    discountStartIn: z.string().optional(),
+    discountEndsIn: z.string().optional(),
   }).refine((data) => data.discountPercentage || data.discountAmount, {
     message: "Either percentage or amount is required",
     path: ["discountPercentage"],
@@ -64,6 +67,8 @@ function DiscountMaster() {
       discountPercentage: '',
       discountAmount: '',
       discountDescription: '',
+      discountStartIn: '',
+      discountEndsIn: '',
     },
   });
 
@@ -101,7 +106,9 @@ function DiscountMaster() {
       discountName: discountData.discounts_name,
       discountPercentage: discountData.discounts_percentage?.toString() || '',
       discountAmount: discountData.discounts_amount?.toString() || '',
-      discountDescription: discountData.discounts_description || ''
+      discountDescription: discountData.discounts_description || '',
+      discountStartIn: discountData.discount_start_in || '',
+      discountEndsIn: discountData.discount_ends_in || '',
     };
     
     setSelectedDiscount({
@@ -143,7 +150,9 @@ function DiscountMaster() {
       discountName: discountValues.discountName,
       discountPercentage: discountValues.discountPercentage ? parseFloat(discountValues.discountPercentage) : null,
       discountAmount: discountValues.discountAmount ? parseInt(discountValues.discountAmount) : null,
-      discountDescription: discountValues.discountDescription
+      discountDescription: discountValues.discountDescription,
+      discountStartIn: discountValues.discountStartIn || null,
+      discountEndsIn: discountValues.discountEndsIn || null,
     };
 
     const updateDiscForm = new FormData();
@@ -349,6 +358,7 @@ function DiscountMaster() {
                           <TableHead className="font-semibold">Description</TableHead>
                           <TableHead className="font-semibold text-center">Percentage</TableHead>
                           <TableHead className="font-semibold text-center">Amount</TableHead>
+                          <TableHead className="font-semibold text-center">Duration Date</TableHead>
                           <TableHead className="font-semibold text-center">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -379,6 +389,18 @@ function DiscountMaster() {
                                   {discount.discounts_amount ? (
                                     <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
                                       ₱{discount.discounts_amount}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {(discount.discount_start_in || discount.discount_ends_in) ? (
+                                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                      {discount.discount_start_in ? DateFormatter.formatLongDate(discount.discount_start_in) : '—'}
+                                      {" "}-
+                                      {" "}
+                                      {discount.discount_ends_in ? DateFormatter.formatLongDate(discount.discount_ends_in) : '—'}
                                     </Badge>
                                   ) : (
                                     <span className="text-gray-400">-</span>
@@ -420,7 +442,7 @@ function DiscountMaster() {
                           })
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                               {searchTerm ? 'No discounts found matching your search.' : 'No discounts available.'}
                             </TableCell>
                           </TableRow>
@@ -471,18 +493,7 @@ function DiscountMaster() {
                       <FormItem>
                         <FormLabel>Discount Percentage</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="text" 
-                            placeholder="e.g. 15.50" 
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              // Allow only numbers and decimal point
-                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value);
-                              }
-                            }}
-                          />
+                          <Input placeholder="e.g. 15.50" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -496,23 +507,42 @@ function DiscountMaster() {
                       <FormItem>
                         <FormLabel>Discount Amount (Fixed)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="text" 
-                            placeholder="e.g. 500" 
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              // Allow only numbers and decimal point
-                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value);
-                              }
-                            }}
-                          />
+                          <Input placeholder="e.g. 500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="discountStartIn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Starts In</FormLabel>
+                          <FormControl>
+                            <Input type="date" placeholder="Start date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="discountEndsIn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ends In</FormLabel>
+                          <FormControl>
+                            <Input type="date" placeholder="End date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -567,16 +597,17 @@ function DiscountMaster() {
                         <FormControl>
                           <Input 
                             type="text" 
+                            placeholder="e.g. 15.50" 
                             {...field}
                             onChange={(e) => {
                               const value = e.target.value;
-                              // Allow only numbers and decimal point
                               if (value === '' || /^\d*\.?\d*$/.test(value)) {
                                 field.onChange(value);
                               }
                             }}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -592,19 +623,53 @@ function DiscountMaster() {
                         <FormControl>
                           <Input 
                             type="text" 
+                            placeholder="e.g. 500" 
                             {...field}
                             onChange={(e) => {
                               const value = e.target.value;
-                              // Allow only numbers and decimal point
                               if (value === '' || /^\d*\.?\d*$/.test(value)) {
                                 field.onChange(value);
                               }
                             }}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  {/* Starts / Ends In */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="discountStartIn"
+                      defaultValue={selectedDiscount.discountStartIn}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Starts In</FormLabel>
+                          <FormControl>
+                            <Input type="date" placeholder="Start date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="discountEndsIn"
+                      defaultValue={selectedDiscount.discountEndsIn}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ends In</FormLabel>
+                          <FormControl>
+                            <Input type="date" placeholder="End date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   {/* Description */}
                   <FormField

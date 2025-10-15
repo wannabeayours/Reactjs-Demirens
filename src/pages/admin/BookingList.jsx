@@ -24,9 +24,11 @@ import { Search, Filter, ArrowRightLeft, Eye, Settings, CalendarPlus, ChevronDow
 import { formatDateTime } from "@/lib/utils"
 import { NumberFormatter } from './Function_Files/NumberFormatter'
 import RoomChangeSheet from "./SubPages/RoomChangeSheet"
+import { useNavigate } from 'react-router-dom'
 
 function AdminBookingList() {
   const APIConn = `${localStorage.url}admin.php`;
+  const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
@@ -62,6 +64,9 @@ function AdminBookingList() {
   const [extendedRooms, setExtendedRooms] = useState([]);
   const [invoiceData, setInvoiceData] = useState(null);
   const [billingData, setBillingData] = useState([]);
+  // Image viewer state
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [imageViewerSrc, setImageViewerSrc] = useState('');
 
   const getAllStatus = useCallback(async () => {
     const formData = new FormData();
@@ -246,8 +251,8 @@ function AdminBookingList() {
     setSelectedBooking(booking);
 
     // Check if booking status allows room changes
-    if (booking.booking_status !== 'Approved' && booking.booking_status !== 'Checked-In') {
-      toast.error('Room changes are only allowed for bookings with "Approved" or "Checked-In" status');
+    if (booking.booking_status !== 'Confirmed' && booking.booking_status !== 'Checked-In') {
+      toast.error('Room changes are only allowed for bookings with "Confirmed" or "Checked-In" status');
       return;
     }
 
@@ -277,8 +282,8 @@ function AdminBookingList() {
     setSelectedBooking(booking);
 
     // Check if booking status allows extension
-    if (booking.booking_status !== 'Approved' && booking.booking_status !== 'Checked-In') {
-      toast.error('Booking extensions are only allowed for bookings with "Approved" or "Checked-In" status');
+    if (booking.booking_status !== 'Confirmed' && booking.booking_status !== 'Checked-In') {
+      toast.error('Booking extensions are only allowed for bookings with "Confirmed" or "Checked-In" status');
       return;
     }
 
@@ -379,8 +384,16 @@ function AdminBookingList() {
     }
 
     // Prevent setting restricted statuses
-    if (newStatus === 'Approved' || newStatus === 'Cancelled') {
-      toast.error('Cannot set status to "Approved" or "Cancelled"');
+    if (newStatus === 'Confirmed' || newStatus === 'Cancelled') {
+      toast.error('Cannot set status to "Confirmed" or "Cancelled"');
+      return;
+    }
+
+    // If trying to Check-In a Pending booking, redirect to Online approvals to confirm first
+    if (selectedBooking.booking_status === 'Pending' && newStatus === 'Checked-In') {
+      toast.error('Pending bookings must be confirmed before checking in. Redirecting to Approvals...');
+      navigate('/admin/online', { state: { prefillSearch: selectedBooking.reference_no } });
+      setShowStatusChange(false);
       return;
     }
 
@@ -891,17 +904,17 @@ function AdminBookingList() {
   const getStatusBadge = (status) => {
     const statusConfig = {
       'Pending': { variant: 'secondary', className: 'bg-yellow-500 hover:bg-yellow-600' },
-      'Approved': { variant: 'default', className: 'bg-green-500 hover:bg-green-600' },
+      'Confirmed': { variant: 'default', className: 'bg-green-500 hover:bg-green-600' },
       'Checked-In': { variant: 'default', className: 'bg-emerald-500 hover:bg-emerald-600' },
       'Checked-Out': { variant: 'default', className: 'bg-[#34699a] hover:bg-[#2a5580]' },
       'Cancelled': { variant: 'destructive', className: 'bg-red-500 hover:bg-red-600' }
     };
 
-    const config = statusConfig[status] || { variant: 'outline', className: 'bg-gray-100 text-gray-800' };
+    const config = statusConfig[status === 'Approved' ? 'Confirmed' : status] || { variant: 'outline', className: 'bg-gray-100 text-gray-800' };
 
     return (
       <Badge variant={config.variant} className={config.className}>
-        {status}
+        {status === 'Approved' ? 'Confirmed' : status}
       </Badge>
     );
   };
@@ -1076,7 +1089,7 @@ function AdminBookingList() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active/Checked-In</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {filteredBookings.filter(b => b.booking_status === 'Approved' || b.booking_status === 'Checked-In').length}
+                    {filteredBookings.filter(b => b.booking_status === 'Confirmed' || b.booking_status === 'Checked-In' || b.booking_status === 'Approved').length}
                   </p>
                 </div>
               </div>
@@ -1550,6 +1563,40 @@ function AdminBookingList() {
                   </div>
                 </div>
 
+                {/* Booking Image Preview */}
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border dark:border-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Uploaded File</h3>
+                  {selectedBooking?.booking_fileName ? (
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={`${(localStorage.getItem('url') || localStorage.url)}images/${selectedBooking.booking_fileName}`}
+                        alt="Booking file"
+                        className="w-48 h-48 object-cover rounded-md border dark:border-gray-700 cursor-zoom-in"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onClick={() => {
+                          const baseUrl = (localStorage.getItem('url') || localStorage.url);
+                          const fullSrc = `${baseUrl}images/${selectedBooking.booking_fileName}`;
+                          setImageViewerSrc(fullSrc);
+                          setIsImageViewerOpen(true);
+                        }}
+                      />
+                      <div className="text-sm text-gray-600 dark:text-gray-400 break-all">
+                        <p>File name: <span className="font-mono text-gray-900 dark:text-white">{selectedBooking.booking_fileName}</span></p>
+                        <a
+                          href={`${(localStorage.getItem('url') || localStorage.url)}images/${selectedBooking.booking_fileName}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                        >
+                          <ExternalLink className="w-4 h-4" /> Open in new tab
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No file uploaded for this booking.</p>
+                  )}
+                </div>
+
                 {/* Booking Information */}
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Booking Information</h3>
@@ -1925,7 +1972,7 @@ function AdminBookingList() {
                       {Array.isArray(status) && status
                         .filter(statusItem =>
                           // Filter out statuses that admins cannot manually set
-                          statusItem.booking_status_name !== 'Approved' &&
+                          statusItem.booking_status_name !== 'Confirmed' &&
                           statusItem.booking_status_name !== 'Cancelled' &&
                           statusItem.booking_status_name !== 'Pending' &&
                           statusItem.booking_status_name !== 'Check-Out' &&
@@ -2634,6 +2681,22 @@ function AdminBookingList() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Full Image Viewer Modal */}
+        <Dialog open={isImageViewerOpen} onOpenChange={setIsImageViewerOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-4xl lg:max-w-6xl p-0 bg-black">
+            <div className="relative">
+              <img src={imageViewerSrc} alt="Full size" className="w-full h-auto max-h-[85vh] object-contain" />
+              <button
+                onClick={() => setIsImageViewerOpen(false)}
+                className="absolute top-3 right-3 bg-white/80 hover:bg-white text-black rounded-full px-3 py-1 text-sm"
+                aria-label="Close"
+              >
+                Close
+              </button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

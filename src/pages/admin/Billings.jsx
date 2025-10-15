@@ -25,6 +25,9 @@ const Billings = () => {
  const [statusType, setStatusType] = useState('All')
  const [loading, setLoading] = useState(true)
 
+ // New: payment methods state
+ const [paymentMethods, setPaymentMethods] = useState([])
+
  const getBookings = async () => {
   setLoading(true)
   const formData = new FormData()
@@ -163,8 +166,25 @@ const Billings = () => {
   }
  ]
 
+ // New: fetch payment methods
+ const getPaymentMethods = async () => {
+  try {
+   const formData = new FormData()
+   formData.append('method', 'getAllPayMethods')
+   const res = await axios.post(APIConn, formData)
+   if (res.data && Array.isArray(res.data)) {
+    setPaymentMethods(res.data)
+   } else {
+    setPaymentMethods([])
+   }
+  } catch (err) {
+   console.error('Error fetching payment methods:', err)
+  }
+ }
+
  useEffect(() => {
   getBookings()
+  getPaymentMethods()
  }, [])
 
  return (
@@ -290,7 +310,7 @@ const Billings = () => {
     )}
 
     {mainContent === 'customerPayment' && (
-     <CustomerPayment customer={selectedCustomer} onBack={() => setMainContent('default')} />
+     <CustomerPayment customer={selectedCustomer} paymentMethods={paymentMethods} onBack={() => setMainContent('default')} />
     )}
    </div>
 

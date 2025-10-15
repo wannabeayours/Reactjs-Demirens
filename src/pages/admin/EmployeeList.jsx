@@ -186,9 +186,6 @@ function EmployeeManagement() {
   // Submit employee data to API
   const submitEmployeeData = async (payload, method) => {
     try {
-      console.log('=== SUBMITTING TO API ===');
-      console.log('Method:', method);
-      console.log('Payload:', payload);
 
       const formData = new FormData();
       formData.append('method', method);
@@ -240,29 +237,6 @@ function EmployeeManagement() {
     setIsDialogOpen(true);
   };
 
-  // Handle delete
-  const handleDelete = async (employee) => {
-    if (window.confirm(`Are you sure you want to deactivate ${employee.employee_fname} ${employee.employee_lname}?`)) {
-      try {
-        const formData = new FormData();
-        formData.append('method', 'deleteEmployee');
-        formData.append('json', JSON.stringify({ employee_id: employee.employee_id }));
-
-        const response = await axios.post(APIConn, formData);
-
-        if (response.data.status === 'success') {
-          toast.success(response.data.message);
-          fetchEmployees();
-        } else {
-          toast.error(response.data.message);
-        }
-      } catch (error) {
-        console.error('Error deleting employee:', error);
-        toast.error('Error deleting employee');
-      }
-    }
-  };
-
   // Toggle Active/Inactive status
   const handleToggleStatus = async (employee) => {
     const isActive = employee.employee_status === 1 || employee.employee_status === 'Active' || employee.employee_status === true;
@@ -309,7 +283,7 @@ function EmployeeManagement() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminHeader />
-      <div className="ml-72 p-4 sm:p-6 space-y-6 max-w-7xl">
+      <div className="ml-0 lg:ml-72 px-2 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-6 max-w-7xl">
       
       <Card>
         <CardHeader>
@@ -319,7 +293,7 @@ function EmployeeManagement() {
                 <Users className="h-6 w-6 text-[#34699a] dark:text-[#34699a]" />
               </div>
               <div>
-                <CardTitle className="text-xl sm:text-2xl font-bold">Employee Management</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl font-bold">Employee List</CardTitle>
                 <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                   Manage employees and administrators
                 </p>

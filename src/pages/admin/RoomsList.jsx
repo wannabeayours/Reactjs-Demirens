@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Search, Grid, List, SlidersHorizontal, Edit, X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, Edit, X, ChevronLeft, ChevronRight, ArrowLeft, Bed, Users } from 'lucide-react'
 
 // Card Components
 import {
@@ -50,6 +50,10 @@ const getRoomStatusForDates = (room, startDate, endDate) => {
 
 function AdminRoomsList() {
   const APIConn = `${localStorage.url}admin.php`
+  // Compute normalized role once to use for permissions
+  const userTypeRaw = (localStorage.getItem('userType') || '').toLowerCase().replace(/[\s_-]/g, '')
+  const userLevelRaw = (localStorage.getItem('userLevel') || '').toLowerCase().replace(/[\s_-]/g, '')
+  const normalizedRole = userLevelRaw || userTypeRaw
 
   const [rooms, setRooms] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -376,6 +380,11 @@ function AdminRoomsList() {
 
   // Edit Room Type details
   const handleEditRoomType = async (roomType) => {
+    // Restrict Front Desk users
+    if (normalizedRole === 'frontdesk') {
+      toast.error('Front Desk users do not have permission to edit room types')
+      return
+    }
     setSelectedRoomTypeForEdit(roomType)
     setEditForm({
       price: String(roomType.price || ''),
@@ -788,10 +797,10 @@ function AdminRoomsList() {
                   {filteredRoomTypes.map((roomType, index) => (
                     <Card 
                       key={index} 
-                      className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer flex flex-col sm:flex-row sm:gap-4 items-stretch"
+                      className="group hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer block"
                       onClick={() => handleViewRoomType(roomType)}
                     >
-                      <div className="relative w-full sm:w-2/5 xl:w-1/3">
+                      <div className="relative w-full">
                         <CardContent className="p-0">
                           <div className="relative">
                             {(() => {
@@ -872,7 +881,7 @@ function AdminRoomsList() {
                         </CardContent>
                       </div>
 
-                      <div className="p-4 sm:flex-1 flex flex-col justify-between">
+                      <div className="p-4 flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-2">
                           <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                             {roomType.name}
@@ -884,24 +893,41 @@ function AdminRoomsList() {
                         <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2 sm:line-clamp-3">
                           {roomType.description}
                         </p>
-                        <div className="flex items-center justify-between">
+
+                        {/* Features row */}
+                        <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4 text-gray-500" />
+                            <span>{roomType.capacity} {roomType.capacity > 1 ? 'persons' : 'person'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Bed className="h-4 w-4 text-gray-500" />
+                            <span>{roomType.beds} bed{roomType.beds > 1 ? 's' : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Grid className="h-4 w-4 text-gray-500" />
+                            <span>{roomType.rooms.length} available</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2">
                           <span className="font-bold text-green-600 dark:text-green-400">
                             ₱{Number(roomType.price).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </span>
-                          <p className="hidden sm:block text-xs text-muted-foreground">
-                            {roomType.capacity} {roomType.capacity > 1 ? 'persons' : 'person'} • {roomType.beds} bed{roomType.beds > 1 ? 's' : ''}
-                          </p>
                         </div>
+
                         <CardFooter className="px-0 pt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full flex items-center justify-center gap-1 bg-amber-500/5 hover:bg-amber-500/10 border-border text-amber-600 dark:text-amber-500"
-                            onClick={(e) => { e.stopPropagation(); handleEditRoomType(roomType); }}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                            Edit Details
-                          </Button>
+                          {normalizedRole !== 'frontdesk' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full flex items-center justify-center gap-1 bg-amber-500/5 hover:bg-amber-500/10 border-border text-amber-600 dark:text-amber-500"
+                              onClick={(e) => { e.stopPropagation(); handleEditRoomType(roomType); }}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                              Edit Details
+                            </Button>
+                          )}
                         </CardFooter>
                       </div>
                     </Card>

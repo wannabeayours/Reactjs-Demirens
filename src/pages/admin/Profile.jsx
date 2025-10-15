@@ -34,6 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Eye, EyeOff, Edit, Save, X } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Shield, KeyRound, History as HistoryIcon } from "lucide-react"
 
 function AdminProfile() {
   const [adminData, setAdminData] = useState(null);
@@ -42,7 +44,7 @@ function AdminProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+  // Removed: twoFAEnabled, biometricEnabled, securityQuestionsEnabled, isBiometricModalOpen
   // Form data for editing
   const [editData, setEditData] = useState({
     employee_fname: '',
@@ -124,10 +126,13 @@ function AdminProfile() {
     try {
       setLoading(true);
       const userId = localStorage.getItem('userId');
-      const userType = localStorage.getItem('userType');
+      const rawType = (localStorage.getItem('userType') || '').toLowerCase().replace(/[\s_-]/g, '');
+      const rawLevel = (localStorage.getItem('userLevel') || '').toLowerCase().replace(/[\s_-]/g, '');
+      const typeAllowed = ['admin','employee','frontdesk'].includes(rawType);
+      const levelAllowed = ['admin','frontdesk'].includes(rawLevel);
       
-      if (!userId || userType !== 'admin') {
-        toast.error('Admin access required');
+      if (!userId || (!typeAllowed && !levelAllowed)) {
+        toast.error('Employee or Admin access required');
         return;
       }
 
@@ -205,6 +210,16 @@ function AdminProfile() {
       }
 
       const userId = localStorage.getItem('userId');
+      const userType = (localStorage.getItem('userType') || '').toLowerCase().replace(/[\s_-]/g, '')
+      const userLevel = (localStorage.getItem('userLevel') || '').toLowerCase().replace(/[\s_-]/g, '')
+      const typeAllowed = ['admin','employee','frontdesk'].includes(userType)
+      const levelAllowed = ['admin','frontdesk'].includes(userLevel)
+
+      if (!userId || (!typeAllowed && !levelAllowed)) {
+        toast.error('Employee or Admin access required');
+        return;
+      }
+
       const updateData = {
         employee_id: userId,
         employee_fname: editData.employee_fname,
@@ -251,7 +266,7 @@ function AdminProfile() {
     return (
       <div>
         <AdminHeader />
-        <main id="MainPage" className="ml-72 p-4 space-y-6">
+        <main id="MainPage" className="ml-0 lg:ml-72 px-2 sm:px-4 lg:px-6 py-4 space-y-6">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#34699a]"></div>
           </div>
@@ -264,7 +279,7 @@ function AdminProfile() {
     return (
       <div>
         <AdminHeader />
-        <main id="MainPage" className="ml-72 p-4 space-y-6">
+        <main id="MainPage" className="ml-0 lg:ml-72 px-2 sm:px-4 lg:px-6 py-4 space-y-6">
           <div className="text-center">
             <p className="text-red-500">Failed to load admin data</p>
             <Button onClick={fetchAdminData} className="mt-4">
@@ -276,14 +291,22 @@ function AdminProfile() {
     );
   }
 
+  // Compute role for clear visual indicator
+  const isAdmin = String(adminData.userlevel_name || '').toLowerCase().includes('admin');
+
   return (
     <>
       <div>
         <AdminHeader />
 
-        <main id="MainPage" className="ml-72 p-4 space-y-6">
+        <main id="MainPage" className="ml-0 lg:ml-72 px-2 sm:px-4 lg:px-6 py-4 space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-[#34699a] dark:text-white">Admin Profile</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold text-[#34699a] dark:text-white">My Account</h1>
+              <span className={`px-2 py-1 text-xs rounded-full ${isAdmin ? 'bg-emerald-600' : 'bg-indigo-600'} text-white`}>
+                {isAdmin ? 'Admin' : 'Front-Desk'}
+              </span>
+            </div>
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#34699a] hover:bg-[#2a5580] text-white">
@@ -488,66 +511,104 @@ function AdminProfile() {
             </Dialog>
           </div>
 
-          {/* Responsive Layout */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Side: Menu */}
-            <div className="w-full lg:w-1/3">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle>Profile Navigation</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">Menu Here:</p>
-                  <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                    <li>Profile</li>
-                    <li>Role & Access</li>
-                    <li>Security Settings</li>
-                    <li>Notifications & Preferences</li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">Use the menu to navigate admin settings.</p>
-                </CardFooter>
-              </Card>
-            </div>
+          {/* New grid layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Security Settings (left) */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="flex flex-row items-center gap-2">
+                <Shield className="w-5 h-5 text-[#34699a]" />
+                <CardTitle>Security Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Change Password */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <KeyRound className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Change Password</p>
+                      <p className="text-xs text-muted-foreground">Update your current password to ensure your account remains secure.</p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => setIsEditModalOpen(true)}>Manage</Button>
+                </div>
+                {/* Login History */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <HistoryIcon className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Login History</p>
+                      <p className="text-xs text-muted-foreground">Log of all login attempts, including successful and failed.</p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => toast.info('Login history view coming soon')}>View</Button>
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Right Side: Profile Info */}
-            <div className="w-full lg:w-2/3 space-y-6">
-              {/* Admin Info Card */}
+            {/* Profile & Overview (right) */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Profile hero card */}
               <Card>
-                <CardContent className="flex flex-col sm:flex-row items-center gap-4 p-6">
-                  <img
-                    src="/adminProfile.jpg"
-                    alt="Admin Profile"
-                    className="w-32 h-32 rounded-full object-cover border"
-                  />
+                <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-medium">{adminData.employee_fname} {adminData.employee_lname}</h2>
-                    <p className="text-sm text-muted-foreground">{adminData.userlevel_name}</p>
-                    <p className="text-sm text-muted-foreground">{adminData.employee_email}</p>
-                    <p className="text-sm text-muted-foreground">Status: {adminData.employee_status}</p>
+                    <CardTitle className="text-lg">{adminData.employee_fname} {adminData.employee_lname}</CardTitle>
+                    <CardDescription>
+                      {isAdmin ? 'Administrator' : 'Front-Desk'} · {adminData.employee_email}
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+                    <Edit className="w-4 h-4 mr-2" /> Edit
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Username</p>
+                      <p className="text-sm font-medium">{adminData.employee_username}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Phone</p>
+                      <p className="text-sm font-medium">{adminData.employee_phone || '—'}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Role</p>
+                      <p className="text-sm font-medium">{adminData.userlevel_name}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Status</p>
+                      <p className="text-sm font-medium">{String(adminData.employee_status || 'Active')}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Additional Info / Action Card */}
+              {/* Account Overview card */}
               <Card>
                 <CardHeader>
                   <CardTitle>Account Overview</CardTitle>
                   <CardDescription>Details about this admin account.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p>✔️ Username: {adminData.employee_username}</p>
-                  <p>✔️ Phone: {adminData.employee_phone}</p>
-                  <p>✔️ Address: {adminData.employee_address}</p>
-                  <p>✔️ Birthdate: {DateFormatter.formatDateOnly(adminData.employee_birthdate)}</p>
-                  <p>✔️ Gender: {adminData.employee_gender}</p>
-                  <p>✔️ Account Created: {DateFormatter.formatDateOnly(adminData.employee_created_at)}</p>
-                  <p>✔️ Last Updated: {DateFormatter.formatDateOnly(adminData.employee_updated_at)}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Address</p>
+                      <p className="text-sm font-medium">{adminData.employee_address || '—'}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Birthdate</p>
+                      <p className="text-sm font-medium">{DateFormatter.formatDateOnly(adminData.employee_birthdate)}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Gender</p>
+                      <p className="text-sm font-medium">{adminData.employee_gender || '—'}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground">Last Updated</p>
+                      <p className="text-sm font-medium">{DateFormatter.formatDateOnly(adminData.last_update || adminData.updated_at || '')}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Review admin access logs in the system tab.</p>
                 </CardContent>
-                <CardFooter>
-                  <p className="text-sm text-muted-foreground">Review admin access logs in the system tab.</p>
-                </CardFooter>
               </Card>
             </div>
           </div>

@@ -39,10 +39,10 @@ function Sidebar({ onCollapse }) {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
-    
+
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
@@ -51,7 +51,7 @@ function Sidebar({ onCollapse }) {
     const savedOpenMasters = localStorage.getItem('sidebar-openMasters')
     const savedOpenPayments = localStorage.getItem('sidebar-openPayments')
     const savedOpenBookings = localStorage.getItem('sidebar-openBookings')
-    
+
     if (savedOpenMasters !== null) {
       setOpenMasters(JSON.parse(savedOpenMasters))
     }
@@ -93,14 +93,14 @@ function Sidebar({ onCollapse }) {
     const restoreScrollPosition = () => {
       const savedPosition = localStorage.getItem('sidebar-scroll-position')
       const savedMobilePosition = localStorage.getItem('sidebar-mobile-scroll-position')
-      
+
       if (desktopScrollRef.current && savedPosition) {
         const viewport = desktopScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
         if (viewport) {
           viewport.scrollTop = parseInt(savedPosition)
         }
       }
-      
+
       if (mobileScrollRef.current && savedMobilePosition) {
         const viewport = mobileScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
         if (viewport) {
@@ -114,16 +114,15 @@ function Sidebar({ onCollapse }) {
     return () => clearTimeout(timer)
   }, [location.pathname])
 
-  // Security check - redirect if not admin
+  // Access check - allow Admin and Front-Desk; block others
   useEffect(() => {
     const userId = localStorage.getItem('userId')
-    const userType = localStorage.getItem('userType')
-    const userLevel = localStorage.getItem('userLevel')
+    const userType = (localStorage.getItem('userType') || '').toLowerCase()
 
-    if (!userId || userType !== 'admin' || userLevel !== 'Admin') {
+    if (!userId || !['admin', 'employee', 'front-desk', 'frontdesk'].includes(userType)) {
       console.log('Unauthorized access detected in Sidebar')
-      toast.error('Admin access required')
-      navigate('/login')
+      toast.error('Employee access required')
+      navigate('/employee/login')
     }
   }, [navigate])
 
@@ -131,19 +130,30 @@ function Sidebar({ onCollapse }) {
   const handleLogout = useCallback(async () => {
     try {
       const userId = localStorage.getItem('userId')
-      const userType = localStorage.getItem('userType')
-      
-      if (!userId || userType !== 'admin') {
-        toast.error('Admin access required')
+      const userTypeRaw = localStorage.getItem('userType') || ''
+      const userLevelRaw = localStorage.getItem('userLevel') || ''
+      const normalizedType = userTypeRaw.toLowerCase()
+      const normalizedLevel = userLevelRaw.toLowerCase()
+
+      // Allow Admin and Front Desk/Employee to logout
+      const isAuthorized =
+        ['admin', 'employee', 'frontdesk', 'front-desk'].includes(normalizedType) ||
+        ['admin', 'frontdesk', 'front-desk'].includes(normalizedLevel)
+
+      if (!userId || !isAuthorized) {
+        toast.error('Employee or Admin access required')
+        navigate('/employee/login')
         return
       }
 
       const APIConn = localStorage.getItem('url') + "admin.php"
       const formData = new FormData()
       formData.append('method', 'logout')
-      formData.append('json', JSON.stringify({ 
-        employee_id: userId, 
-        user_type: userType 
+      const userTypeForApi =
+        normalizedType === 'frontdesk' || normalizedType === 'front-desk' ? 'employee' : (normalizedType || 'employee')
+      formData.append('json', JSON.stringify({
+        employee_id: userId,
+        user_type: userTypeForApi
       }))
 
       const response = await axios.post(APIConn, formData)
@@ -156,9 +166,9 @@ function Sidebar({ onCollapse }) {
         localStorage.removeItem('lname')
         localStorage.removeItem('userType')
         localStorage.removeItem('userLevel')
-        
+
         toast.success('Successfully logged out')
-        navigate('/')
+        navigate('/employee/login')
       } else {
         toast.error(response.data.message || 'Logout failed')
       }
@@ -171,15 +181,12 @@ function Sidebar({ onCollapse }) {
   const mainLinks = [
     { path: "/admin/dashboard", icon: <Home className="w-4 h-4" />, label: "Dashboard" },
     { path: "/admin/profile", icon: <User className="w-4 h-4" />, label: "Profile" },
-    { path: "/admin/employeelist", icon: <User className="w-4 h-4" />, label: "Employee List" },
     { path: "/admin/roomslist", icon: <BedIcon className="w-4 h-4" />, label: "Rooms List" },
     { path: "/admin/bookinglist", icon: <File className="w-4 h-4" />, label: "Bookings List" },
-    { path: "/admin/guestprofile", icon: <User className="w-4 h-4" />, label: "Guest Profiles" },
     { path: "/admin/transactionhistory", icon: <HistoryIcon className="w-4 h-4" />, label: "Transaction History" },
     { path: "/admin/requestedamenities", icon: <PillBottleIcon className="w-4 h-4" />, label: "Amenity Requests" },
     { path: "/admin/calendar", icon: <Calendar1Icon className="w-4 h-4" />, label: "Calendar" },
     { path: "/admin/visitorslog", icon: <User2Icon className="w-4 h-4" />, label: "Visitors" },
-    { path: "/admin/reviews", icon: <StarIcon className="w-4 h-4" />, label: "Reviews" },
   ]
 
   const bookingLinks = [
@@ -191,6 +198,14 @@ function Sidebar({ onCollapse }) {
     { path: "/admin/invoice", icon: <ReceiptText className="w-4 h-4" />, label: "Invoice" },
     { path: "/admin/billings", icon: <Wallet className="w-4 h-4" />, label: "Billings" },
   ]
+
+
+// Admin-only links
+  const adminOnlyLinks = [
+    { path: "/admin/employeelist", icon: <User className="w-4 h-4" />, label: "Employee List" },
+    { path: "/admin/reviews", icon: <StarIcon className="w-4 h-4" />, label: "Reviews" },
+    { path: "/admin/guestprofile", icon: <User className="w-4 h-4" />, label: "Guest Profiles" },
+  ];
 
   const masterLinks = [
     { path: "/admin/roomtypemaster", icon: <Bed className="w-4 h-4" />, label: "Room Types" },
@@ -213,13 +228,25 @@ function Sidebar({ onCollapse }) {
     <>
       {/* Main Links */}
       {mainLinks.map((item, index) => (
-          <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
+        <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
+          <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
+            {item.icon}
+            {item.label}
+          </Button>
+        </Link>
+      ))}
+
+      {/* Admin-only Links */}
+      {(localStorage.getItem("userLevel") || "").toLowerCase() === "admin" && (
+        adminOnlyLinks.map((item, index) => (
+          <Link to={item.path} key={`admin-${index}`} className="block w-full" onClick={saveScrollPosition}>
             <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
               {item.icon}
               {item.label}
             </Button>
           </Link>
-        ))}
+        ))
+      )}
 
       {/* Collapsible: Bookings */}
       <Collapsible open={openBookings} onOpenChange={(open) => {
@@ -230,14 +257,14 @@ function Sidebar({ onCollapse }) {
         setTimeout(() => {
           const savedPosition = localStorage.getItem('sidebar-scroll-position')
           const savedMobilePosition = localStorage.getItem('sidebar-mobile-scroll-position')
-          
+
           if (desktopScrollRef.current && savedPosition) {
             const viewport = desktopScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
             if (viewport) {
               viewport.scrollTop = parseInt(savedPosition)
             }
           }
-          
+
           if (mobileScrollRef.current && savedMobilePosition) {
             const viewport = mobileScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
             if (viewport) {
@@ -257,13 +284,13 @@ function Sidebar({ onCollapse }) {
         </CollapsibleTrigger>
         <CollapsibleContent className="pl-4 space-y-2 mt-1">
           {bookingLinks.map((item, index) => (
-              <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
-                  {item.icon}
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
+            <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
+              <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
+                {item.icon}
+                {item.label}
+              </Button>
+            </Link>
+          ))}
         </CollapsibleContent>
       </Collapsible>
 
@@ -276,14 +303,14 @@ function Sidebar({ onCollapse }) {
         setTimeout(() => {
           const savedPosition = localStorage.getItem('sidebar-scroll-position')
           const savedMobilePosition = localStorage.getItem('sidebar-mobile-scroll-position')
-          
+
           if (desktopScrollRef.current && savedPosition) {
             const viewport = desktopScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
             if (viewport) {
               viewport.scrollTop = parseInt(savedPosition)
             }
           }
-          
+
           if (mobileScrollRef.current && savedMobilePosition) {
             const viewport = mobileScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
             if (viewport) {
@@ -303,53 +330,55 @@ function Sidebar({ onCollapse }) {
         </CollapsibleTrigger>
         <CollapsibleContent className="pl-4 space-y-2 mt-1">
           {paymentLinks.map((item, index) => (
-              <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
-                  {item.icon}
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
+            <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
+              <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
+                {item.icon}
+                {item.label}
+              </Button>
+            </Link>
+          ))}
         </CollapsibleContent>
       </Collapsible>
 
       {/* Collapsible: Master Group */}
-      <Collapsible open={openMasters} onOpenChange={(open) => {
-        // Save current scroll position before state change
-        saveScrollPosition()
-        setOpenMasters(open)
-        // Restore scroll position after DOM update
-        setTimeout(() => {
-          const savedPosition = localStorage.getItem('sidebar-scroll-position')
-          const savedMobilePosition = localStorage.getItem('sidebar-mobile-scroll-position')
-          
-          if (desktopScrollRef.current && savedPosition) {
-            const viewport = desktopScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
-            if (viewport) {
-              viewport.scrollTop = parseInt(savedPosition)
-            }
-          }
-          
-          if (mobileScrollRef.current && savedMobilePosition) {
-            const viewport = mobileScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
-            if (viewport) {
-              viewport.scrollTop = parseInt(savedMobilePosition)
-            }
-          }
-        }, 50)
-      }}>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-between items-center text-white hover:bg-white/10 hover:text-white">
-            <span className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Masters
-            </span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${openMasters ? "rotate-180" : ""}`} />
-          </Button>
-        </CollapsibleTrigger>
+      {(localStorage.getItem("userLevel") || "").toLowerCase() === "admin" && (
+        <Collapsible open={openMasters} onOpenChange={(open) => {
+          // Save current scroll position before state change
+          saveScrollPosition()
+          setOpenMasters(open)
+          // Restore scroll position after DOM update
+          setTimeout(() => {
+            const savedPosition = localStorage.getItem('sidebar-scroll-position')
+            const savedMobilePosition = localStorage.getItem('sidebar-mobile-scroll-position')
 
-        <CollapsibleContent className="pl-4 space-y-2 mt-1">
-          {masterLinks.map((item, index) => (
+            if (desktopScrollRef.current && savedPosition) {
+              const viewport = desktopScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
+              if (viewport) {
+                viewport.scrollTop = parseInt(savedPosition)
+              }
+            }
+
+            if (mobileScrollRef.current && savedMobilePosition) {
+              const viewport = mobileScrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
+              if (viewport) {
+                viewport.scrollTop = parseInt(savedMobilePosition)
+              }
+            }
+          }, 50)
+        }}>
+
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between items-center text-white hover:bg-white/10 hover:text-white">
+              <span className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Masters
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${openMasters ? "rotate-180" : ""}`} />
+            </Button>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="pl-4 space-y-2 mt-1">
+            {masterLinks.map((item, index) => (
               <Link to={item.path} key={index} className="block w-full" onClick={saveScrollPosition}>
                 <Button variant="ghost" className="w-full justify-start gap-2 text-white hover:bg-white/10 hover:text-white">
                   {item.icon}
@@ -357,8 +386,9 @@ function Sidebar({ onCollapse }) {
                 </Button>
               </Link>
             ))}
-        </CollapsibleContent>
-      </Collapsible>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </>
   ), [openBookings, openPayments, openMasters, saveScrollPosition])
 
@@ -384,7 +414,7 @@ function Sidebar({ onCollapse }) {
         </ScrollArea>
 
         <div className="absolute bottom-4 left-4 right-4 border-t border-gray-300 pt-4 bg-[#34699a]">
-          <Button 
+          <Button
             onClick={handleLogout}
             className="w-full bg-[#dd474c] hover:bg-[#c73e42] text-white border-0"
           >
@@ -413,7 +443,7 @@ function Sidebar({ onCollapse }) {
         </ScrollArea>
 
         <div className="absolute bottom-4 left-6 right-6 border-t border-gray-300 pt-4 bg-[#34699a]">
-          <Button 
+          <Button
             onClick={handleLogout}
             className="w-full bg-[#dd474c] hover:bg-[#c73e42] text-white border-0"
           >

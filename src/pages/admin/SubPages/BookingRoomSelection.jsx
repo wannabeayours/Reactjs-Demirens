@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function AdminBookingRoomSelection() {
   const [bookingRooms, setBookingRooms] = useState([]);
@@ -28,6 +28,9 @@ function AdminBookingRoomSelection() {
   const [selectedRooms, setSelectedRooms] = useState([]);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const origin = location.state?.origin || null;
+  const isVisitorOrigin = origin === 'visitorslog';
   const APIConn = `${localStorage.url}admin.php`;
 
   // Function to filter out duplicate bookings - keep latest booking rooms and non-extended rooms from older bookings
@@ -121,10 +124,18 @@ function AdminBookingRoomSelection() {
 
   // Filter rooms based on search term
   useEffect(() => {
+    // Base rooms from fetch + smart dedup
+    let rooms = bookingRooms;
+  
+    // When coming from Visitors Log, only show bookings that are Checked-In
+    if (isVisitorOrigin) {
+      rooms = rooms.filter(room => String(room.booking_status_name).toLowerCase() === 'checked-in');
+    }
+  
     if (!searchTerm.trim()) {
-      setFilteredRooms(bookingRooms);
+      setFilteredRooms(rooms);
     } else {
-      const filtered = bookingRooms.filter(room =>
+      const filtered = rooms.filter(room =>
         room.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         room.reference_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         room.roomtype_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,7 +144,7 @@ function AdminBookingRoomSelection() {
       );
       setFilteredRooms(filtered);
     }
-  }, [searchTerm, bookingRooms]);
+  }, [searchTerm, bookingRooms, isVisitorOrigin]);
 
   useEffect(() => {
     fetchBookingRooms();
@@ -175,7 +186,7 @@ function AdminBookingRoomSelection() {
   const handleRoomSelect = (room) => {
     setSelectedRooms(prevSelected => {
       const isSelected = prevSelected.some(selected => selected.booking_room_id === room.booking_room_id);
-      
+
       if (isSelected) {
         // Remove room from selection
         const updated = prevSelected.filter(selected => selected.booking_room_id !== room.booking_room_id);
@@ -183,8 +194,14 @@ function AdminBookingRoomSelection() {
         return updated;
       } else {
         // Add room to selection
+        if (isVisitorOrigin) {
+          // Visitors can only select ONE booking
+          const updated = [room];
+          console.log('🏨 Selected single room for visitor flow:', room.roomnumber_id);
+          return updated;
+        }
         const updated = [...prevSelected, room];
-        console.log('🏨 Added room to selection:', room.roomnumber_id, 'Total selected:', updated.length);
+        console.log('🏨 Added room to selection (amenities flow):', room.roomnumber_id, 'Total selected:', updated.length);
         return updated;
       }
     });
@@ -203,6 +220,19 @@ function AdminBookingRoomSelection() {
     if (selectedRooms.length > 0) {
       localStorage.setItem('selectedBookingRoom', JSON.stringify(selectedRooms[0]));
     }
+
+    const origin = location.state?.origin || null;
+
+    if (origin === 'visitorslog') {
+      navigate('/admin/visitorslog', {
+        state: {
+          selectedBookingRoom: selectedRooms[0],
+          selectedBookingRooms: selectedRooms,
+          openVisitorModal: true
+        }
+      });
+      return;
+    }
     
     navigate('/admin/requestedamenities', { 
       state: { 
@@ -214,6 +244,11 @@ function AdminBookingRoomSelection() {
   };
 
   const handleBackToAmenities = () => {
+    const origin = location.state?.origin || null;
+    if (origin === 'visitorslog') {
+      navigate('/admin/visitorslog');
+      return;
+    }
     navigate('/admin/requestedamenities');
   };
 
@@ -254,14 +289,14 @@ function AdminBookingRoomSelection() {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Amenity Requests
+            {isVisitorOrigin ? 'Back to Visitors Log' : 'Back to Amenity Requests'}
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Select Booking Room
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Choose a booking room to add amenities for
+              {isVisitorOrigin ? 'Choose a booking room for visitor logging' : 'Choose a booking room to add amenities for'}
             </p>
           </div>
         </div>
@@ -356,7 +391,7 @@ function AdminBookingRoomSelection() {
                   className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Package className="h-4 w-4 mr-2" />
-                  Add Amenities to {selectedRooms.length} Room{selectedRooms.length > 1 ? 's' : ''}
+                  {isVisitorOrigin ? 'Select Booking' : `Add Amenities to ${selectedRooms.length} Room${selectedRooms.length > 1 ? 's' : ''}`}
                 </Button>
               </div>
             </div>
@@ -417,14 +452,16 @@ function AdminBookingRoomSelection() {
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Smart filtering
               </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSelectAll}
-                className="text-xs"
-              >
-                {selectedRooms.length === filteredRooms.length ? 'Deselect All' : 'Select All'}
-              </Button>
+              {!isVisitorOrigin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="text-xs"
+                >
+                  {selectedRooms.length === filteredRooms.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              )}
             </div>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
@@ -449,12 +486,16 @@ function AdminBookingRoomSelection() {
                   <TableRow>
                     <TableHead className="w-12">
                       <div className="flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedRooms.length === filteredRooms.length && filteredRooms.length > 0}
-                          onChange={handleSelectAll}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
+                        {!isVisitorOrigin ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedRooms.length === filteredRooms.length && filteredRooms.length > 0}
+                            onChange={handleSelectAll}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                        ) : (
+                          <div className="w-4 h-4" />
+                        )}
                       </div>
                     </TableHead>
                     <TableHead>Reference</TableHead>

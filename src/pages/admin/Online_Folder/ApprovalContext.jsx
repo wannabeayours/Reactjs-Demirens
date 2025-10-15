@@ -4,35 +4,28 @@ import React, { createContext, useContext, useState } from "react";
 const ApprovalContext = createContext(null);
 
 export const ApprovalProvider = ({ children }) => {
-  const [state, setState] = useState({
-    // From list page
+  const [state, setState] = React.useState({
     bookingId: null,
-    adminId: localStorage.getItem("admin_id") || null,
-    customerName: "",
-    checkIn: "", // ISO date string
-    checkOut: "", // ISO date string
+    userId: (() => {
+      const keys = ["user_id", "userId", "userID", "admin_id", "employee_id", "employeeId"];
+      for (const k of keys) {
+        const v = localStorage.getItem(k);
+        if (v) return v;
+      }
+      return null;
+    })(),
+    customerName: null,
+    checkIn: null,
+    checkOut: null,
     nights: 0,
-
-    // Request summary
-    requestedRoomTypes: [], // [{id?: number, name: string}]
-    requestedRoomCount: 0,  // number of rooms requested (booking.rooms.length)
-
-    // Step 2: selected rooms (actual room numbers)
-    selectedRooms: [], // [{ id: number, roomtype_name: string, price: number }]
-
-    // Totals (computed on receipt step)
-    totals: {
-      subtotal: 0,
-      vat: 0,
-      grandTotal: 0,
-    },
+    requestedRoomTypes: [],
+    requestedRoomCount: 0,
+    selectedRooms: [],
+    totals: { subtotal: 0, vat: 0, grandTotal: 0, downpayment: 0 },
   });
 
-  return (
-    <ApprovalContext.Provider value={{ state, setState }}>
-      {children}
-    </ApprovalContext.Provider>
-  );
+  const value = React.useMemo(() => ({ state, setState }), [state]);
+  return <ApprovalContext.Provider value={value}>{children}</ApprovalContext.Provider>;
 };
 
 export const useApproval = () => {

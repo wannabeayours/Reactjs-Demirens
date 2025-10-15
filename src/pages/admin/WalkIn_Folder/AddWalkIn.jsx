@@ -65,11 +65,11 @@ const AddWalkIn = () => {
         break;
         
       case 'customers_phone_number':
-        // Only allow numbers, spaces, hyphens, parentheses, and plus sign
-        sanitizedValue = value.replace(/[^0-9\s\-\(\)\+]/g, '');
-        // Limit length
-        if (sanitizedValue.length > 15) {
-          sanitizedValue = sanitizedValue.substring(0, 15);
+        // Only allow numbers; enforce exactly 11 digits max
+        sanitizedValue = value.replace(/[^0-9]/g, '');
+        // Limit length to 11 digits
+        if (sanitizedValue.length > 11) {
+          sanitizedValue = sanitizedValue.substring(0, 11);
         }
         break;
         
@@ -135,9 +135,9 @@ const AddWalkIn = () => {
     if (!walkInData.customers_phone_number?.trim()) {
       nextErrors.customers_phone_number = "Phone number is required";
     } else {
-      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+      const phoneRegex = /^[0-9]{11}$/;
       if (!phoneRegex.test(walkInData.customers_phone_number.trim())) {
-        nextErrors.customers_phone_number = "Please enter a valid phone number (10-15 digits)";
+        nextErrors.customers_phone_number = "Please enter a valid 11-digit phone number";
       }
     }
 
@@ -279,11 +279,11 @@ const AddWalkIn = () => {
                     name="customers_phone_number"
                     value={walkInData.customers_phone_number || ""}
                     onChange={handleChange}
-                    placeholder="Enter phone number (10-15 digits)"
+                    placeholder="Enter phone number (11 digits)"
                     className={errors.customers_phone_number ? "border-red-500" : ""}
-                    maxLength={15}
-                    pattern="[\+]?[0-9\s\-\(\)]{10,15}"
-                    title="Enter a valid phone number (10-15 digits)"
+                    maxLength={11}
+                    pattern="[0-9]{11}"
+                    title="Enter a valid phone number (11 digits)"
                     autoComplete="tel"
                   />
                   {errors.customers_phone_number && <p className="text-xs text-red-600 mt-1">{errors.customers_phone_number}</p>}

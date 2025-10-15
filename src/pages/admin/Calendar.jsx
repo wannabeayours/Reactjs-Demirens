@@ -7,7 +7,6 @@ import { ChevronLeft, ChevronRight, Calendar, Plus, Filter } from "lucide-react"
 
 function AdminCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState(null)
 
   // Get current month and year
   const currentMonth = currentDate.getMonth()
@@ -28,15 +27,45 @@ function AdminCalendar() {
   // Day names
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-  // Sample events data
-  const sampleEvents = [
-    { id: 1, date: 5, title: "Room 101 Check-in", type: "checkin", color: "bg-blue-500" },
-    { id: 2, date: 8, title: "Room 205 Check-out", type: "checkout", color: "bg-green-500" },
-    { id: 3, date: 12, title: "Maintenance", type: "maintenance", color: "bg-yellow-500" },
-    { id: 4, date: 15, title: "Room 301 Check-in", type: "checkin", color: "bg-blue-500" },
-    { id: 5, date: 20, title: "Group Booking", type: "booking", color: "bg-purple-500" },
-    { id: 6, date: 25, title: "Room 102 Check-out", type: "checkout", color: "bg-green-500" },
+  // Sample room groups and bookings for timeline view
+  const roomGroups = [
+    {
+      name: "Economy Rooms",
+      rooms: [
+        { id: 101, name: "Room 101 / Floor 1" },
+        { id: 102, name: "Room 102 / Floor 1" },
+        { id: 103, name: "Room 103 / Floor 1" },
+      ],
+    },
+    {
+      name: "Standard Rooms",
+      rooms: [
+        { id: 201, name: "Room 201 / Floor 2" },
+        { id: 202, name: "Room 202 / Floor 2" },
+        { id: 203, name: "Room 203 / Floor 2" },
+      ],
+    },
+    {
+      name: "VIP Rooms",
+      rooms: [
+        { id: 301, name: "Room 301 / Floor 3" },
+        { id: 302, name: "Room 302 / Floor 3" },
+      ],
+    },
   ]
+
+  const sampleBookings = [
+    { id: "b1", roomId: 101, guest: "Lisa Davidson", start: new Date(currentYear, currentMonth, 2), end: new Date(currentYear, currentMonth, 5), color: "bg-green-200 text-green-800" },
+    { id: "b2", roomId: 201, guest: "Alex Hamilton", start: new Date(currentYear, currentMonth, 4), end: new Date(currentYear, currentMonth, 8), color: "bg-blue-200 text-blue-800" },
+    { id: "b3", roomId: 202, guest: "JJ Jackson", start: new Date(currentYear, currentMonth, 7), end: new Date(currentYear, currentMonth, 9), color: "bg-pink-200 text-pink-800" },
+    { id: "b4", roomId: 301, guest: "Olga K", start: new Date(currentYear, currentMonth, 10), end: new Date(currentYear, currentMonth, 14), color: "bg-purple-200 text-purple-800" },
+    { id: "b5", roomId: 103, guest: "Myrna Sales", start: new Date(currentYear, currentMonth, 13), end: new Date(currentYear, currentMonth, 16), color: "bg-yellow-200 text-yellow-800" },
+    { id: "b6", roomId: 302, guest: "Vito Bravo", start: new Date(currentYear, currentMonth, 18), end: new Date(currentYear, currentMonth, 21), color: "bg-indigo-200 text-indigo-800" },
+  ]
+
+  const getDayIndex = (dateObj) => Math.max(0, Math.min(daysInMonth - 1, dateObj.getDate() - 1))
+
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
   // Navigation functions
   const goToPreviousMonth = () => {
@@ -51,10 +80,8 @@ function AdminCalendar() {
     setCurrentDate(new Date())
   }
 
-  // Get events for a specific date
-  const getEventsForDate = (date) => {
-    return sampleEvents.filter(event => event.date === date)
-  }
+  // Get events for a specific date (not used in timeline view)
+  const getEventsForDate = () => []
 
   // Check if date is today
   const isToday = (date) => {
@@ -66,10 +93,8 @@ function AdminCalendar() {
     )
   }
 
-  // Check if date is selected
-  const isSelected = (date) => {
-    return selectedDate === date
-  }
+  // Check if date is selected (not used in timeline view)
+  const isSelected = () => false
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -94,7 +119,7 @@ function AdminCalendar() {
           className={`h-20 sm:h-24 border border-gray-200 dark:border-gray-700 p-1 sm:p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-w-0 ${
             isCurrentDay ? 'bg-blue-100 dark:bg-blue-900' : ''
           } ${isSelectedDay ? 'bg-blue-200 dark:bg-blue-800' : ''}`}
-          onClick={() => setSelectedDate(selectedDate === day ? null : day)}
+          onClick={() => {}}
         >
           <div className={`text-xs sm:text-sm font-medium ${isCurrentDay ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}>
             {day}
@@ -122,11 +147,11 @@ function AdminCalendar() {
     return days
   }
 
-  // Get selected date events
-  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []
+  // Get selected date events (not used in timeline view)
+  const selectedDateEvents = []
 
   return (
-    <div className="ml-72 p-4 sm:p-6 space-y-6 max-w-full overflow-x-hidden">
+    <div className="ml-0 lg:ml-72 px-2 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-6 max-w-full overflow-x-hidden">
       <AdminHeader />
       
       {/* Calendar Header */}
@@ -156,85 +181,75 @@ function AdminCalendar() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-hidden">
+        <CardContent className="overflow-x-auto">
           {/* Calendar Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg sm:text-xl font-semibold">
                 {monthNames[currentMonth]} {currentYear}
               </h2>
               <Button variant="outline" size="sm" onClick={goToNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
+            <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="w-full overflow-hidden">
-            <div className="grid grid-cols-7 gap-0 border border-gray-200 dark:border-gray-700 rounded-lg min-w-0">
-              {/* Day Headers */}
-              {dayNames.map(day => (
-                <div key={day} className="bg-gray-50 dark:bg-gray-800 p-2 text-center font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
-                  {day}
+          {/* Days header like timeline */}
+          <div className="min-w-[800px]">
+            <div className="grid" style={{gridTemplateColumns: `220px repeat(${daysInMonth}, minmax(38px, 1fr))`}}>
+              <div className="bg-gray-100 dark:bg-gray-800 p-2 font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">Rooms</div>
+              {daysArray.map((d) => (
+                <div key={`dh-${d}`} className="bg-gray-100 dark:bg-gray-800 p-2 text-center text-xs border border-gray-200 dark:border-gray-700">
+                  {d}
                 </div>
               ))}
-              
-              {/* Calendar Days */}
-              {generateCalendarDays()}
             </div>
-          </div>
 
-          {/* Selected Date Events */}
-          {selectedDate && (
-            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">
-                Events for {monthNames[currentMonth]} {selectedDate}, {currentYear}
-              </h3>
-              {selectedDateEvents.length > 0 ? (
-                <div className="space-y-2">
-                  {selectedDateEvents.map(event => (
-                    <div key={event.id} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700 rounded-lg">
-                      <div className={`w-3 h-3 rounded-full ${event.color}`}></div>
-                      <div className="flex-1">
-                        <p className="font-medium">{event.title}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{event.type}</p>
-                      </div>
-                      <Badge variant="outline" className="capitalize">
-                        {event.type}
-                      </Badge>
-                    </div>
-                  ))}
+            {/* Room Groups */}
+            {roomGroups.map((group) => (
+              <div key={group.name} className="mt-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{group.name}</span>
                 </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No events scheduled for this date.</p>
-              )}
-            </div>
-          )}
-
-          {/* Legend */}
-          <div className="mt-6 flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span>Check-in</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span>Check-out</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span>Maintenance</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span>Booking</span>
-            </div>
+                {group.rooms.map((room) => {
+                  const roomBookings = sampleBookings.filter(b => b.roomId === room.id)
+                  return (
+                    <div key={room.id} className="grid items-center" style={{gridTemplateColumns: `220px repeat(${daysInMonth}, minmax(38px, 1fr))`}}>
+                      {/* Room label */}
+                      <div className="p-2 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-200 whitespace-nowrap">{room.name}</div>
+                      {/* Day cells with bookings overlayed */}
+                      {daysArray.map((d) => (
+                        <div key={`dc-${room.id}-${d}`} className="relative h-10 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"></div>
+                      ))}
+                      {/* Booking blocks absolute positioned across the row */}
+                      <div className="contents">
+                        {roomBookings.map((bk) => {
+                          const startIdx = getDayIndex(bk.start)
+                          const endIdx = getDayIndex(bk.end)
+                          const span = Math.max(1, endIdx - startIdx + 1)
+                          return (
+                            <div
+                              key={bk.id}
+                              className={`col-start-[${startIdx+2}] col-span-${span} relative flex items-center`}
+                              style={{gridColumnStart: startIdx + 2, gridColumnEnd: startIdx + 2 + span}}
+                            >
+                              <div className={`absolute left-0 right-0 m-1 h-8 rounded-md px-3 flex items-center gap-2 shadow-sm ${bk.color}`}>
+                                <div className="w-6 h-6 rounded-full bg-white/70 border border-white/80"></div>
+                                <span className="text-xs font-medium truncate">{bk.guest}</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

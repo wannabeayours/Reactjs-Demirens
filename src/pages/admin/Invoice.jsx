@@ -113,20 +113,20 @@ function CreateInvoice() {
   }, []);
 
   // Debug function to test API connection
-  const testAPIConnection = async () => {
-    try {
-      const url = localStorage.getItem("url") + "transactions.php";
-      const formData = new FormData();
-      formData.append("operation", "getBookingsWithBillingStatus");
-      const res = await axios.post(url, formData);
-      console.log("API Test Response:", res.data);
-      toast.success("API connection successful!");
-    } catch (err) {
-      console.error("API Test Error:", err);
-      toast.error("API connection failed: " + err.message);
-    }
-  };
-
+  // const testAPIConnection = async () => {
+  //   try {
+  //     const url = localStorage.getItem("url") + "transactions.php";
+  //     const formData = new FormData();
+  //     formData.append("operation", "getBookingsWithBillingStatus");
+  //     const res = await axios.post(url, formData);
+  //     console.log("API Test Response:", res.data);
+  //     toast.success("API connection successful!");
+  //   } catch (err) {
+  //     console.error("API Test Error:", err);
+  //     toast.error("API connection failed: " + err.message);
+  //   }
+  // };
+  
   return (
     <div className="lg:ml-72 p-3 lg:p-6 space-y-4 lg:space-y-6 max-w-full overflow-hidden">
       <AdminHeader/>
@@ -147,98 +147,39 @@ function CreateInvoice() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={testAPIConnection}
-                className="flex items-center gap-2 text-xs lg:text-sm"
-              >
-                <Settings className="h-3 w-3 lg:h-4 lg:w-4" />
-                <span className="hidden sm:inline">Test API</span>
-                <span className="sm:hidden">Test</span>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Loading State */}
-      {loading && (
-        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardContent className="p-4 lg:p-6">
-            <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#34699a]"></div>
-              <span className="text-sm lg:text-base text-gray-600 dark:text-gray-300">Processing invoice...</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Search and Filter Section */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-            <Search className="h-4 w-4 lg:h-5 lg:w-5" />
-            <span className="text-lg lg:text-xl">Search & Filter</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by booking ID, reference, or customer name..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="pl-10 pr-10"
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-
             {/* Status Filter */}
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#34699a] focus:border-[#34699a] outline-none"
+                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#34699a] focus:border-[#34699a] outline-none w-full"
               >
                 <option value="all">All Status</option>
                 <option value="created">Created</option>
                 <option value="not-created">Not Created</option>
               </select>
             </div>
-
-            {/* Clear Filters Button */}
-            {(searchQuery || statusFilter !== "all") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearFilters}
-                className="flex items-center gap-2"
-              >
-                <X className="h-3 w-3" />
-                Clear
-              </Button>
-            )}
           </div>
+
+          {/* Clear Filters Button */}
+          {(searchQuery || statusFilter !== "all") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              className="flex items-center gap-2"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </Button>
+          )}
 
           {/* Results Count */}
           <div className="text-sm text-gray-600 dark:text-gray-400">
             Showing {getFilteredBookings().length} of {bookings.length} bookings
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* Bookings Table */}

@@ -42,6 +42,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function ChargeMaster() {
   const APIConn = `${localStorage.url}admin.php`;
@@ -60,6 +61,7 @@ function ChargeMaster() {
     chargeCategory: z.string().min(1, 'Required'),
     chargePrice: z.string().min(1, 'Required'),
     chargeDescription: z.string().optional(),
+    chargeIsRestricted: z.boolean().default(false).optional(),
   });
 
   const form = useForm({
@@ -69,6 +71,7 @@ function ChargeMaster() {
       chargeCategory: '',
       chargePrice: '',
       chargeDescription: '',
+      chargeIsRestricted: false,
     },
   });
 
@@ -121,7 +124,8 @@ function ChargeMaster() {
       chargeName: chargeData.charges_master_name,
       chargeCategory: chargeData.charges_category_id?.toString(),
       chargePrice: chargeData.charges_master_price?.toString(),
-      chargeDescription: chargeData.charges_master_description || ''
+      chargeDescription: chargeData.charges_master_description || '',
+      chargeIsRestricted: !!chargeData.charge_name_isRestricted,
     };
     
     setSelectedCharge({
@@ -140,7 +144,8 @@ function ChargeMaster() {
       charge_category: parseInt(chargeData.chargeCategory),
       charge_name: chargeData.chargeName,
       charge_price: parseFloat(chargeData.chargePrice),
-      charge_description: chargeData.chargeDescription || ''
+      charge_description: chargeData.chargeDescription || '',
+      charge_is_restricted: chargeData.chargeIsRestricted ? 1 : 0,
     };
     const addChargeForm = new FormData();
     addChargeForm.append("method", "addCharges");
@@ -169,7 +174,8 @@ function ChargeMaster() {
       charge_name: chargeValues.chargeName,
       charge_category: parseInt(chargeValues.chargeCategory),
       charge_price: parseFloat(chargeValues.chargePrice),
-      charge_description: chargeValues.chargeDescription || ''
+      charge_description: chargeValues.chargeDescription || '',
+      charge_is_restricted: chargeValues.chargeIsRestricted ? 1 : 0,
     };
 
     const updateChargeForm = new FormData();
@@ -548,6 +554,27 @@ function ChargeMaster() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="chargeIsRestricted"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            Restrict this charge name
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">Prevents frontdesk from reusing this name for ad-hoc charges.</p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
                   <Button type="submit" disabled={isLoading}>Submit</Button>
                 </form>
               </Form>
@@ -638,6 +665,29 @@ function ChargeMaster() {
                         <FormControl>
                           <Textarea {...field} />
                         </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Restricted Toggle */}
+                  <FormField
+                    control={form.control}
+                    name="chargeIsRestricted"
+                    defaultValue={selectedCharge.chargeIsRestricted}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            Restrict this charge name
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">Prevents frontdesk from reusing this name for ad-hoc charges.</p>
+                        </div>
                       </FormItem>
                     )}
                   />

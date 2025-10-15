@@ -1,70 +1,68 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
-import Landingpage from './pages/Landingpage';
-// import AdminHeader from './components/layout/AdminHeader';
-// import CustomerHeader from './components/layout/CustomerHeader';
-// import FrontHeader from './components/layout/FrontHeader';
-import LandingHeader from './components/layout/LandingHeader';
 
-
-
-import CustomerAbout from './pages/customer/CustomerAbout';
-import CustomerBooking from './pages/customer/CustomerBooking';
-import CustomerRooms from './pages/customer/CustomerRooms';
-import CustomerGallery from './pages/customer/CustomerGallery';
-import CustomerRestaurant from './pages/customer/CustomerRestaurant';
-import CustomerPayment from './pages/customer/CustomerPayment';
-import RoomSearch from './pages/customer/RoomSearch';
-import { useEffect } from 'react';
-import CustomerHeader from './components/layout/CustomerHeader';
-import CustomerMain from './pages/customer/CustomerMain';
-import { Toaster } from 'sonner';
-import { CheckCircle2Icon, XCircleIcon } from 'lucide-react';
-
-// Frontdesk Side
-import FrontdeskLogin from './pages/frontdesk/FrontdeskLogin';
-import FrontdeskDashboard from './pages/frontdesk/FrontdeskDashboard';
-import FrontdeskWalkin from './pages/frontdesk/FrontdeskWalkin';
-import FrontdeskReservation from './pages/frontdesk/FrontdeskResvation';
-import BookingChargesMaster from './pages/frontdesk/BookingChargesMaster';
-import BookingRequestList from './pages/frontdesk/BookingListRequest';
-import BookingChargesList from './pages/frontdesk/BookingChargesList';
-import BookingCreateInvoice from './pages/frontdesk/BookingCreateInvoice';
-import BookingDisplayInvoiceSample from './pages/frontdesk/BookingDisplayInvoiceSample';
-import Billings from './pages/admin/Billings';
-import Invoice from './pages/admin/Invoice';
-import ApproveRooms from './pages/admin/Online_Folder/ApproveRooms';
-import ApprovalReceipt from './pages/admin/Online_Folder/ApprovalReceipt';
-import Login from './pages/UserAuth_Folder/Login';
-import Register from './pages/UserAuth_Folder/Register';
-import OTP_Auth from './pages/UserAuth_Folder/OTP_Auth';
-import AddWalkIn from './pages/admin/WalkIn_Folder/AddWalkIn';
-import ChooseRooms from './pages/admin/WalkIn_Folder/ChooseRooms';
-import PaymentMethod from './pages/admin/WalkIn_Folder/PaymentMethod';
-import Confirmation from './pages/admin/WalkIn_Folder/Confirmation';
-import { WalkInProvider } from './pages/admin/WalkIn_Folder/WalkInContext';
-import { ApprovalProvider } from './pages/admin/Online_Folder/ApprovalContext';
-import OnlineReqList from './pages/admin/Online_Folder/OnlineReqList';
-import CustomerRoomView from './pages/customer/CustomerRoomView';
-import ForgotPassword from './pages/UserAuth_Folder/ForgotPassword';
-import ResetPassword from './pages/UserAuth_Folder/ResetPassword';
+// ------------------------------------------------------------ Admin Side Here ------------------------------------------------------------
 import AdminRouteGuard from './pages/admin/components/AdminRouteGuard';
-import EmployeeManagement from './pages/admin/EmployeeManagement';
-import AdminBookingRoomSelection from './pages/admin/SubPages/BookingRoomSelection';
-import AdminNewBook from './pages/admin/NewBook';
-import CreateInvoice from './pages/admin/Invoice';
+import AdminRoomsList from './pages/admin/RoomsList';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/Profile';
-import AdminRoomsList from './pages/admin/RoomsList';
 import AdminBookingList from './pages/admin/BookingList';
 import AdminCalendar from './pages/admin/Calendar';
 import AdminGuestProfile from './pages/admin/GuestProfile';
 import AdminPayments from './pages/admin/Payments';
 import AdminRequestedAmenities from './pages/admin/RequestedAmenities';
+import AdminBookingRoomSelection from './pages/admin/SubPages/BookingRoomSelection';
 import AdminReviews from './pages/admin/Reviews';
 import AdminTransactionHis from './pages/admin/TransactionHis';
 import AdminVisitorsLog from './pages/admin/VisitorsLog';
+import AdminAmenityMaster from './pages/admin/Master_Files/AmenityMaster';
+import AdminChargesCategory from './pages/admin/Master_Files/ChargesCategory';
+import AdminChargeMaster from './pages/admin/Master_Files/ChargeMaster';
+import AdminDiscountMaster from './pages/admin/Master_Files/DiscountMaster';
+import AdminRoomtype from './pages/admin/Master_Files/RoomTypeMaster';
+import AdminNewBook from './pages/admin/WalkIn_Folder/AddWalkIn';
+import Landingpage from './pages/Landingpage';
+import Billings from './pages/admin/Billings';
+import CreateInvoice from './pages/admin/Invoice';
+import EmployeeList from './pages/admin/EmployeeList';
+
+// Online
+import OnlineReqList from './pages/admin/Online_Folder/OnlineReqList';
+import { ApprovalProvider } from './pages/admin/Online_Folder/ApprovalContext';
+import ApprovalReceipt from './pages/admin/Online_Folder/ApprovalReceipt';
+
+// Walk In
+import AddWalkIn from './pages/admin/WalkIn_Folder/AddWalkIn';
+import ChooseRooms from './pages/admin/WalkIn_Folder/ChooseRooms';
+import PaymentMethod from './pages/admin/WalkIn_Folder/PaymentMethod';
+import Confirmation from './pages/admin/WalkIn_Folder/Confirmation';
+import { WalkInProvider } from './pages/admin/WalkIn_Folder/WalkInContext';
+
+
+// ------------------------------------------------------------ User Auth Side Here ------------------------------------------------------------
+import Login from './pages/UserAuth_Folder/Login';
+import EmployeeLogin from './pages/UserAuth_Folder/Login_Employees';
+import Register from './pages/UserAuth_Folder/Register';
+import OTPAuth from './pages/UserAuth_Folder/OTP_Auth';
+import ForgotPassword from './pages/UserAuth_Folder/ForgotPassword';
+import ResetPassword from './pages/UserAuth_Folder/ResetPassword';
+
+// ------------------------------------------------------------ Customer Side Here ------------------------------------------------------------
+import RoomSearch from './pages/customer/RoomSearch';
+import CustomerRoomView from './pages/customer/CustomerRoomView';
+import CustomerAbout from './pages/customer/CustomerAbout';
+import CustomerBooking from './pages/customer/CustomerBooking';
+import CustomerRooms from './pages/customer/CustomerRooms';
+import CustomerGallery from './pages/customer/CustomerGallery';
+import CustomerRestaurant from './pages/customer/CustomerRestaurant';
+import { useEffect } from 'react';
+import CustomerMain from './pages/customer/CustomerMain';
+import { Toaster } from 'sonner';
+import { CheckCircle2Icon, XCircleIcon } from 'lucide-react';
+import { SuccessPayment } from './pages/customer/modals/sheets/pages/SuccessPayment';
+import { CancelledPayment } from './pages/customer/modals/sheets/pages/CancelledPayment';
+
 
 function App() {
 
@@ -81,12 +79,10 @@ function App() {
 
 
   return (
-
     <>
       <div className="w-full ">
 
       </div>
-
       <Toaster
         position='top-center'
         richColors
@@ -96,34 +92,28 @@ function App() {
           error: <XCircleIcon />,
         }}
 
-
-
       />
-
-      <WalkInProvider>
-        <ApprovalProvider>
-          <Router>
-
-            {/* <div>
-        {localStorage.getItem("role") === "admin" ? <AdminHeader />
-          : localStorage.getItem("role") === "front" ? <FrontHeader />
-            : localStorage.getItem("role") === "customer" ? <CustomerHeader />
-              : <LandingHeader />
-        } */}
-            {/* <LandingHeader /> */}
+      <Router>
 
 
-            <div style={{ flex: 1 }}>
+        <div style={{ flex: 1 }}>
+
+          <WalkInProvider>
+            <ApprovalProvider>
+
               <Routes>
-                {/* Admin Pages */}
+
+                {/* Auth Pages */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/employee/login" element={<EmployeeLogin />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/verify" element={<OTP_Auth />} />
+                <Route path="/verify" element={<OTPAuth />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+
+                {/* Landing Page */}
                 <Route path="/" element={<Landingpage />} />
-                {/* Admin Pages */}
-                <Route path="/" element={<Landingpage />} />
+
                 {/* Protected Admin Pages */}
                 <Route path="/admin/dashboard" element={
                   <AdminRouteGuard>
@@ -191,22 +181,22 @@ function App() {
                   </AdminRouteGuard>
                 } />
 
-                {/* <Route path="/admin/amenitymaster" element={
+                <Route path="/admin/amenitymaster" element={
                   <AdminRouteGuard>
                     <AdminAmenityMaster />
                   </AdminRouteGuard>
-                } /> */}
-                {/* <Route path="/admin/chargescategory" element={
+                } />
+                <Route path="/admin/chargescategory" element={
                   <AdminRouteGuard>
                     <AdminChargesCategory />
                   </AdminRouteGuard>
-                } /> */}
-                {/* <Route path="/admin/chargemaster" element={
+                } />
+                <Route path="/admin/chargemaster" element={
                   <AdminRouteGuard>
                     <AdminChargeMaster />
                   </AdminRouteGuard>
-                } /> */}
-                {/* <Route path="/admin/discountmaster" element={
+                } />
+                <Route path="/admin/discountmaster" element={
                   <AdminRouteGuard>
                     <AdminDiscountMaster />
                   </AdminRouteGuard>
@@ -215,10 +205,10 @@ function App() {
                   <AdminRouteGuard>
                     <AdminRoomtype />
                   </AdminRouteGuard>
-                } /> */}
-                <Route path="/admin/employeemanagement" element={
+                } />
+                <Route path="/admin/employeelist" element={
                   <AdminRouteGuard>
-                    <EmployeeManagement />
+                    <EmployeeList />
                   </AdminRouteGuard>
                 } />
 
@@ -239,11 +229,12 @@ function App() {
                     <OnlineReqList />
                   </AdminRouteGuard>
                 } />
-                <Route path="/admin/approve/:bookingId" element={
+                {/* Route temporarily disabled: ApproveRooms component missing */}
+                {/* <Route path="/admin/approve/:bookingId" element={
                   <AdminRouteGuard>
                     <ApproveRooms />
                   </AdminRouteGuard>
-                } />
+                } /> */}
                 <Route path="/admin/receipt/:bookingId" element={
                   <AdminRouteGuard>
                     <ApprovalReceipt />
@@ -271,40 +262,28 @@ function App() {
                     <Confirmation />
                   </AdminRouteGuard>
                 } />
-
-                {/* Frontdesk */}
-                {/* <Route path="/frontdesk/login" element={<FrontdeskLogin />} />
-            <Route path="/frontdesk/dashboard" element={<FrontdeskDashboard />} />
-            <Route path="/frontdesk/walkin" element={<FrontdeskWalkin />} />
-            <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
-                {/* <Route path="/frontdesk/reservations" element={<FrontdeskReservation />} /> */}
-                <Route path="/BookingChargesMaster" element={<BookingChargesMaster />} />
-                <Route path="/BookingRequestList" element={<BookingRequestList />} />
-                <Route path="/BookingChargesList" element={<BookingChargesList />} />
-                <Route path="/BookingCreateInvoice" element={<BookingCreateInvoice />} />
-                <Route path="/BookingDisplayInvoiceSample" element={<BookingDisplayInvoiceSample />} />
+                
                 {/* Customer Route */}
-
+                <Route path="/customer/roomview" element={<CustomerRoomView />} />
+                <Route path="/customer/roomsearch" element={<RoomSearch />} />
                 <Route path="/customer/about" element={<CustomerAbout />} />
                 <Route path="/customer/bookings" element={<CustomerBooking />} />
                 <Route path="/customer/rooms" element={<CustomerRooms />} />
                 <Route path="/customer/gallery" element={<CustomerGallery />} />
                 <Route path="/customer/restaurant" element={<CustomerRestaurant />} />
-                <Route path="/customer/payment" element={<CustomerPayment />} />
-                <Route path="/customer/roomsearch" element={<RoomSearch />} />
-                <Route path="/customer/roomview" element={<CustomerRoomView />} />
                 <Route path="/customer" element={<CustomerMain />} />
-
-
+                <Route path="/payment-success" element={<SuccessPayment />} />
+                <Route path="/payment-cancelled" element={<CancelledPayment />} />
 
 
               </Routes>
-            </div>
-            {/* <Footer /> */}
+            </ApprovalProvider>
+          </WalkInProvider>
 
-          </Router>
-        </ApprovalProvider>
-      </WalkInProvider>
+        </div>
+        {/* <Footer /> */}
+
+      </Router>
 
     </>
   );

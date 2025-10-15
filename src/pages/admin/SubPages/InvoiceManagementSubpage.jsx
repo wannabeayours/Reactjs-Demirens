@@ -37,7 +37,19 @@ function InvoiceManagementSubpage({
     invoice_status_id: 1
   });
 
-  const validateBilling = async (bookingId) => {
+  // Helper: get current logged-in employee ID from localStorage
+  const getCurrentEmployeeId = () => {
+    // Prefer employee-specific keys first, then generic user keys, admin last
+    const keys = ["employee_id", "employeeId", "userId", "user_id", "userID", "admin_id"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (raw && /^\d+$/.test(raw)) {
+        const id = parseInt(raw, 10);
+        if (id > 0) return id;
+      }
+    }
+    return 1; // Fallback to admin if none found
+  };  const validateBilling = async (bookingId) => {
     try {
       const url = localStorage.getItem("url") + "transactions.php";
       const formData = new FormData();
@@ -60,7 +72,7 @@ function InvoiceManagementSubpage({
       formData.append("operation", "createBillingRecord");
       formData.append("json", JSON.stringify({ 
         booking_id: bookingId,
-        employee_id: 1
+        employee_id: getCurrentEmployeeId()
       }));
       
       const res = await axios.post(url, formData);
@@ -79,8 +91,8 @@ function InvoiceManagementSubpage({
       formData.append("json", JSON.stringify({ 
         booking_id: bookingId,
         discount_id: invoiceForm.discount_id,
-        vat_rate: invoiceForm.vat_rate,
-        downpayment: invoiceForm.downpayment
+        vat_rate: 0.12,
+        downpayment: 0
       }));
       
       console.log("Calculating billing breakdown for booking:", bookingId);
@@ -315,12 +327,12 @@ function InvoiceManagementSubpage({
 
       const jsonData = {
         billing_ids: [billingId],
-        employee_id: 1, // Replace with session value
+        employee_id: getCurrentEmployeeId(),
         payment_method_id: invoiceForm.payment_method_id,
         invoice_status_id: invoiceForm.invoice_status_id,
         discount_id: invoiceForm.discount_id,
-        vat_rate: invoiceForm.vat_rate,
-        downpayment: invoiceForm.downpayment
+        vat_rate: 0.12,
+        downpayment: 0
       };
 
       console.log("Creating invoice with data:", jsonData);
@@ -689,11 +701,7 @@ function InvoiceManagementSubpage({
                     <span className="font-mono font-bold text-xl">₱{(parseFloat(billingBreakdown.final_total) || 0).toFixed(2)}</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">Downpayment:</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.downpayment) || 0).toFixed(2)}</span>
-                    </div>
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 border border-yellow-200 dark:border-yellow-800">
                       <span className="font-bold text-lg">Balance Due:</span>
                       <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">₱{(parseFloat(billingBreakdown.balance) || 0).toFixed(2)}</span>
@@ -840,10 +848,6 @@ function InvoiceManagementSubpage({
                                 <span>VAT ({(detailedCharges.summary.vat_rate * 100).toFixed(0)}%):</span>
                                 <span>₱{detailedCharges.summary.vat_amount.toFixed(2)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span>Downpayment:</span>
-                                <span className="text-green-600">-₱{detailedCharges.summary.downpayment.toFixed(2)}</span>
-                              </div>
                               <div className="flex justify-between font-semibold border-t pt-1 text-lg">
                                 <span>Balance Due:</span>
                                 <span className="text-red-600">₱{detailedCharges.summary.balance.toFixed(2)}</span>
@@ -876,7 +880,7 @@ function InvoiceManagementSubpage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select 
@@ -896,39 +900,13 @@ function InvoiceManagementSubpage({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="vat_rate">VAT Rate</Label>
+                <Label htmlFor="vat_rate">VAT Rate (fixed)</Label>
                 <Input
                   id="vat_rate"
                   type="text"
                   value={invoiceForm.vat_rate}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setInvoiceForm({...invoiceForm, vat_rate: parseFloat(value) || 0});
-                    }
-                  }}
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  placeholder="0.12"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="downpayment">Downpayment</Label>
-                <Input
-                  id="downpayment"
-                  type="text"
-                  value={invoiceForm.downpayment}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setInvoiceForm({...invoiceForm, downpayment: parseFloat(value) || 0});
-                    }
-                  }}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
+                  readOnly
+                  disabled
                 />
               </div>
             </div>

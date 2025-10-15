@@ -8,14 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { BedDouble, Info, MinusIcon, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import axios from 'axios'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Stepper } from '@/components/ui/stepper'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { format } from 'date-fns'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import ComboBox from '@/components/ui/combo-box'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -24,20 +23,19 @@ import Moreinfo from './Moreinfo'
 import CreditCard from '../CreditCard'
 
 const schema = z.object({
+  walkinfirstname: z.string().min(1, { message: "First name is required" }),
+  walkinlastname: z.string().min(1, { message: "Last name is required" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  // PH contact number: exactly 11 numeric digits
+  contactNumber: z
+    .string()
+    .regex(/^\d{11}$/, { message: "Contact number must be exactly 11 digits" }),
   // Payment type toggle (gcash | bank)
   payType: z.enum(['gcash', 'bank']).default(''),
-  // GCash fields
-  gcashNumber: z.string().optional(),
-  gcashName: z.string().optional(),
-  // Proof of payment (file)
-  proofOfPayment: z.any().optional(),
-  // Amount to pay
-  totalPay: z.string().min(1, { message: 'Total pay is required' }),
 })
 
 function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
   const [paymentMethod, setPaymentMethod] = useState('')
-  const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [proofOfPayment, setProofOfPayment] = useState(null)
@@ -50,100 +48,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     setSuccess(false)
     setError('')
   }
-
-  // Inputs now managed via react-hook-form; local input state removed
-
-  const handleRemoveFile = () => {
-    setProofOfPayment(null)
-    setPreviewUrl('')
-    try { form.setValue('proofOfPayment', null, { shouldValidate: true }) } catch { }
-    try { form.clearErrors('proofOfPayment') } catch { }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = null
-    }
-  }
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]
-    console.log('[ProofOfPayment] Selected file:', file)
-    if (file) {
-      console.log('[ProofOfPayment] name:', file.name, 'size:', file.size, 'type:', file.type)
-      if (file.type.match('image.*')) {
-        setProofOfPayment(file)
-        try { form.setValue('proofOfPayment', file, { shouldValidate: true }) } catch { }
-        try { form.clearErrors('proofOfPayment') } catch { }
-
-        // Create a preview URL for the image
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          setPreviewUrl(e.target.result)
-          console.log('[ProofOfPayment] preview URL generated')
-        }
-        reader.readAsDataURL(file)
-
-        // Clear any previous errors
-        setError('')
-      } else {
-        console.warn('[ProofOfPayment] Invalid file type:', file.type)
-        setError('Please upload an image file (JPG, PNG, etc.)')
-        setProofOfPayment(null)
-        setPreviewUrl('')
-        try {
-          form.setValue('proofOfPayment', null, { shouldValidate: true })
-          form.setError('proofOfPayment', { type: 'manual', message: 'Please upload an image file (JPG, PNG, etc.)' })
-        } catch { }
-        e.target.value = null
-      }
-    }
-  }
-
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
 
   const handleShowAlert = async () => {
-    // First validate the entire form
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast.error("Please fill in all required fields correctly.");
-      return;
-    }
-
-    const formValues = form.getValues();
-    const { totalPay, paymentMethod } = formValues;
-    const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
-    const totalWithBeds = subtotal + extraBedCharges;
-    const downPayment = (totalWithBeds * 0.5).toFixed(2)
-
-    // Additional payment validations
-    if (paymentMethod === 0) {
-      toast.error("Please select a payment method");
-      return;
-    } else if (totalPay === "") {
-      toast.error("Please enter total amount");
-      return;
-    } else if (Number(totalPay) < downPayment) {
-      toast.error(`Total amount must be at least 50% of the total (₱${downPayment})`);
-      return;
-    }
-
-    // Validate payment-specific fields and proof of payment
-    if (!validatePaymentFields()) {
-      return;
-    }
-
     setAlertMessage("All payments are non-refundable. However, bookings may be canceled within 24 hours of confirmation.");
     setShowAlert(true);
   };
+
   const handleCloseAlert = async (status) => {
     if (status === 1) {
-      // Validate the form before proceeding
-      const isValid = await form.trigger();
-      if (isValid) {
-        handleConfirmBooking();
-      } else {
-        toast.error("Please fill in all required fields correctly.");
-      }
+      handleOpenGcash();
     }
     setShowAlert(false);
   };
@@ -151,16 +66,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      walkinfirstname: "",
-      walkinlastname: "",
-      email: "",
-      contactNumber: "",
-      // Payment defaults
       payType: 'gcash',
-      gcashNumber: '',
-      gcashName: '',
-      proofOfPayment: null,
-      totalPay: '',
     },
   })
 
@@ -183,12 +89,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
   const customerBookingWithAccount = async () => {
     try {
-      // const today = new Date(); today.setHours(0, 0, 0, 0);
-      // if (new Date(checkIn).getTime() <= today.getTime()) {
-      //   toast.error("Check-in date cannot be today or earlier.");
-      //   return;
-      // }
-
       const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
       const childrenNumberLS = localStorage.getItem("children") || 0;
@@ -278,78 +178,139 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       console.error(error);
     }
   };
-
-  // Helper: simple validators for payment fields
-  const normalizePhone = (raw) => (raw || '').replace(/[^0-9]/g, '');
-  const isValidPHMobile = (raw) => {
-    const d = normalizePhone(raw);
-    // Accept 11-digit starting 09, or 12-digit starting 639
-    if (/^09\d{9}$/.test(d)) return true;
-    if (/^639\d{9}$/.test(d)) return true;
-    return false;
-  };
-  const isValidEmail = (email) => {
-    const v = (email || '').trim();
-    // Lightweight email check
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-  };
-  const isDigitsBetween = (raw, min = 10, max = 20) => {
-    const d = normalizePhone(raw);
-    return new RegExp(`^\\d{${min},${max}}$`).test(d);
-  };
-
-  // Helper: validate payment-specific required fields and proof of payment using form values
-  const validatePaymentFields = () => {
-    const values = form.getValues();
-    const payType = values.payType || paymentMethod;
-
-    // Ensure a proof of payment image is uploaded
-    if (!values.proofOfPayment) {
-      toast.error("Please upload proof of payment.");
-      try { form.setError('proofOfPayment', { type: 'manual', message: 'Proof of payment is required.' }) } catch { }
-      return false;
-    }
-
-    if (payType === 'gcash') {
-      if (!values.gcashNumber || !values.gcashName) {
-        toast.error("Please complete all GCash details.");
-        if (!values.gcashNumber) form.setError('gcashNumber', { type: 'manual', message: 'GCash number is required.' });
-        if (!values.gcashName) form.setError('gcashName', { type: 'manual', message: 'Account name is required.' });
-        return false;
-      }
-      if (!isValidPHMobile(values.gcashNumber)) {
-        toast.error("Enter a valid PH mobile number (e.g., 09XXXXXXXXX or +639XXXXXXXXX).");
-        form.setError('gcashNumber', { type: 'manual', message: 'Invalid PH mobile number.' });
-        return false;
-      }
-      if ((values.gcashName || '').trim().length < 2) {
-        toast.error("Account name looks too short.");
-        form.setError('gcashName', { type: 'manual', message: 'Account name looks too short.' });
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  const getPaymentMethod = async () => {
+  const handleOpenGcash = async () => {
+    const loading = toast.loading("Redirecting...");
     try {
-      const url = localStorage.getItem('url') + "customer.php";
-      const formData = new FormData();
-      formData.append("operation", "getPaymentMethod");
-      const res = await axios.post(url, formData);
-      console.log("res ni get payment method", res);
-      if (res.data !== 0) {
-        const formattedData = res.data.map((item) => ({
-          value: item.payment_method_id,
-          label: item.payment_method_name,
-        }));
-        setPaymentMethod(formattedData);
+      const url = localStorage.getItem("url") + "gcash_api.php";
+      const childrenNumber = localStorage.getItem("children");
+      const adultNumber = localStorage.getItem("adult");
+      const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
+      const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+      const displayedVat = subtotal - (subtotal / 1.12)
+      const totalWithBeds = subtotal + extraBedCharges;
+      const downPayment = (totalWithBeds * 0.5).toFixed(2)
+      const totalAmount = totalWithBeds.toFixed(2)
+      const payType = form.getValues('payType');
+      const formValues = form.getValues();
+      const { walkinfirstname, walkinlastname, email, contactNumber } = formValues;
+
+      const bookingDetails = {
+        "checkIn": formatYMD(checkIn),
+        "checkOut": formatYMD(checkOut),
+        "downpayment": downPayment,
+        "totalAmount": totalAmount,
+        "totalPay": downPayment,
+        "displayedVat": displayedVat.toFixed(2),
+        "children": childrenNumber,
+        "adult": adultNumber,
+        "payment_method_id": payType === 'gcash' ? 1 : 2,
       }
-      // setPaymentMethod(res.data !== 0 ? res.data : []);
+
+      const roomDetails = selectedRooms.map((room) => {
+        const adultCount = adultCounts[room.room_type] || 0;
+        const childrenCount = childrenCounts[room.room_type] || 0;
+        const bedCount = bedCounts[room.room_type] || 0;
+        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, beds=${bedCount}`)
+        return {
+          roomTypeId: room.room_type,
+          guestCount: adultCount + childrenCount,
+          adultCount: adultCount,
+          childrenCount: childrenCount,
+          bedCount: bedCount,
+        };
+      });
+
+      const jsonData = {
+        walkinfirstname: walkinfirstname,
+        walkinlastname: walkinlastname,
+        email: email,
+        contactNumber: contactNumber,
+        bookingDetails: bookingDetails,
+        roomDetails: roomDetails
+      }
+
+      const formData = new FormData();
+      const fullName = localStorage.getItem("fname") + " " + localStorage.getItem("lname");
+      formData.append("totalAmount", downPayment);
+      formData.append("hasAccount", 1);
+      formData.append("name", fullName);
+      localStorage.setItem("hasAccount", 1);
+      const res = await axios.post(url, formData);
+
+      console.log("[gcashBooking] response:", res.data);
+
+      const checkoutUrl = res.data.checkout_url;
+      if (checkoutUrl) {
+        localStorage.setItem("jsonData", JSON.stringify(jsonData));
+        window.location.href = checkoutUrl;
+      } else {
+        toast.error("Error: No checkout URL received.");
+      }
     } catch (error) {
-      toast.error("Network error");
-      console.error(error);
+      console.error("GCash Payment Error:", error);
+      toast.error("Something went wrong");
+    } finally {
+      toast.dismiss(loading);
+    }
+  };
+
+  const isRoomAvailable = async () => {
+    try {
+      const url = localStorage.getItem("url") + "customer.php";
+      const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
+      const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+      const displayedVat = subtotal - (subtotal / 1.12)
+      const totalWithBeds = subtotal + extraBedCharges;
+      const downPayment = (totalWithBeds * 0.5).toFixed(2)
+      const totalAmount = totalWithBeds.toFixed(2)
+      const payType = form.getValues('payType');
+
+      const bookingDetails = {
+        "checkIn": formatYMD(checkIn),
+        "checkOut": formatYMD(checkOut),
+        "downpayment": downPayment,
+        "totalAmount": totalAmount,
+        "totalPay": downPayment,
+        "displayedVat": displayedVat.toFixed(2),
+        "children": childrenNumber,
+        "adult": adultNumber,
+      }
+
+      const roomDetails = selectedRooms.map((room) => {
+        const adultCount = adultCounts[room.room_type] || 0;
+        const childrenCount = childrenCounts[room.room_type] || 0;
+        const bedCount = bedCounts[room.room_type] || 0;
+        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, beds=${bedCount}`)
+        return {
+          roomTypeId: room.room_type,
+          guestCount: adultCount + childrenCount,
+          adultCount: adultCount,
+          childrenCount: childrenCount,
+          bedCount: bedCount,
+        };
+      });
+      const jsonData = {
+        bookingDetails: bookingDetails,
+        roomDetails: roomDetails
+      }
+
+      const formData = new FormData();
+      formData.append("operation", "isRoomAvailable");
+      formData.append("json", JSON.stringify(jsonData));
+      const res = await axios.post(url, formData);
+      console.log("[isRoomAvailable] response:", res.data);
+      const code = Number(res?.data);
+      if (code !== 1) {
+        toast.error("Rooms not available anymore");
+        return 0;
+      }
+      if (payType === 'gcash') {
+        handleShowAlert();
+      }
+      return 1;
+    } catch (error) {
+      toast.error("Something went wrong");
+      return 0;
     }
   }
 
@@ -501,10 +462,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRooms]);
 
-  useEffect(() => {
-    getPaymentMethod();
-  }, []);
-
   // ---------------------- Handlers ----------------------
 
   const handleCheckInChange = (e) => {
@@ -541,8 +498,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
     localStorage.setItem('checkOut', newDateStr);
   };
 
-
-
   const handleRemoveRoom = (indexRemove) => {
     const roomToRemove = selectedRooms[indexRemove];
     const updated = selectedRooms.filter((_, i) => i !== indexRemove);
@@ -574,7 +529,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       // Validate the form using react-hook-form
       const isValid = await form.trigger(["walkinfirstname", "walkinlastname", "email", "contactNumber"]);
       if (!isValid) {
-        toast.error("Please fill in all required fields correctly.");
+        toast.error("Invalid walk-in customer information.");
         return;
       }
     }
@@ -589,11 +544,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const handleConfirmBooking = () => {
-    customerBookingWithAccount();
-  };
-
 
   // Booking Summary Component
   const BookingSummary = () => {
@@ -637,7 +587,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               <h3 className="text-lg font-semibold mb-4">Payment Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span>Subtotalss:</span>
+                  <span>Subtotals:</span>
                   <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 {selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) > 0 && (
@@ -968,7 +918,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       </div>
 
     </div>
-  )
+  );
+
   const BookingConfirmationStep = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
     const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
@@ -979,9 +930,66 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
 
     return (
-      <div className="h-[calc(100vh-400px)]">
+      <div className="h-[calc(100vh-350px)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ScrollArea className="h-[calc(100vh-400px)]">
+          <ScrollArea className="h-[calc(100vh-350px)]">
+
+            {/* Guest Information */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+              <Card className="bg-white shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">First Name</p>
+                      <p className="font-medium">{formValues.walkinfirstname}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Last Name</p>
+                      <p className="font-medium">{formValues.walkinlastname}</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium">{formValues.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Contact Number</p>
+                        <p className="font-medium">{formValues.contactNumber}</p>
+                      </div>
+
+                    </div>
+
+
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Booking Details */}
+              <Card className="bg-white shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Check-in Date</p>
+                      <p className="font-medium">{format(checkIn, 'PPP')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Check-out Date</p>
+                      <p className="font-medium">{format(checkOut, 'PPP')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Number of Nights</p>
+                      <p className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Guests</p>
+                      <p className="font-medium">{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0)} guest{selectedRooms.reduce((total, room) => total + (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Room Details */}
             <Card className="bg-white shadow-md">
@@ -1021,7 +1029,55 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 </div>
               </CardContent>
             </Card>
+          </ScrollArea>
 
+          <ScrollArea className="h-[calc(100vh-350px)]">
+
+            <Card className="bg-white shadow-md rounded-2xl overflow-hidden mb-3">
+              <CardHeader className="bg-gray-50">
+                <CardTitle>Select Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Form {...form}>
+                  <div className="flex space-x-4 mb-6">
+                    <Button
+                      variant={paymentMethod === 'gcash' ? 'default' : 'outline'}
+                      onClick={() => handlePaymentMethodChange('gcash')}
+                      className="flex-1"
+                    >
+                      GCash
+                    </Button>
+                    <Button
+                      variant={paymentMethod === 'bank' ? 'default' : 'outline'}
+                      onClick={() => handlePaymentMethodChange('bank')}
+                      className="flex-1"
+                    >
+                      Paypal
+                    </Button>
+                  </div>
+
+                  {/* Payment Form */}
+                  {paymentMethod === 'gcash' && (
+                    <div>
+                      <Button onClick={isRoomAvailable} className="w-full">
+                        Pay with GCash
+                      </Button>
+                    </div>
+                  )}
+                  {paymentMethod === 'bank' && (
+                    <CreditCard onSubmit={customerBookingWithAccount} totalAmount={total} isRoomAvailable={isRoomAvailable} />
+                  )
+                  }
+                </Form>
+              </CardContent>
+              <CardFooter className="bg-gray-50 flex flex-col">
+                {error && (
+                  <div className="w-full mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-md text-sm">
+                    {error}
+                  </div>
+                )}
+              </CardFooter>
+            </Card>
             {/* Payment Summary */}
             <Card className="bg-white shadow-md border-2 border-blue-200">
               <CardContent className="p-6">
@@ -1064,184 +1120,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </ScrollArea>
-
-          <ScrollArea className="h-[calc(100vh-400px)]">
-            <Card className="bg-white shadow-md rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gray-50">
-                <CardTitle>Select Payment Method</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <Form {...form}>
-                  <div className="flex space-x-4 mb-6">
-                    <Button
-                      variant={paymentMethod === 'gcash' ? 'default' : 'outline'}
-                      onClick={() => handlePaymentMethodChange('gcash')}
-                      className="flex-1"
-                    >
-                      GCash
-                    </Button>
-                    <Button
-                      variant={paymentMethod === 'bank' ? 'default' : 'outline'}
-                      onClick={() => handlePaymentMethodChange('bank')}
-                      className="flex-1"
-                    >
-                      Paypal
-                    </Button>
-                  </div>
-
-                  {/* Payment Form */}
-                  {paymentMethod === 'gcash' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-600">Please complete your payment using GCash.</p>
-
-                      <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="gcashNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="gcash-number">GCash Number</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="gcash-number"
-                                  type="text"
-                                  placeholder="09XX XXX XXXX"
-                                  className="mt-1"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="gcashName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="gcash-name">Account Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="gcash-name"
-                                  type="text"
-                                  placeholder="Full Name"
-                                  className="mt-1"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                        <h3 className="font-medium text-center mb-2">Payment Instructions</h3>
-                        <ol className="list-decimal list-inside text-sm space-y-2 text-gray-700">
-                          <li>Open your GCash app on your mobile device</li>
-                          <li>Tap on "Send Money"</li>
-                          <li>Enter the hotel's GCash number: <span className="font-medium">0917 123 4567</span></li>
-                          <li>Enter the amount: ₱ {down.toLocaleString('en-PH')}</li>
-                          <li>In the message field, include your booking reference</li>
-                          <li>Complete the payment in your GCash app</li>
-                          <li>Take a screenshot of your payment confirmation</li>
-                          <li>Upload the screenshot below and click "Continue to Payment"</li>
-                        </ol>
-                      </div>
-
-                      <div className="mt-6">
-                        <FormField
-                          control={form.control}
-                          name="proofOfPayment"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="proof-of-payment" className="font-medium">Upload Proof of Payment</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="proof-of-payment"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    field.onChange(file);
-                                    handleFileChange(e);
-                                  }}
-                                  name={field.name}
-                                  ref={field.ref}
-                                  onBlur={field.onBlur}
-                                  className="mt-1"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <p className="text-xs text-gray-600 mt-1">Selected file: {field.value?.name || 'No file chosen'}</p>
-                              <p className="text-xs text-gray-500 mt-1">Upload a screenshot of your payment confirmation (JPG, PNG)</p>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {previewUrl && (
-                        <div className="mt-4 relative">
-                          <div className="border rounded-md overflow-hidden">
-                            <img
-                              src={previewUrl}
-                              alt="Payment proof"
-                              className="max-h-48 mx-auto"
-                            />
-                          </div>
-                          <button
-                            onClick={handleRemoveFile}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            type="button"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                      <div className="mt-6">
-                        <FormField
-                          control={form.control}
-                          name="totalPay"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel htmlFor="total-pay-gcash">Amount to Pay</FormLabel>
-                              <FormControl>
-                                <Input
-                                  id="total-pay-gcash"
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="Enter amount (₱)"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {paymentMethod === 'bank' && (
-                    <CreditCard onSubmit={customerBookingWithAccount} totalAmount={total} />
-                  )
-                  }
-                </Form>
-              </CardContent>
-              <CardFooter className="bg-gray-50 flex flex-col">
-                {error && (
-                  <div className="w-full mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-md text-sm">
-                    {error}
-                  </div>
-                )}
-              </CardFooter>
             </Card>
           </ScrollArea>
         </div>
@@ -1304,29 +1182,21 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
+            <Button
+              onClick={handleNextStep}
+              className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
+              size="sm"
+              disabled={currentStep === steps.length}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
 
-            {currentStep < steps.length ? (
-              <Button
-                onClick={handleNextStep}
-                className="bg-[#113F67] hover:bg-[#0d2f4f] flex items-center gap-2"
-                size="sm"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleShowAlert}
-                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                size="sm"
-              >
-                Confirm Booking
-              </Button>
-            )}
           </div>
         </SheetFooter>
+
       </SheetContent>
-    </Sheet>
+    </Sheet >
   );
 
 }

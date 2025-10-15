@@ -36,8 +36,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from '@/components/ui/scroll-area'
 import axios from 'axios'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-const CustomerPayment = ({ customer, onBack }) => {
+const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
   const APIConn = `${localStorage.url}admin.php`
 
   const [customerBills, setCustomerBills] = useState([]);
@@ -57,6 +58,14 @@ const CustomerPayment = ({ customer, onBack }) => {
     title: '',
     showModal: false
   })
+
+  // New: payment form states
+  const [amountReceived, setAmountReceived] = useState('')
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState(null)
+  // New: track payment processing state to disable UI while request is in-flight
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  // New: transactions endpoint for invoice-related operations
+  const APIConnTransactions = `${localStorage.url}transactions.php`
 
   // API Connections
   const getBillingInfo = async () => {
@@ -197,9 +206,143 @@ const CustomerPayment = ({ customer, onBack }) => {
   const formatDate = (dateStr) =>
     DateFormatter.formatLongDate(dateStr)
 
-  const handlePay = () => {
-    console.log("Processing payment...");
+  // Ensure we have a billing ID linked to this booking
+  const getBookingBillingId = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('operation', 'getBookingBillingId');
+      formData.append('json', JSON.stringify({ booking_id: customer.booking_id }));
+      const res = await axios.post(APIConnTransactions, formData);
+      if (res.data?.success && res.data.billing_id) {
+        return res.data.billing_id;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error getting booking billing ID:', err);
+      return null;
+    }
+  }
+
+  // Create a billing record if none exists
+  const createBillingRecordForBooking = async () => {
+    try {
+      const employeeId = parseInt(localStorage.getItem('userId')) || 1;
+      const formData = new FormData();
+      formData.append('operation', 'createBillingRecord');
+      formData.append('json', JSON.stringify({ 
+        booking_id: customer.booking_id,
+        employee_id: employeeId,
+        payment_method_id: selectedPaymentMethodId || 2,
+        vat_rate: 0.12,
+        discount_id: null
+      }));
+      const res = await axios.post(APIConnTransactions, formData);
+      return !!(res.data && res.data.success);
+    } catch (err) {
+      console.error('Error creating billing record:', err);
+      return false;
+    }
+  }
+
+  // Helper: get comprehensive billing total to safely compute downpayment
+  const getFinalTotalForBooking = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('operation', 'calculateComprehensiveBilling');
+      formData.append('json', JSON.stringify({ 
+        booking_id: customer.booking_id,
+        vat_rate: 0.12,
+        discount_id: null,
+        downpayment: 0
+      }));
+      const res = await axios.post(APIConnTransactions, formData);
+      if (res.data?.success && typeof res.data.final_total !== 'undefined') {
+        return parseFloat(res.data.final_total) || 0;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error calculating comprehensive billing:', error);
+      return null;
+    }
+  }
+
+  const handlePay = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      const received = parseFloat(amountReceived);
+      if (!selectedPaymentMethodId) {
+        alert('Please select a payment method.');
+        return;
+      }
+      if (isNaN(received) || received <= 0) {
+        alert('Please enter a valid amount received.');
+        return;
+      }
+
+      // Get or create billing record
+      let billingId = await getBookingBillingId();
+      if (!billingId) {
+        const created = await createBillingRecordForBooking();
+        if (!created) {
+          alert('Failed to create billing record for this booking.');
+          return;
+        }
+        billingId = await getBookingBillingId();
+        if (!billingId) {
+          alert('Billing ID could not be retrieved after creation.');
+          return;
+        }
+      }
+
+      // Safely compute downpayment based on current comprehensive total
+      const finalTotal = await getFinalTotalForBooking();
+      const downpaymentToUse = finalTotal != null ? Math.min(received, finalTotal) : received;
+
+      // Prepare payload for invoice creation
+      const employeeId = parseInt(localStorage.getItem('userId')) || 1;
+      const jsonData = {
+        billing_ids: [billingId],
+        employee_id: employeeId,
+        payment_method_id: selectedPaymentMethodId,
+        invoice_status_id: 1,
+        discount_id: null,
+        vat_rate: 0.12,
+        downpayment: downpaymentToUse
+      };
+
+      const formData = new FormData();
+      formData.append('operation', 'createInvoice');
+      formData.append('json', JSON.stringify(jsonData));
+
+      const res = await axios.post(APIConnTransactions, formData);
+      if (res.data?.success) {
+        alert(res.data.message || 'Invoice created successfully.');
+        // Refresh billing info after successful invoice creation
+        getBillingInfo();
+      } else {
+        alert(res.data?.message || 'Failed to create invoice.');
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      alert('An error occurred while processing payment.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
+
+  // Compute change based on amount received
+  const changeAmount = useMemo(() => {
+    const amount = parseFloat(amountReceived) || 0
+    // Compute total directly from customerBills to avoid dependency on totalCharges before it's declared
+    const total = customerBills.reduce((acc, bill) => {
+      const qty = bill.item_amount || 1
+      const price = parseFloat(bill.item_price) || 0
+      return acc + qty * price
+    }, 0)
+    const diff = amount - total
+    return diff > 0 ? diff : 0
+  }, [amountReceived, customerBills])
 
   const handlePrintReceipt = () => {
     console.log("Printing receipt...");
@@ -363,30 +506,45 @@ const CustomerPayment = ({ customer, onBack }) => {
               <CardContent className="space-y-4 text-sm">
                 <div className="space-y-2">
                   <Label htmlFor="amountReceived">Amount Received</Label>
-                  <Input id="amountReceived" placeholder="₱ 0.00" />
+                  <Input id="amountReceived" placeholder="₱ 0.00" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)} />
                 </div>
-                <p><span className="font-semibold">Change:</span> ₱ 150.00</p>
-                <div className="flex space-x-4 items-center">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="cash" />
-                    <Label htmlFor="cash">Cash</Label>
+                <p><span className="font-semibold">Change:</span> {NumberFormatter.formatCurrency(changeAmount)}</p>
+
+                {/* Dynamic Payment Methods */}
+                {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_method">Payment Method</Label>
+                    <Select
+                      value={selectedPaymentMethodId ? selectedPaymentMethodId.toString() : ""}
+                      onValueChange={(value) => setSelectedPaymentMethodId(value ? parseInt(value) : null)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentMethods.map(pm => (
+                          <SelectItem key={pm.payment_method_id} value={pm.payment_method_id.toString()}>
+                            {pm.payment_method_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="check" />
-                    <Label htmlFor="check">Check</Label>
-                  </div>
-                </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">No payment methods available.</div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-end gap-4">
                 <Button
                   className="bg-green-600 text-white hover:bg-green-700"
-                  onClick={handlePay} // Replace with your actual pay handler
+                  onClick={handlePay}
+                  disabled={!selectedPaymentMethodId || !amountReceived || isProcessingPayment}
                 >
                   Pay
                 </Button>
                 <Button
                   className="bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={handlePrintReceipt} // Replace with your actual print handler
+                  onClick={handlePrintReceipt}
                 >
                   Print Receipt
                 </Button>

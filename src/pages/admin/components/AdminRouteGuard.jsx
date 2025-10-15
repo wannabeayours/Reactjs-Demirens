@@ -13,23 +13,31 @@ const AdminRouteGuard = ({ children }) => {
 
   const checkAuthentication = () => {
     try {
-      // Check if user is logged in and is an admin
+      // Check if user is logged in and is Admin or Front-Desk
       const userId = localStorage.getItem('userId');
-      const userType = localStorage.getItem('userType');
-      const userLevel = localStorage.getItem('userLevel');
+      const rawType = localStorage.getItem('userType') || '';
+      const rawLevel = localStorage.getItem('userLevel') || '';
 
-      console.log('Auth Check:', { userId, userType, userLevel });
+      // Normalize values for robust comparisons
+      const normalizedType = rawType.toLowerCase().replace(/[\s_-]/g, ''); // e.g., 'front-desk' -> 'frontdesk'
+      const normalizedLevel = rawLevel.toLowerCase().replace(/[\s_-]/g, ''); // e.g., 'Front-Desk' -> 'frontdesk'
 
-      // Validate admin access
-      if (userId && userType === 'admin' && userLevel === 'Admin') {
+      console.log('Auth Check:', { userId, userType: rawType.toLowerCase(), userLevel: rawLevel.toLowerCase() });
+      console.log('Auth Normalized:', { normalizedType, normalizedLevel });
+
+      const typeAllowed = normalizedType === 'admin' || normalizedType === 'employee' || normalizedType === 'frontdesk';
+      const levelAllowed = normalizedLevel === 'admin' || normalizedLevel === 'frontdesk';
+
+      // Validate access for Admin and Front-Desk
+      if (userId && (typeAllowed || levelAllowed)) {
         setIsAuthenticated(true);
-        console.log('Admin access granted');
+        console.log('Access granted');
       } else {
         setIsAuthenticated(false);
-        console.log('Admin access denied - Invalid credentials');
-        
+        console.log('Access denied - Invalid credentials');
+
         // Clear any invalid session data
-        if (userType !== 'admin' || userLevel !== 'Admin') {
+        if (!userId || (!typeAllowed && !levelAllowed)) {
           localStorage.removeItem('userId');
           localStorage.removeItem('fname');
           localStorage.removeItem('lname');
@@ -51,7 +59,7 @@ const AdminRouteGuard = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#34699a] mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying admin access...</p>
+          <p className="text-gray-600">Verifying access...</p>
         </div>
       </div>
     );
@@ -59,7 +67,7 @@ const AdminRouteGuard = ({ children }) => {
 
   // If not authenticated, redirect to login with a message
   if (!isAuthenticated) {
-    toast.error('Admin access required. Please log in as an administrator.');
+    toast.error('Employee or Admin access required. Please log in.');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

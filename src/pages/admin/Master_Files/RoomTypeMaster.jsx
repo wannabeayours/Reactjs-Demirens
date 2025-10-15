@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from '@/components/ui/textarea';
 import AdminHeader from '../components/AdminHeader'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { NumberFormatter } from '@/pages/admin/Function_Files/NumberFormatter';
 
 const formSchema = z.object({
   roomType_name: z.string().min(1).max(20, {
@@ -120,7 +121,7 @@ function RoomTypeMaster() {
     const jsonData = {
       roomtype_name: values.roomType_name,
       roomtype_description: values.roomType_desc,
-      roomtype_price: parseFloat(values.roomType_price),
+      roomtype_price: NumberFormatter.parseCurrencyInput(values.roomType_price),
       max_capacity: 4, // Default value
       roomtype_beds: 1, // Default value  
       roomtype_capacity: 2, // Default value
@@ -155,7 +156,7 @@ function RoomTypeMaster() {
       roomtype_id: selectedRoom.room_id,
       roomtype_name: values.roomType_name,
       roomtype_description: values.roomType_desc,
-      roomtype_price: parseFloat(values.roomType_price)
+      roomtype_price: NumberFormatter.parseCurrencyInput(values.roomType_price)
     };
 
     const formData = new FormData();
@@ -312,9 +313,9 @@ function RoomTypeMaster() {
                         <div>
                           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Avg. Price</p>
                           <p className="text-2xl font-bold text-blue-600">
-                            ${roomsType.length > 0 
-                              ? Math.round(roomsType.reduce((sum, room) => sum + parseFloat(room.roomtype_price), 0) / roomsType.length)
-                              : 0}
+                            {roomsType.length > 0 
+                              ? NumberFormatter.formatCurrency(roomsType.reduce((sum, room) => sum + parseFloat(room.roomtype_price), 0) / roomsType.length)
+                              : NumberFormatter.formatCurrency(0)}
                           </p>
                         </div>
                         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -370,7 +371,7 @@ function RoomTypeMaster() {
                               </TableCell>
                               <TableCell className="text-right">
                                 <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
-                                  ${room.roomtype_price}
+                                  {NumberFormatter.formatCurrency(room.roomtype_price)}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-center">

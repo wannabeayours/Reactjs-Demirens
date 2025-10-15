@@ -14,16 +14,21 @@ function AdminHeader({ onCollapse, notificationRefreshTrigger = 0, resetNotifica
 
   const APIConn = useMemo(() => `${localStorage.url}admin.php`, [])
 
-  // Security check - redirect if not admin
+  // Security check - allow Admin and Employees (including Front-Desk)
   useEffect(() => {
     const userId = localStorage.getItem('userId')
     const userType = localStorage.getItem('userType')
     const userLevel = localStorage.getItem('userLevel')
 
-    if (!userId || userType !== 'admin' || userLevel !== 'Admin') {
+    const normalizedType = (userType || '').toLowerCase().replace(/[\s_-]/g, '') // e.g., 'front-desk' -> 'frontdesk'
+    const normalizedLevel = (userLevel || '').toLowerCase().replace(/[\s_-]/g, '')
+    const typeAllowed = ['admin', 'employee', 'frontdesk'].includes(normalizedType)
+    const levelAllowed = ['admin', 'frontdesk'].includes(normalizedLevel)
+
+    if (!userId || (!typeAllowed && !levelAllowed)) {
       console.log('Unauthorized access detected in AdminHeader')
-      toast.error('Admin access required')
-      navigate('/login')
+      toast.error('Employee or Admin access required')
+      navigate('/employee/login')
     }
   }, [navigate])
 
