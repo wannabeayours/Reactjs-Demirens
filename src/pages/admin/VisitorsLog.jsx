@@ -12,6 +12,12 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { 
   Search, 
   Plus, 
   Pencil, 
@@ -104,6 +110,11 @@ function AdminVisitorsLog() {
     if (s.includes('checked-out') || s.includes('checkout')) return 'bg-gray-500/15 text-gray-700 border border-gray-300'
     return 'bg-blue-500/15 text-blue-700 border border-blue-300'
   }, [])
+
+  const canChangeStatus = useCallback((row) => {
+    const name = getStatusNameById(row?.visitorapproval_id).toLowerCase()
+    return name.includes('pending') || name.includes('approved')
+  }, [getStatusNameById])
 
   const fetchApprovals = useCallback(async () => {
     try {
@@ -279,9 +290,7 @@ function AdminVisitorsLog() {
   }, [formBookingId, formBookingCustomerName])
 
   const handleNavigateToBookingRoomSelection = () => {
-    navigate('/admin/bookingroomselection', {
-      state: { origin: 'visitorslog' }
-    })
+    navigate('/admin/choosebookforvisitor')
   }
 
   const openAddDialog = () => {
@@ -333,8 +342,18 @@ function AdminVisitorsLog() {
       // Basic validation for better UX
       if (!formVisitorName.trim()) { toast.error('Visitor name is required'); return }
       if (!formPurpose.trim()) { toast.error('Purpose is required'); return }
-      if (!isPendingSelected && !formCheckin) { toast.error('Check-in time is required'); return }
+      if (!editingLog && !isPendingSelected && !formCheckin) { toast.error('Check-in time is required'); return }
       if (!String(formBookingId).trim()) { toast.error('Booking ID is required'); return }
+
+      // Prevent reverting status to Pending when editing an already non-pending entry
+      if (editingLog) {
+        const selectedName = (getStatusNameById(formStatusId) || '').toLowerCase()
+        const currentName = (getStatusNameById(editingLog.visitorapproval_id) || '').toLowerCase()
+        if (!currentName.includes('pending') && selectedName.includes('pending')) {
+          toast.error('You cannot revert status back to Pending')
+          return
+        }
+      }
 
       const fd = new FormData()
       const method = editingLog ? 'updateVisitorLog' : 'addVisitorLog'
@@ -342,11 +361,13 @@ function AdminVisitorsLog() {
       if (editingLog) fd.append('visitorlogs_id', editingLog.visitorlogs_id)
       fd.append('visitorlogs_visitorname', formVisitorName)
       fd.append('visitorlogs_purpose', formPurpose)
-      if (formCheckin) fd.append('visitorlogs_checkin_time', formCheckin.replace('T', ' ') + ':00')
+      // Do not allow changing check-in time in edit mode
+      if (!editingLog && formCheckin) fd.append('visitorlogs_checkin_time', formCheckin.replace('T', ' ') + ':00')
       if (formCheckout) fd.append('visitorlogs_checkout_time', formCheckout.replace('T', ' ') + ':00')
       const statusToSend = formStatusId || (!editingLog ? String(getStatusIdByName('Approved') || '') : '')
       if (statusToSend) fd.append('visitorapproval_id', statusToSend)
-      fd.append('booking_id', formBookingId)
+      // Keep original booking_id when editing; prevent changes in edit mode
+      fd.append('booking_id', editingLog ? String(editingLog.booking_id) : formBookingId)
       // Include employee_id if available
       const employeeId = localStorage.getItem('userId')
       if (employeeId) fd.append('employee_id', employeeId)
@@ -369,6 +390,10 @@ function AdminVisitorsLog() {
 
   const setRowStatus = async (row, targetStatusName) => {
     try {
+      if (!canChangeStatus(row)) {
+        toast.error('Status changes are allowed only for Pending or Approved entries')
+        return
+      }
       // Normalize common synonyms to match backend statuses
       const normalized = (() => {
         const n = (targetStatusName || '').toLowerCase()
@@ -422,16 +447,17 @@ function AdminVisitorsLog() {
       const res = await axios.post(APIConn, fd)
       const ok = res.data?.response === true || res.data?.success === true
       if (ok) {
-        // Prefer setting status to Left if available, otherwise fall back to Checked-Out
-        const leftStatus = approvals.find(a => (a.visitorapproval_status || '').toLowerCase().includes('left'))
-        const checkedOutStatus = approvals.find(a => (a.visitorapproval_status || '').toLowerCase().includes('checked-out'))
-        const nextStatus = leftStatus || checkedOutStatus
-        if (nextStatus) {
-          const fd2 = new FormData()
-          fd2.append('method', 'setVisitorApproval')
-          fd2.append('visitorlogs_id', row.visitorlogs_id)
-          fd2.append('visitorapproval_id', nextStatus.visitorapproval_id)
-          await axios.post(APIConn, fd2)
+        if (canChangeStatus(row)) {
+          const leftStatus = approvals.find(a => (a.visitorapproval_status || '').toLowerCase().includes('left'))
+          const checkedOutStatus = approvals.find(a => (a.visitorapproval_status || '').toLowerCase().includes('checked-out'))
+          const nextStatus = leftStatus || checkedOutStatus
+          if (nextStatus) {
+            const fd2 = new FormData()
+            fd2.append('method', 'setVisitorApproval')
+            fd2.append('visitorlogs_id', row.visitorlogs_id)
+            fd2.append('visitorapproval_id', nextStatus.visitorapproval_id)
+            await axios.post(APIConn, fd2)
+          }
         }
         toast.success('Checkout time updated')
         fetchLogs()
@@ -541,9 +567,11 @@ function AdminVisitorsLog() {
     }
     return logs.filter(r => {
       const dt = r.visitorlogs_checkin_time ? new Date(r.visitorlogs_checkin_time) : null
-      return dt && dt >= start && dt <= end
+      if (!(dt && dt >= start && dt <= end)) return false
+      const statusName = getStatusNameById(r.visitorapproval_id).toLowerCase()
+      return statusName.includes('approved') || statusName.includes('pending')
     }).length
-  }, [logs, totalRange])
+  }, [logs, totalRange, getStatusNameById])
 
   // Chart removed per request
   // Horizontal bar chart data for visitor statuses
@@ -722,18 +750,26 @@ function AdminVisitorsLog() {
                             <Button variant="outline" size="sm" onClick={() => openEditDialog(row)} className="gap-1">
                               <Pencil className="h-3 w-3" /> Edit
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => setRowStatus(row, 'Approved')} className="gap-1">
-                              <CheckCircle className="h-3 w-3" /> Approve
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setRowStatus(row, 'Declined')} className="gap-1">
-                              <XCircle className="h-3 w-3" /> Decline
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setRowStatus(row, 'Left')} className="gap-1">
-                              <LogOut className="h-3 w-3" /> Left
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setCheckoutNow(row)} className="gap-1">
-                              <LogOut className="h-3 w-3" /> Check-Out
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-1" disabled={!canChangeStatus(row)} title={!canChangeStatus(row) ? 'Status locked; only Pending or Approved can change' : ''}>
+                                  Choose Status
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                {!(getStatusNameById(row.visitorapproval_id) || '').toLowerCase().includes('approved') && (
+                                  <DropdownMenuItem disabled={!canChangeStatus(row)} onClick={() => setRowStatus(row, 'Approved')} className="text-gray-900 dark:text-gray-100">
+                                    <CheckCircle className="h-3 w-3 mr-2" /> Approve
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem disabled={!canChangeStatus(row)} onClick={() => setRowStatus(row, 'Declined')} className="text-gray-900 dark:text-gray-100">
+                                  <XCircle className="h-3 w-3 mr-2" /> Decline
+                                </DropdownMenuItem>
+                                <DropdownMenuItem disabled={!canChangeStatus(row)} onClick={() => setCheckoutNow(row)} className="text-gray-900 dark:text-gray-100">
+                                  <LogOut className="h-3 w-3 mr-2" /> Left
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -773,18 +809,18 @@ function AdminVisitorsLog() {
             <div>
               <Label className="mb-1 block">Check-in {isPendingSelected ? '' : '*'}</Label>
               <div className="flex items-center gap-2">
-                <Input className="bg-muted/30 border-border" type="datetime-local" value={formCheckin} onChange={(e) => setFormCheckin(e.target.value)} />
-                <Button type="button" variant="outline" size="sm" onClick={setCheckinNowInForm} disabled={isPendingSelected}>Now</Button>
-                <Button type="button" variant="outline" size="sm" onClick={clearCheckinInForm}>Reset</Button>
+                <Input className="bg-muted/30 border-border" type="datetime-local" value={formCheckin} onChange={(e) => setFormCheckin(e.target.value)} disabled={!!editingLog} readOnly={!!editingLog} />
+                <Button type="button" variant="outline" size="sm" onClick={setCheckinNowInForm} disabled={isPendingSelected || !!editingLog}>Now</Button>
+                <Button type="button" variant="outline" size="sm" onClick={clearCheckinInForm} disabled={!!editingLog}>Reset</Button>
               </div>
             </div>
 
             {/* Row 2: Booking ID and Status */}
             <div>
-              <Label className="mb-1 block">Booking ID *</Label>
+              <Label className="mb-1 block">Booking ID *{editingLog ? ' (locked on edit)' : ''}</Label>
               <div className="flex items-center gap-2">
-                <Input className="bg-muted/30 border-border" value={bookingDisplayLabel} readOnly onClick={handleNavigateToBookingRoomSelection} placeholder="Select booking room" />
-                <Button type="button" variant="outline" size="sm" onClick={handleNavigateToBookingRoomSelection}>Select Booking Room</Button>
+                <Input className="bg-muted/30 border-border" value={bookingDisplayLabel} readOnly={true} disabled={!!editingLog} onClick={!editingLog ? handleNavigateToBookingRoomSelection : undefined} placeholder="Select booking room" />
+                <Button type="button" variant="outline" size="sm" onClick={handleNavigateToBookingRoomSelection} disabled={!!editingLog}>Select Booking Room</Button>
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">Select a booking to display its customer name.</p>
             </div>
@@ -795,11 +831,21 @@ function AdminVisitorsLog() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions13.map(st => (
-                    <SelectItem key={st.visitorapproval_id} value={String(st.visitorapproval_id)}>
-                      {st.visitorapproval_status}
-                    </SelectItem>
-                  ))}
+                  {statusOptions13
+                    .filter(st => {
+                      if (editingLog) {
+                        const currentName = (getStatusNameById(editingLog.visitorapproval_id) || '').toLowerCase()
+                        const isCurrentPending = currentName.includes('pending')
+                        const isItemPending = (st.visitorapproval_status || '').toLowerCase().includes('pending')
+                        if (!isCurrentPending && isItemPending) return false
+                      }
+                      return true
+                    })
+                    .map(st => (
+                      <SelectItem key={st.visitorapproval_id} value={String(st.visitorapproval_id)}>
+                        {st.visitorapproval_status}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <p className="text-[10px] text-muted-foreground mt-1">Approved or Pending only.</p>

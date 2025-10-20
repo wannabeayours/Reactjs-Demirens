@@ -104,7 +104,15 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     const childrenNumber = localStorage.getItem("children");
     const adultNumber = localStorage.getItem("adult");
     const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+    const extraBedCharges = selectedRooms.reduce((t, r) => {
+      const roomTypeId = r.room_type;
+      const capacity = r.roomtype_capacity || 0;
+      const maxExtra = r.roomtype_maxbeds || 0;
+      const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+      const over = Math.max(0, guests - capacity);
+      const extraGuests = Math.min(over, maxExtra);
+      return t + extraGuests * 420 * numberOfNights;
+    }, 0);
     const displayedVat = subtotal - (subtotal / 1.12)
     const totalWithBeds = subtotal + extraBedCharges;
     const downPayment = (totalWithBeds * 0.5).toFixed(2)
@@ -135,9 +143,9 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const bookingDetails = {
         "checkIn": formatYMD(checkIn),
         "checkOut": formatYMD(checkOut),
-        "downpayment": downPayment,
+        "downpayment": totalAmount,
         "totalAmount": totalAmount,
-        "totalPay": downPayment,
+        "totalPay": totalAmount,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
@@ -150,16 +158,21 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       console.log("bedCounts", bedCounts)
 
       const roomDetails = selectedRooms.map((room) => {
-        const adultCount = adultCounts[room.room_type] || 0;
-        const childrenCount = childrenCounts[room.room_type] || 0;
-        const bedCount = bedCounts[room.room_type] || 0;
-        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, beds=${bedCount}`)
+        const roomTypeId = room.room_type;
+        const adultCount = adultCounts[roomTypeId] || 0;
+        const childrenCount = childrenCounts[roomTypeId] || 0;
+        const capacity = room.roomtype_capacity || 0;
+        const maxExtra = room.roomtype_maxbeds || 0;
+        const totalGuests = adultCount + childrenCount;
+        const over = Math.max(0, totalGuests - capacity);
+        const extraGuests = Math.min(over, maxExtra);
+        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, extraGuests=${extraGuests}`)
         return {
-          roomTypeId: room.room_type,
-          guestCount: adultCount + childrenCount,
+          roomTypeId: roomTypeId,
+          guestCount: totalGuests,
           adultCount: adultCount,
           childrenCount: childrenCount,
-          bedCount: bedCount,
+          bedCount: extraGuests, // send extra guests count as bedCount for backend
         };
       });
 
@@ -240,7 +253,15 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const childrenNumber = localStorage.getItem("children");
       const adultNumber = localStorage.getItem("adult");
       const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-      const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+      const extraBedCharges = selectedRooms.reduce((t, r) => {
+        const roomTypeId = r.room_type;
+        const capacity = r.roomtype_capacity || 0;
+        const maxExtra = r.roomtype_maxbeds || 0;
+        const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+        const over = Math.max(0, guests - capacity);
+        const extraGuests = Math.min(over, maxExtra);
+        return t + extraGuests * 420 * numberOfNights;
+      }, 0);
       const displayedVat = subtotal - (subtotal / 1.12)
       const totalWithBeds = subtotal + extraBedCharges;
       const downPayment = (totalWithBeds * 0.5).toFixed(2)
@@ -252,9 +273,9 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const bookingDetails = {
         "checkIn": formatYMD(checkIn),
         "checkOut": formatYMD(checkOut),
-        "downpayment": downPayment,
+        "downpayment": totalAmount,
         "totalAmount": totalAmount,
-        "totalPay": downPayment,
+        "totalPay": totalAmount,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
@@ -262,16 +283,21 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       }
 
       const roomDetails = selectedRooms.map((room) => {
-        const adultCount = adultCounts[room.room_type] || 0;
-        const childrenCount = childrenCounts[room.room_type] || 0;
-        const bedCount = bedCounts[room.room_type] || 0;
-        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, beds=${bedCount}`)
+        const roomTypeId = room.room_type;
+        const adultCount = adultCounts[roomTypeId] || 0;
+        const childrenCount = childrenCounts[roomTypeId] || 0;
+        const capacity = room.roomtype_capacity || 0;
+        const maxExtra = room.roomtype_maxbeds || 0;
+        const totalGuests = adultCount + childrenCount;
+        const over = Math.max(0, totalGuests - capacity);
+        const extraGuests = Math.min(over, maxExtra);
+        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, extraGuests=${extraGuests}`)
         return {
-          roomTypeId: room.room_type,
-          guestCount: adultCount + childrenCount,
+          roomTypeId: roomTypeId,
+          guestCount: totalGuests,
           adultCount: adultCount,
           childrenCount: childrenCount,
-          bedCount: bedCount,
+          bedCount: extraGuests,
         };
       });
 
@@ -285,7 +311,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       }
 
       const formData = new FormData();
-      formData.append("totalAmount", downPayment);
+      formData.append("totalAmount", totalAmount);
       formData.append("hasAccount", 0);
       formData.append("name", walkinfirstname + " " + walkinlastname);
       formData.append("email", email);
@@ -317,7 +343,15 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     try {
       const url = localStorage.getItem("url") + "customer.php";
       const subtotal = selectedRooms.reduce((total, room) => total + (Number(room.roomtype_price) * numberOfNights), 0)
-      const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+      const extraBedCharges = selectedRooms.reduce((t, r) => {
+        const roomTypeId = r.room_type;
+        const capacity = r.roomtype_capacity || 0;
+        const maxExtra = r.roomtype_maxbeds || 0;
+        const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+        const over = Math.max(0, guests - capacity);
+        const extraGuests = Math.min(over, maxExtra);
+        return t + extraGuests * 420 * numberOfNights;
+      }, 0);
       const displayedVat = subtotal - (subtotal / 1.12)
       const totalWithBeds = subtotal + extraBedCharges;
       const downPayment = (totalWithBeds * 0.5).toFixed(2)
@@ -327,25 +361,30 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const bookingDetails = {
         "checkIn": formatYMD(checkIn),
         "checkOut": formatYMD(checkOut),
-        "downpayment": downPayment,
+        "downpayment": totalAmount,
         "totalAmount": totalAmount,
-        "totalPay": downPayment,
+        "totalPay": totalAmount,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
       }
 
       const roomDetails = selectedRooms.map((room) => {
-        const adultCount = adultCounts[room.room_type] || 0;
-        const childrenCount = childrenCounts[room.room_type] || 0;
-        const bedCount = bedCounts[room.room_type] || 0;
-        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, beds=${bedCount}`)
+        const roomTypeId = room.room_type;
+        const adultCount = adultCounts[roomTypeId] || 0;
+        const childrenCount = childrenCounts[roomTypeId] || 0;
+        const capacity = room.roomtype_capacity || 0;
+        const maxExtra = room.roomtype_maxbeds || 0;
+        const totalGuests = adultCount + childrenCount;
+        const over = Math.max(0, totalGuests - capacity);
+        const extraGuests = Math.min(over, maxExtra);
+        console.log(`Room ${room.roomtype_name}: adults=${adultCount}, children=${childrenCount}, extraGuests=${extraGuests}`)
         return {
-          roomTypeId: room.room_type,
-          guestCount: adultCount + childrenCount,
+          roomTypeId: roomTypeId,
+          guestCount: totalGuests,
           adultCount: adultCount,
           childrenCount: childrenCount,
-          bedCount: bedCount,
+          bedCount: extraGuests,
         };
       });
       const jsonData = {
@@ -470,9 +509,10 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
         const storedChildren = parseInt(localStorage.getItem('children')) || childrenNumber || 0;
         const roomTypeId = selected.room_type;
 
-        setGuestCounts(g => ({ ...g, [roomTypeId]: Math.min(guestNum, selected.roomtype_capacity || 1) }));
-        setAdultCounts(a => ({ ...a, [roomTypeId]: Math.min(storedAdult, selected.roomtype_capacity || Number.MAX_SAFE_INTEGER) }));
-        setChildrenCounts(c => ({ ...c, [roomTypeId]: Math.min(storedChildren, selected.roomtype_capacity || Number.MAX_SAFE_INTEGER) }));
+        const maxGuestsInit = (selected.roomtype_capacity || 0) + (selected.roomtype_maxbeds || 0);
+        setGuestCounts(g => ({ ...g, [roomTypeId]: Math.min(guestNum, maxGuestsInit || 1) }));
+        setAdultCounts(a => ({ ...a, [roomTypeId]: Math.min(storedAdult, maxGuestsInit || Number.MAX_SAFE_INTEGER) }));
+        setChildrenCounts(c => ({ ...c, [roomTypeId]: Math.min(storedChildren, Math.max(0, (maxGuestsInit || Number.MAX_SAFE_INTEGER) - (storedAdult || 0))) }));
         setBedCounts(b => ({ ...b, [roomTypeId]: 0 })); // Initialize with 0 beds
 
         return [...prev, selected];
@@ -489,23 +529,26 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const roomTypeId = room.room_type;
 
       if (guestCounts[roomTypeId] === undefined) {
+        const maxGuests = (room.roomtype_capacity || 0) + (room.roomtype_maxbeds || 0);
         setGuestCounts(prev => ({
           ...prev,
-          [roomTypeId]: Math.min(parseInt(localStorage.getItem('guestNumber')) || 1, room.roomtype_capacity || 1)
+          [roomTypeId]: Math.min(parseInt(localStorage.getItem('guestNumber')) || 1, maxGuests || 1)
         }));
       }
 
       if (adultCounts[roomTypeId] === undefined) {
+        const maxGuests = (room.roomtype_capacity || 0) + (room.roomtype_maxbeds || 0);
         setAdultCounts(prev => ({
           ...prev,
-          [roomTypeId]: Math.min(Math.max(0, parseInt(localStorage.getItem('adult')) || 1), room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+          [roomTypeId]: Math.min(Math.max(0, parseInt(localStorage.getItem('adult')) || 1), maxGuests || Number.MAX_SAFE_INTEGER)
         }));
       }
 
       if (childrenCounts[roomTypeId] === undefined) {
         const storedChildren = parseInt(localStorage.getItem('children')) || 0;
         const currAdults = adultCounts[roomTypeId] || 0;
-        const remaining = Math.max(0, (room.roomtype_capacity || Number.MAX_SAFE_INTEGER) - currAdults);
+        const maxGuests = (room.roomtype_capacity || 0) + (room.roomtype_maxbeds || 0);
+        const remaining = Math.max(0, (maxGuests || Number.MAX_SAFE_INTEGER) - currAdults);
         setChildrenCounts(prev => ({
           ...prev,
           [roomTypeId]: Math.min(storedChildren, remaining)
@@ -609,7 +652,24 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
   // Booking Summary Component
   const BookingSummary = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
-    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+    const extraBedCharges = selectedRooms.reduce((t, r) => {
+      const roomTypeId = r.room_type;
+      const capacity = r.roomtype_capacity || 0;
+      const maxExtra = r.roomtype_maxbeds || 0;
+      const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+      const over = Math.max(0, guests - capacity);
+      const extraGuests = Math.min(over, maxExtra);
+      return t + extraGuests * 420 * numberOfNights;
+    }, 0);
+    const extraGuestCount = selectedRooms.reduce((t, r) => {
+      const roomTypeId = r.room_type;
+      const capacity = r.roomtype_capacity || 0;
+      const maxExtra = r.roomtype_maxbeds || 0;
+      const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+      const over = Math.max(0, guests - capacity);
+      const extraGuests = Math.min(over, maxExtra);
+      return t + extraGuests;
+    }, 0);
     const vat = subtotal - (subtotal / 1.12);
     const total = subtotal + extraBedCharges;
     const down = total * 0.5;
@@ -651,11 +711,11 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                   <span>Subtotals:</span>
                   <span>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                {selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) > 0 && (
+                {extraGuestCount > 0 && (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>{extraGuestCount} extra person{extraGuestCount !== 1 ? 's' : ''} × ₱420:</span>
+                      <span className='font-bold'>₱{(extraGuestCount * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
@@ -671,15 +731,15 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                   <span>Total Amount:</span>
                   <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between items-center font-bold text-blue-600">
+                {/* <div className="flex justify-between items-center font-bold text-blue-600">
                   <span>Down Payment (50%):</span>
                   <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                </div> */}
+                {/* <div className="mt-3 p-2 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-800">
                     <strong>Note:</strong> 50% down payment required to confirm booking.
                   </p>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
@@ -817,9 +877,9 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                       const roomTypeId = room.room_type;
                                       const current = adultCounts[roomTypeId] || 0;
                                       const currentChildren = childrenCounts[roomTypeId] || 0;
+                                      const maxGuests = (room.roomtype_capacity || Number.MAX_SAFE_INTEGER) + (room.roomtype_maxbeds || 0);
                                       if (
-                                        current + currentChildren <
-                                        (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                        current + currentChildren < maxGuests
                                       ) {
                                         setAdultCounts((prev) => ({
                                           ...prev,
@@ -830,7 +890,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                     disabled={
                                       (adultCounts[room.room_type] || 0) +
                                       (childrenCounts[room.room_type] || 0) >=
-                                      (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                      ((room.roomtype_capacity || Number.MAX_SAFE_INTEGER) + (room.roomtype_maxbeds || 0))
                                     }
                                   >
                                     <Plus />
@@ -869,9 +929,9 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                       const roomTypeId = room.room_type;
                                       const current = childrenCounts[roomTypeId] || 0;
                                       const currentAdults = adultCounts[roomTypeId] || 0;
+                                      const maxGuests = (room.roomtype_capacity || Number.MAX_SAFE_INTEGER) + (room.roomtype_maxbeds || 0);
                                       if (
-                                        currentAdults + current <
-                                        (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                        currentAdults + current < maxGuests
                                       ) {
                                         setChildrenCounts((prev) => ({
                                           ...prev,
@@ -882,7 +942,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                                     disabled={
                                       (adultCounts[room.room_type] || 0) +
                                       (childrenCounts[room.room_type] || 0) >=
-                                      (room.roomtype_capacity || Number.MAX_SAFE_INTEGER)
+                                      ((room.roomtype_capacity || Number.MAX_SAFE_INTEGER) + (room.roomtype_maxbeds || 0))
                                     }
                                   >
                                     <Plus />
@@ -1069,7 +1129,24 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
 
   const BookingConfirmationStep = () => {
     const subtotal = selectedRooms.reduce((t, r) => t + Number(r.roomtype_price) * numberOfNights, 0);
-    const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
+    const extraBedCharges = selectedRooms.reduce((t, r) => {
+      const roomTypeId = r.room_type;
+      const capacity = r.roomtype_capacity || 0;
+      const maxExtra = r.roomtype_maxbeds || 0;
+      const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+      const over = Math.max(0, guests - capacity);
+      const extraGuests = Math.min(over, maxExtra);
+      return t + extraGuests * 420 * numberOfNights;
+    }, 0);
+    const extraGuestCount = selectedRooms.reduce((t, r) => {
+      const roomTypeId = r.room_type;
+      const capacity = r.roomtype_capacity || 0;
+      const maxExtra = r.roomtype_maxbeds || 0;
+      const guests = (adultCounts[roomTypeId] || 0) + (childrenCounts[roomTypeId] || 0);
+      const over = Math.max(0, guests - capacity);
+      const extraGuests = Math.min(over, maxExtra);
+      return t + extraGuests;
+    }, 0);
     const vat = subtotal - (subtotal / 1.12);
     const total = subtotal + extraBedCharges;
     const down = total * 0.5;
@@ -1164,7 +1241,7 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                           <div className="flex gap-4">
                             <span>Adults: {adultCounts[room.room_type] || 0}</span>
                             <span>Children: {childrenCounts[room.room_type] || 0}</span>
-                            <span>Extra Beds: {bedCounts[room.room_type] || 0}</span>
+                            <span>Extra Persons: {Math.min(Math.max(0, (adultCounts[room.room_type] || 0) + (childrenCounts[room.room_type] || 0) - (room.roomtype_capacity || 0)), room.roomtype_maxbeds || 0)}</span>
                           </div>
                           <div className="font-medium">
                             {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} × ₱{room.roomtype_price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₱{(numberOfNights * room.roomtype_price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -1241,8 +1318,8 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                   {extraBedCharges > 0 && (
                     <>
                       <div className="flex justify-between items-center">
-                        <span>{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0)} bed{selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) !== 1 ? 's' : ''} × ₱420:</span>
-                        <span>₱{(selectedRooms.reduce((total, room) => total + (bedCounts[room.room_type] || 0), 0) * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span>{extraGuestCount} extra person{extraGuestCount !== 1 ? 's' : ''} × ₱420:</span>
+                        <span>₱{(extraGuestCount * 420).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
@@ -1255,16 +1332,16 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
                     <span>Total Amount:</span>
                     <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between items-center text-lg font-bold text-blue-600">
+                  {/* <div className="flex justify-between items-center text-lg font-bold text-blue-600">
                     <span>Down Payment (50%):</span>
                     <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  </div> */}
+                  {/* <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800">
                       <strong>Note:</strong> A 50% down payment is required to confirm your booking.
                       The remaining balance will be collected upon check-in.
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>

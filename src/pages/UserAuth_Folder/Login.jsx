@@ -91,9 +91,7 @@ function Login() {
             formData.append("operation", "login");
             formData.append("json", JSON.stringify(jsonData));
             const res = await axios.post(url, formData);
-            console.log("Full API Response:", res);
-            console.log("Response Data (raw):", res.data);
-            console.log("Response Status:", res.status);
+            console.log("res ni login", res)
 
             // Parse the JSON string response
             const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
@@ -120,7 +118,7 @@ function Login() {
                     setTimeout(() => {
                         navigateTo("/customer");
                     }, 1500);
-                } else if (userType === "Front-Desk") {
+                } else if (userType === "employee") {
                     toast.success("Successfully logged in as Employee");
                     console.log("=== EMPLOYEE LOGIN INFO ===");
                     console.log("Employee ID:", user.employee_id);
@@ -142,7 +140,7 @@ function Login() {
                     localStorage.setItem("userType", "employee");
                     localStorage.setItem("userLevel", user.userlevel_name);
                     setTimeout(() => {
-                        navigateTo("/admin/dashboard");
+                        navigateTo("/frontdesk/dashboard");
                     }, 1500);
                 } else if (userType === "admin") {
                     toast.success("Successfully logged in as Admin");

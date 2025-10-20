@@ -80,22 +80,35 @@ function AddAmenityRequestModal({
   };
 
   const handleNavigateToBookingRoomSelection = () => {
-    navigate('/admin/bookingroomselection');
+    navigate('/admin/bookingroomselection', { state: { origin: 'requestedamenities' } });
   };
 
   const addAmenityToList = () => {
-    if (!currentAmenity.charges_master_id || !currentAmenity.booking_charges_price || !currentAmenity.booking_charges_quantity) {
-      toast.error('Please fill in all amenity fields');
+    if (!currentAmenity.charges_master_id) {
+      toast.error('Please select an amenity');
       return;
     }
 
+    // Ensure defaults when inputs are removed
+    const ensuredAmenity = {
+      ...currentAmenity,
+      booking_charges_price:
+        currentAmenity.booking_charges_price !== ''
+          ? currentAmenity.booking_charges_price
+          : (selectedCharge?.charges_master_price?.toString() || ''),
+      booking_charges_quantity:
+        currentAmenity.booking_charges_quantity !== ''
+          ? currentAmenity.booking_charges_quantity
+          : '1',
+    };
+
     // Check if this amenity is already in the list
-    const existingIndex = amenitiesList.findIndex(item => item.charges_master_id === currentAmenity.charges_master_id);
+    const existingIndex = amenitiesList.findIndex(item => item.charges_master_id === ensuredAmenity.charges_master_id);
     
     if (existingIndex !== -1) {
       // Update quantity if amenity already exists
       const updatedList = [...amenitiesList];
-      const currentQty = parseInt(currentAmenity.booking_charges_quantity) || 0;
+      const currentQty = parseInt(ensuredAmenity.booking_charges_quantity) || 0;
       const existingQty = parseInt(updatedList[existingIndex].booking_charges_quantity) || 0;
       updatedList[existingIndex].booking_charges_quantity = (currentQty + existingQty).toString();
       setAmenitiesList(updatedList);
@@ -103,7 +116,7 @@ function AddAmenityRequestModal({
     } else {
       // Add new amenity to list
       const newAmenity = {
-        ...currentAmenity,
+        ...ensuredAmenity,
         id: Date.now(), // Temporary ID for React key
         charges_master_name: selectedCharge?.charges_master_name || '',
         charges_category_name: selectedCharge?.charges_category_name || ''
@@ -483,51 +496,7 @@ function AddAmenityRequestModal({
                   )}
                 </div>
 
-                {/* Price and Quantity */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Price per Unit *
-                    </Label>
-                    <Input
-                      type="text"
-                      placeholder="0.00"
-                      value={currentAmenity.booking_charges_price}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow only numbers and decimal point
-                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                          setCurrentAmenity(prev => ({
-                            ...prev,
-                            booking_charges_price: value
-                          }));
-                        }
-                      }}
-                      className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Quantity *
-                    </Label>
-                    <Input
-                      type="text"
-                      placeholder="1"
-                      value={currentAmenity.booking_charges_quantity}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow only positive integers
-                        if (value === '' || /^\d+$/.test(value)) {
-                          setCurrentAmenity(prev => ({
-                            ...prev,
-                            booking_charges_quantity: value
-                          }));
-                        }
-                      }}
-                      className="h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                </div>
+                {/* Inputs removed: Price per Unit and Quantity now adjusted in Selected Amenities */}
 
                 {/* Preview Total */}
                 {currentAmenity.booking_charges_price && currentAmenity.booking_charges_quantity && (
@@ -547,7 +516,7 @@ function AddAmenityRequestModal({
                 {/* Add to List Button */}
                         <Button 
                           onClick={addAmenityToList}
-                          disabled={!currentAmenity.charges_master_id || !currentAmenity.booking_charges_price || !currentAmenity.booking_charges_quantity}
+                          disabled={!currentAmenity.charges_master_id}
                           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 dark:from-purple-700 dark:to-pink-700 dark:hover:from-purple-600 dark:hover:to-pink-600 text-white h-10 shadow-lg hover:shadow-xl transition-all duration-200"
                         >
                           <Plus className="h-4 w-4 mr-2" />

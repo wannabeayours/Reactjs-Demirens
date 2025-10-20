@@ -140,14 +140,13 @@ export default function ApprovalReceipt() {
     () => lineItems.reduce((sum, li) => sum + li.lineTotal, 0),
     [lineItems]
   );
-  const vat = useMemo(() => subtotal * 0.12, [subtotal]);
-  const grandTotal = useMemo(() => subtotal + vat, [subtotal, vat]);
+  // VAT removed; grand total equals subtotal
+  const grandTotal = useMemo(() => subtotal, [subtotal]);
   const downpayment = useMemo(() => grandTotal * 0.5, [grandTotal]);
 
   const effectiveTotals = useMemo(() => {
     const computed = {
       subtotal,
-      vat,
       grandTotal,
       downpayment,
       balance: grandTotal - downpayment,
@@ -155,21 +154,19 @@ export default function ApprovalReceipt() {
     };
     if ((lineItems || []).length > 0) return computed;
     const metaTotal = Number(bookingMeta?.total_amount || 0);
-    const metaVat = Number(bookingMeta?.vat || 0);
     const metaDown = Number(bookingMeta?.downpayment || 0);
     const metaBalance = Number(
       bookingMeta?.balance ?? Math.max(0, metaTotal - metaDown)
     );
-    const metaSubtotal = Math.max(0, metaTotal - metaVat);
+    const metaSubtotal = Math.max(0, metaTotal);
     return {
       subtotal: metaSubtotal,
-      vat: metaVat,
       grandTotal: metaTotal,
       downpayment: metaDown,
       balance: metaBalance,
       source: "booking",
     };
-  }, [lineItems, subtotal, vat, grandTotal, downpayment, bookingMeta]);
+  }, [lineItems, subtotal, grandTotal, downpayment, bookingMeta]);
 
   // Compact per-night price derived from subtotal
   const perNight = useMemo(() => {
@@ -181,9 +178,9 @@ export default function ApprovalReceipt() {
   useEffect(() => {
     setState((prev) => ({
       ...prev,
-      totals: { subtotal, vat, grandTotal, downpayment },
+      totals: { subtotal, grandTotal, downpayment },
     }));
-  }, [subtotal, vat, grandTotal, downpayment, setState]);
+  }, [subtotal, grandTotal, downpayment, setState]);
 
   // Ensure userId is present in context (fallback to localStorage keys)
   useEffect(() => {
@@ -368,7 +365,6 @@ export default function ApprovalReceipt() {
                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Reference</span><span className="font-medium text-foreground">{bookingMeta?.reference_no || '-'}</span></div>
                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Created at</span><span className="font-medium text-foreground">{DateFormatter.formatDate(bookingMeta?.booking_created_at)}</span></div>
                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-medium text-foreground">{currency(effectiveTotals.subtotal)}</span></div>
-                 <div className="flex items-center justify-between"><span className="text-muted-foreground">VAT (12%)</span><span className="font-medium text-foreground">{currency(effectiveTotals.vat)}</span></div>
                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Downpayment (50%)</span><span className="font-medium text-blue-600 dark:text-blue-400">{currency(effectiveTotals.downpayment)}</span></div>
                  <div className="flex items-center justify-between"><span className="text-muted-foreground">Balance (50%)</span><span className="font-medium text-green-600 dark:text-green-400">{currency(effectiveTotals.balance)}</span></div>
                </div>

@@ -25,7 +25,12 @@ export const SuccessPayment = () => {
       console.log("res:", res);
       if (res.data === 1) {
         localStorage.removeItem("jsonData");
-        navigateTo("/");
+        if (hasAccount === 0) {
+          navigateTo("/");
+        } else {
+          navigateTo("/customer");
+        }
+        localStorage.removeItem("hasAccount");
       }
     } catch (error) {
       toast.error("Network Error");

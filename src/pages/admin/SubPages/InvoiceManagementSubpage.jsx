@@ -32,7 +32,7 @@ function InvoiceManagementSubpage({
   const [invoiceForm, setInvoiceForm] = useState({
     payment_method_id: 2,
     discount_id: null,
-    vat_rate: 0.12,
+    vat_rate: 0,
     downpayment: 0,
     invoice_status_id: 1
   });
@@ -91,7 +91,7 @@ function InvoiceManagementSubpage({
       formData.append("json", JSON.stringify({ 
         booking_id: bookingId,
         discount_id: invoiceForm.discount_id,
-        vat_rate: 0.12,
+        vat_rate: 0,
         downpayment: 0
       }));
       
@@ -331,7 +331,7 @@ function InvoiceManagementSubpage({
         payment_method_id: invoiceForm.payment_method_id,
         invoice_status_id: invoiceForm.invoice_status_id,
         discount_id: invoiceForm.discount_id,
-        vat_rate: 0.12,
+        vat_rate: 0,
         downpayment: 0
       };
 
@@ -669,44 +669,54 @@ function InvoiceManagementSubpage({
             <CardContent>
               {billingBreakdown ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Arrange as a single vertical calculation list */}
+                  <div className="grid grid-cols-1 gap-2">
                     <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">Room Charges:</span>
+                      <span className="font-medium">Room Charges with VAT(12%):</span>
                       <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.room_total) || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">Additional Charges:</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.charge_total) || 0).toFixed(2)}</span>
-                    </div>
+                    {(parseFloat(billingBreakdown.charge_total) || 0) > 0 && (
+                      <div className="flex justify-between items-center py-3 border-b-2 border-gray-300 dark:border-gray-700">
+                        <span className="font-medium">Additional Charges:</span>
+                        <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.charge_total) || 0).toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center py-3 border-b">
                       <span className="font-medium">Subtotal:</span>
                       <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.subtotal) || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">Discount:</span>
-                      <span className="font-mono font-semibold text-red-600">-₱{(parseFloat(billingBreakdown.discount_amount) || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">Amount After Discount:</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.amount_after_discount) || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-3 border-b">
-                      <span className="font-medium">VAT ({((parseFloat(invoiceForm.vat_rate) || 0) * 100).toFixed(1)}%):</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.vat_amount) || 0).toFixed(2)}</span>
-                    </div>
+                    {(parseFloat(billingBreakdown.discount_amount) || 0) > 0 && (
+                      <div className="flex justify-between items-center py-3 border-b-2 border-gray-300 dark:border-gray-700">
+                        <span className="font-medium">Discount:</span>
+                        <span className="font-mono font-semibold text-red-600">-₱{(parseFloat(billingBreakdown.discount_amount) || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {(parseFloat(billingBreakdown.discount_amount) || 0) > 0 && (
+                      <div className="flex justify-between items-center py-3 border-b">
+                        <span className="font-medium">Amount After Discount:</span>
+                        <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.amount_after_discount) || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                    
                   </div>
                   
-                  <div className="flex justify-between items-center py-4 bg-muted rounded-lg px-4">
-                    <span className="font-bold text-xl">Final Total:</span>
-                    <span className="font-mono font-bold text-xl">₱{(parseFloat(billingBreakdown.final_total) || 0).toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 border border-yellow-200 dark:border-yellow-800">
-                      <span className="font-bold text-lg">Balance Due:</span>
-                      <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">₱{(parseFloat(billingBreakdown.balance) || 0).toFixed(2)}</span>
+                    <div className="space-y-2 bg-muted rounded-lg px-4 py-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-xl">Final Total:</span>
+                        <span className="font-mono font-bold text-xl">₱{(parseFloat(billingBreakdown.final_total) || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Downpayment:</span>
+                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">₱{(parseFloat(billingBreakdown.downpayment) || 0).toFixed(2)}</span>
+                      </div>
                     </div>
-                  </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 border border-yellow-200 dark:border-yellow-800">
+                        <span className="font-bold text-lg">Balance Due:</span>
+                        <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">₱{(parseFloat(billingBreakdown.balance) || ((parseFloat(billingBreakdown.final_total) || 0) - (parseFloat(billingBreakdown.downpayment) || 0))).toFixed(2)}</span>
+                      </div>
+                    </div>
                 </div>
               ) : (
                 <p className="text-muted-foreground">Loading billing breakdown...</p>
@@ -830,10 +840,12 @@ function InvoiceManagementSubpage({
                                 <span>Room Charges:</span>
                                 <span>₱{detailedCharges.summary.room_total.toFixed(2)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span>Additional Charges:</span>
-                                <span>₱{detailedCharges.summary.charges_total.toFixed(2)}</span>
-                              </div>
+                              {(detailedCharges.summary.charges_total || 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Additional Charges:</span>
+                                  <span>₱{detailedCharges.summary.charges_total.toFixed(2)}</span>
+                                </div>
+                              )}
                               <div className="flex justify-between font-semibold border-t pt-1">
                                 <span>Subtotal:</span>
                                 <span>₱{detailedCharges.summary.subtotal.toFixed(2)}</span>
@@ -841,19 +853,19 @@ function InvoiceManagementSubpage({
                             </div>
                           </div>
                           
-                          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <h6 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Tax & Payment</h6>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span>VAT ({(detailedCharges.summary.vat_rate * 100).toFixed(0)}%):</span>
-                                <span>₱{detailedCharges.summary.vat_amount.toFixed(2)}</span>
+                              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <h6 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Payment</h6>
+                                <div className="space-y-1 text-sm">
+                                  <div className="flex justify-between">
+                                    <span>Downpayment:</span>
+                                    <span className="text-blue-700 font-semibold">₱{(parseFloat(detailedCharges.summary.downpayment) || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between font-semibold border-t pt-1 text-lg">
+                                    <span>Balance Due:</span>
+                                    <span className="text-red-600">₱{(parseFloat(detailedCharges.summary.balance) || ((parseFloat(detailedCharges.summary.grand_total) || 0) - (parseFloat(detailedCharges.summary.downpayment) || 0))).toFixed(2)}</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex justify-between font-semibold border-t pt-1 text-lg">
-                                <span>Balance Due:</span>
-                                <span className="text-red-600">₱{detailedCharges.summary.balance.toFixed(2)}</span>
-                              </div>
-                            </div>
-                          </div>
                         </div>
                         
                         {/* Grand Total */}
@@ -899,16 +911,7 @@ function InvoiceManagementSubpage({
                 </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="vat_rate">VAT Rate (fixed)</Label>
-                <Input
-                  id="vat_rate"
-                  type="text"
-                  value={invoiceForm.vat_rate}
-                  readOnly
-                  disabled
-                />
-              </div>
+              
             </div>
 
             {/* Action Button */}

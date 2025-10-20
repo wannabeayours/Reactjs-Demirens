@@ -110,7 +110,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const bookingDetails = {
         checkIn: formatYMD(checkIn),
         checkOut: formatYMD(checkOut),
-        downpayment: downPayment,
+        downpayment: totalAmount,
         totalAmount: totalAmount,
         displayedVat: displayedVat.toFixed(2),
         children: childrenNumberLS,
@@ -197,9 +197,9 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const bookingDetails = {
         "checkIn": formatYMD(checkIn),
         "checkOut": formatYMD(checkOut),
-        "downpayment": downPayment,
+        "downpayment": totalAmount,
         "totalAmount": totalAmount,
-        "totalPay": downPayment,
+        "totalPay": totalAmount,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
@@ -231,7 +231,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
       const formData = new FormData();
       const fullName = localStorage.getItem("fname") + " " + localStorage.getItem("lname");
-      formData.append("totalAmount", downPayment);
+      formData.append("totalAmount", totalAmount);
       formData.append("hasAccount", 1);
       formData.append("name", fullName);
       localStorage.setItem("hasAccount", 1);
@@ -268,9 +268,9 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const bookingDetails = {
         "checkIn": formatYMD(checkIn),
         "checkOut": formatYMD(checkOut),
-        "downpayment": downPayment,
+        "downpayment": totalAmount,
         "totalAmount": totalAmount,
-        "totalPay": downPayment,
+        "totalPay": totalAmount,
         "displayedVat": displayedVat.toFixed(2),
         "children": childrenNumber,
         "adult": adultNumber,
@@ -610,15 +610,15 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   <span>Total Amount:</span>
                   <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between items-center font-bold text-blue-600">
+                {/* <div className="flex justify-between items-center font-bold text-blue-600">
                   <span>Down Payment (50%):</span>
                   <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                </div> */}
+                {/* <div className="mt-3 p-2 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-800">
                     <strong>Note:</strong> 50% down payment required to confirm booking.
                   </p>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
@@ -933,37 +933,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       <div className="h-[calc(100vh-350px)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ScrollArea className="h-[calc(100vh-350px)]">
-
-            {/* Guest Information */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              <Card className="bg-white shadow-md">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Guest Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">First Name</p>
-                      <p className="font-medium">{formValues.walkinfirstname}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Last Name</p>
-                      <p className="font-medium">{formValues.walkinlastname}</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-medium">{formValues.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Contact Number</p>
-                        <p className="font-medium">{formValues.contactNumber}</p>
-                      </div>
-
-                    </div>
-
-
-                  </div>
-                </CardContent>
-              </Card>
+            <div className='grid grid-cols-1 gap-3 mb-3'>
 
               {/* Booking Details */}
               <Card className="bg-white shadow-md">
@@ -990,7 +960,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 </CardContent>
               </Card>
             </div>
-
             {/* Room Details */}
             <Card className="bg-white shadow-md">
               <CardContent className="p-6">
@@ -1108,7 +1077,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                     <span>Total Amount:</span>
                     <span>₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between items-center text-lg font-bold text-blue-600">
+                  {/* <div className="flex justify-between items-center text-lg font-bold text-blue-600">
                     <span>Down Payment (50%):</span>
                     <span>₱{down.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
@@ -1117,7 +1086,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                       <strong>Note:</strong> A 50% down payment is required to confirm your booking.
                       The remaining balance will be collected upon check-in.
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>

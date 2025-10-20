@@ -112,6 +112,96 @@ function AdminDashboard() {
   const occupancyRate = useMemo(() => totalRooms ? Math.round((occupiedCount / totalRooms) * 100) : 0, [occupiedCount, totalRooms]);
   const availableRoomsCount = useMemo(() => Object.values(availableByRoomType).reduce((sum, c) => sum + c, 0), [availableByRoomType]);
 
+  // Availability-based theming for Available Rooms card
+  const availabilityCardClasses = useMemo(() => {
+    const ratio = totalRooms ? (availableRoomsCount / totalRooms) : 0;
+    if (ratio >= 0.66) {
+      return {
+        card: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700",
+        title: "text-green-900 dark:text-green-100",
+        desc: "text-green-700 dark:text-green-300",
+        number: "text-green-900 dark:text-green-100",
+        label: "text-green-600 dark:text-green-400",
+        badge: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+      };
+    } else if (ratio >= 0.5) {
+      return {
+        card: "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700",
+        title: "text-yellow-900 dark:text-yellow-100",
+        desc: "text-yellow-700 dark:text-yellow-300",
+        number: "text-yellow-900 dark:text-yellow-100",
+        label: "text-yellow-600 dark:text-yellow-400",
+        badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
+      };
+    } else {
+      return {
+        card: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700",
+        title: "text-red-900 dark:text-red-100",
+        desc: "text-red-700 dark:text-red-300",
+        number: "text-red-900 dark:text-red-100",
+        label: "text-red-600 dark:text-red-400",
+        badge: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
+      };
+    }
+  }, [availableRoomsCount, totalRooms]);
+
+  // Pending card theming: green when none requesting, yellow when at least one
+  const pendingCardClasses = useMemo(() => {
+    const hasPending = (pendingBookingsCount || 0) > 0;
+    if (!hasPending) {
+      return {
+        card: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700",
+        title: "text-green-900 dark:text-green-100",
+        desc: "text-green-700 dark:text-green-300",
+        number: "text-green-900 dark:text-green-100",
+        label: "text-green-600 dark:text-green-400",
+        badge: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+      };
+    }
+    return {
+      card: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-700",
+      title: "text-amber-900 dark:text-amber-100",
+      desc: "text-amber-700 dark:text-amber-300",
+      number: "text-amber-900 dark:text-amber-100",
+      label: "text-amber-600 dark:text-amber-400",
+      badge: "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100",
+    };
+  }, [pendingBookingsCount]);
+
+  // Active Bookings card theming: red when low, yellow at ≥50%, green at ≥66%
+  const activeBookingsCount = useMemo(() => (activeBookings?.active_bookings_count || 0), [activeBookings]);
+  const activeCardClasses = useMemo(() => {
+    const ratio = totalRooms ? (activeBookingsCount / totalRooms) : 0;
+    if (ratio >= 0.66) {
+      return {
+        card: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700",
+        title: "text-green-900 dark:text-green-100",
+        desc: "text-green-700 dark:text-green-300",
+        number: "text-green-900 dark:text-green-100",
+        label: "text-green-600 dark:text-green-400",
+        badge: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+      };
+    } else if (ratio >= 0.5) {
+      return {
+        card: "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700",
+        title: "text-yellow-900 dark:text-yellow-100",
+        desc: "text-yellow-700 dark:text-yellow-300",
+        number: "text-yellow-900 dark:text-yellow-100",
+        label: "text-yellow-600 dark:text-yellow-400",
+        badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
+      };
+    } else {
+      return {
+        card: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700",
+        title: "text-red-900 dark:text-red-100",
+        desc: "text-red-700 dark:text-red-300",
+        number: "text-red-900 dark:text-red-100",
+        label: "text-red-600 dark:text-red-400",
+        badge: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
+      };
+    }
+  }, [activeBookingsCount, totalRooms]);
+
   // Pie chart data for Room Status Distribution
   const pieData = useMemo(() => {
     const entries = Object.entries(roomStatusCounts);
@@ -428,23 +518,23 @@ function AdminDashboard() {
             <div id="CardGroup" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Active Bookings Card */}
               <div className="w-full">
-                <Card className="min-h-[120px] bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
+                <Card className={`min-h-[120px] ${activeCardClasses.card}`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                      <CardTitle className={`${activeCardClasses.title} flex items-center gap-2`}>
                         <User className="h-5 w-5" />
                         Active Bookings
                       </CardTitle>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">Live</Badge>
+                      <Badge variant="secondary" className={activeCardClasses.badge}>Live</Badge>
                     </div>
-                    <CardDescription className="text-blue-700 dark:text-blue-300">Current guests in hotel</CardDescription>
+                    <CardDescription className={activeCardClasses.desc}>Current guests in hotel</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-1">
+                      <div className={`text-3xl font-bold ${activeCardClasses.number} mb-1`}>
                         {NumberFormatter.formatCount(activeBookings.active_bookings_count || 0)}
                       </div>
-                      <div className="text-xs text-blue-600 dark:text-blue-400">Active Bookings</div>
+                      <div className={`text-xs ${activeCardClasses.label}`}>Active Bookings</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -452,23 +542,25 @@ function AdminDashboard() {
 
               {/* Available Rooms Card */}
               <div className="w-full">
-                <Card className="min-h-[120px] bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700">
+                <Card className={`min-h-[120px] ${availabilityCardClasses.card}`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-green-900 dark:text-green-100 flex items-center gap-2">
+                      <CardTitle className={`${availabilityCardClasses.title} flex items-center gap-2`}>
                         <Building className="h-5 w-5" />
                         Available Rooms
                       </CardTitle>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">Live</Badge>
+                      <Badge variant="secondary" className={availabilityCardClasses.badge}>Live</Badge>
                     </div>
-                    <CardDescription className="text-green-700 dark:text-green-300">Vacant rooms across all types</CardDescription>
+                    <CardDescription className={availabilityCardClasses.desc}>Vacant rooms across all types</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-green-900 dark:text-green-100 mb-1">
+                      <div className={`text-3xl font-bold ${availabilityCardClasses.number} mb-1`}>
                         {NumberFormatter.formatCount(availableRoomsCount || 0)}
+                        /
+                        {NumberFormatter.formatCount(totalRooms || 0)}
                       </div>
-                      <div className="text-xs text-green-600 dark:text-green-400">Total Vacant</div>
+                      <div className={`text-xs ${availabilityCardClasses.label}`}>Available / Total</div>
                     </div>
                   </CardContent>
                   <CardFooter className="pt-2">
@@ -483,23 +575,23 @@ function AdminDashboard() {
 
               {/* Pending Bookings Card */}
               <div className="w-full">
-                <Card className="min-h-[120px] bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-700">
+                <Card className={`min-h-[120px] ${pendingCardClasses.card}`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                      <CardTitle className={`${pendingCardClasses.title} flex items-center gap-2`}>
                         <AlertTriangle className="h-5 w-5" />
                         Pending Bookings
                       </CardTitle>
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">Live</Badge>
+                      <Badge variant="secondary" className={pendingCardClasses.badge}>Live</Badge>
                     </div>
-                    <CardDescription className="text-amber-700 dark:text-amber-300">Awaiting approval/check-in</CardDescription>
+                    <CardDescription className={pendingCardClasses.desc}>Awaiting approval/check-in</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-amber-900 dark:text-amber-100 mb-1">
+                      <div className={`text-3xl font-bold ${pendingCardClasses.number} mb-1`}>
                         {NumberFormatter.formatCount(pendingBookingsCount || 0)}
                       </div>
-                      <div className="text-xs text-amber-600 dark:text-amber-400">Pending Bookings</div>
+                      <div className={`text-xs ${pendingCardClasses.label}`}>Pending Bookings</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -640,15 +732,61 @@ function AdminDashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {entries.map(([typeName, statusCounts]) => {
                         const total = Object.values(statusCounts).reduce((sum, c) => sum + c, 0);
+                        const vacant = (statusCounts['Vacant'] || statusCounts['vacant'] || 0);
+                        const occupied = (statusCounts['Occupied'] || statusCounts['occupied'] || 0);
+                        const pending = (statusCounts['Pending'] || statusCounts['pending'] || 0);
+                        const dirty = (statusCounts['Dirty'] || statusCounts['dirty'] || 0);
+                        const maintenance = (statusCounts['Under-Maintenance'] || statusCounts['under-maintenance'] || 0);
+                        const occupancyPercent = Math.round(((occupied + pending) / Math.max(total, 1)) * 100);
+                        const segments = [
+                          { key: 'Occupied', value: occupied },
+                          { key: 'Pending', value: pending },
+                          { key: 'Vacant', value: vacant },
+                          { key: 'Dirty', value: dirty },
+                          { key: 'Under-Maintenance', value: maintenance },
+                        ].filter(s => s.value > 0);
                         return (
                           <Card key={typeName} className="border">
                             <CardHeader className="pb-2">
                               <div className="flex items-center justify-between">
-                                <CardTitle className="text-base text-gray-900 dark:text-white">{typeName}</CardTitle>
+                                <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">{typeName}</CardTitle>
                                 <Badge variant="secondary" className="text-xs">Total of {total} rooms</Badge>
                               </div>
                             </CardHeader>
-                            <CardContent className="pt-0">
+                            <CardContent className="pt-0 space-y-3">
+                              {/* Segmented distribution bar */}
+                              <div className="w-full h-3 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                <div className="flex w-full h-full">
+                                  {segments.map(seg => (
+                                    <div
+                                      key={seg.key}
+                                      className="h-full"
+                                      style={{
+                                        width: `${Math.round((seg.value / Math.max(total, 1)) * 100)}%`,
+                                        backgroundColor: statusColorMap[seg.key] || '#94a3b8'
+                                      }}
+                                      title={`${seg.key}: ${seg.value}`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Quick stats */}
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-3">
+                                  <span className="inline-flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded" style={{ backgroundColor: statusColorMap['Vacant'] }} />
+                                    Vacant: <span className="font-semibold">{NumberFormatter.formatCount(vacant)}</span>
+                                  </span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded" style={{ backgroundColor: statusColorMap['Occupied'] }} />
+                                    Occupied: <span className="font-semibold">{NumberFormatter.formatCount(occupied)}</span>
+                                  </span>
+                                </div>
+                                <span className="text-slate-700 dark:text-slate-300">Occupancy: <span className="font-semibold">{occupancyPercent}%</span></span>
+                              </div>
+
+                              {/* Status badges */}
                               <div className="flex flex-wrap gap-2">
                                 {Object.entries(statusCounts).map(([status, count]) => (
                                   <div key={status} className="flex items-center gap-2 px-2 py-1 rounded border text-xs">

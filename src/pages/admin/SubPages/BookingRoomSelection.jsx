@@ -26,6 +26,7 @@ function AdminBookingRoomSelection() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRooms, setSelectedRooms] = useState([]);
+  const [activeVisitorsMap, setActiveVisitorsMap] = useState({});
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,6 +55,13 @@ function AdminBookingRoomSelection() {
     Object.values(customerBookings).forEach(customerRooms => {
       // Sort by booking_id in descending order to get the latest booking first
       const sortedRooms = customerRooms.sort((a, b) => b.booking_id - a.booking_id);
+      
+      // If the latest booking is not Checked-In, skip all rooms for this customer
+      const latestStatusName = String(sortedRooms[0]?.booking_status_name || '').toLowerCase();
+      if (latestStatusName !== 'checked-in') {
+        console.log(`⛔ Skipping customer ${customerRooms[0].customer_name}: latest status is ${sortedRooms[0]?.booking_status_name || 'Unknown'}`);
+        return; // Do not include any rooms for customers not currently checked-in
+      }
       
       if (sortedRooms.length === 1) {
         // Only one booking, keep all rooms
@@ -122,15 +130,59 @@ function AdminBookingRoomSelection() {
     }
   }, [APIConn]);
 
+  // Fetch active visitors per booking using visitor logs and approval statuses.
+  // Active = no checkout time AND status is not a "left" or "checked-out" variant.
+  const fetchActiveVisitorsMap = useCallback(async () => {
+    try {
+      // Get approval statuses to translate ids to names
+      const fdStatuses = new FormData();
+      fdStatuses.append('method', 'get_visitor_approval_statuses');
+      const resStatuses = await axios.post(APIConn, fdStatuses);
+      const approvals = Array.isArray(resStatuses.data) ? resStatuses.data : [];
+      const statusNameById = {};
+      approvals.forEach(a => {
+        const id = String(a.visitorapproval_id ?? a.id ?? '');
+        const name = String(a.visitorapproval_status ?? a.status ?? '').toLowerCase();
+        if (id) statusNameById[id] = name;
+      });
+
+      // Get visitor logs
+      const fdLogs = new FormData();
+      fdLogs.append('method', 'getVisitorLogs');
+      const resLogs = await axios.post(APIConn, fdLogs);
+      const logs = Array.isArray(resLogs.data) ? resLogs.data : [];
+
+      const counts = {};
+      logs.forEach(log => {
+        const bookingId = log.booking_id;
+        if (!bookingId) return;
+        const checkout = log.visitorlogs_checkout_time;
+        const statusRaw = statusNameById[String(log.visitorapproval_id ?? '')] || '';
+        const status = statusRaw.toLowerCase();
+        const isLeftLike = status.includes('left') || status.includes('checked-out') || status.includes('checkout');
+        // Count only those still inside (no checkout and not marked left/checked-out)
+        if (!checkout && !isLeftLike) {
+          counts[bookingId] = (counts[bookingId] || 0) + 1;
+        }
+      });
+
+      setActiveVisitorsMap(counts);
+    } catch (error) {
+      console.error('❌ Error fetching active visitors map:', error);
+      setActiveVisitorsMap({});
+    }
+  }, [APIConn]);
+
   // Filter rooms based on search term
   useEffect(() => {
     // Base rooms from fetch + smart dedup
     let rooms = bookingRooms;
   
     // When coming from Visitors Log, only show bookings that are Checked-In
-    if (isVisitorOrigin) {
-      rooms = rooms.filter(room => String(room.booking_status_name).toLowerCase() === 'checked-in');
-    }
+    // Backend already filters to Checked-In only, so no need to filter here
+    // if (isVisitorOrigin) {
+    //   rooms = rooms.filter(room => String(room.booking_status_name).toLowerCase() === 'checked-in');
+    // }
   
     if (!searchTerm.trim()) {
       setFilteredRooms(rooms);
@@ -139,8 +191,7 @@ function AdminBookingRoomSelection() {
         room.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         room.reference_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         room.roomtype_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.customers_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.roomnumber_id?.toString().includes(searchTerm)
+        String(room.roomnumber_id).includes(searchTerm)
       );
       setFilteredRooms(filtered);
     }
@@ -148,7 +199,8 @@ function AdminBookingRoomSelection() {
 
   useEffect(() => {
     fetchBookingRooms();
-  }, [fetchBookingRooms]);
+    fetchActiveVisitorsMap();
+  }, [fetchBookingRooms, fetchActiveVisitorsMap]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -184,6 +236,17 @@ function AdminBookingRoomSelection() {
   };
 
   const handleRoomSelect = (room) => {
+    // Prevent selecting rooms at full capacity
+    const adults = Number(room.bookingRoom_adult ?? 0);
+    const children = Number(room.bookingRoom_children ?? 0);
+    const visitors = Number(activeVisitorsMap[room.booking_id] ?? 0);
+    const current = adults + children + visitors;
+    const max = Number(room.max_capacity ?? 0);
+    const isFull = max > 0 && current >= max;
+    if (isFull) {
+      toast.error('This room is at full capacity and cannot be selected.');
+      return;
+    }
     setSelectedRooms(prevSelected => {
       const isSelected = prevSelected.some(selected => selected.booking_room_id === room.booking_room_id);
 
@@ -209,37 +272,35 @@ function AdminBookingRoomSelection() {
 
   const handleConfirmSelection = () => {
     if (selectedRooms.length === 0) {
-      toast.error('Please select at least one booking room first');
+      toast.error('Please select at least one booking room');
       return;
     }
 
-    // Store the selected booking rooms data and navigate back
-    localStorage.setItem('selectedBookingRooms', JSON.stringify(selectedRooms));
-    
-    // For backward compatibility, also store the first selected room as selectedBookingRoom
-    if (selectedRooms.length > 0) {
-      localStorage.setItem('selectedBookingRoom', JSON.stringify(selectedRooms[0]));
+    // Guard: ensure none of the selected rooms are at full capacity
+    const hasFull = selectedRooms.some(r => {
+      const adults = Number(r.bookingRoom_adult ?? 0);
+      const children = Number(r.bookingRoom_children ?? 0);
+      const visitors = Number(activeVisitorsMap[r.booking_id] ?? 0);
+      const current = adults + children + visitors;
+      const max = Number(r.max_capacity ?? 0);
+      return max > 0 && current >= max;
+    });
+    if (hasFull) {
+      toast.error('One or more selected rooms are at full capacity. Please adjust selection.');
+      return;
     }
 
-    const origin = location.state?.origin || null;
-
+    console.log('✅ Confirmed selected rooms:', selectedRooms);
     if (origin === 'visitorslog') {
       navigate('/admin/visitorslog', {
-        state: {
-          selectedBookingRoom: selectedRooms[0],
-          selectedBookingRooms: selectedRooms,
-          openVisitorModal: true
-        }
+        state: { selectedBookingRooms: selectedRooms, openVisitorModal: true }
       });
       return;
     }
-    
-    navigate('/admin/requestedamenities', { 
-      state: { 
-        selectedBookingRoom: selectedRooms[0], // Keep first room for backward compatibility
-        selectedBookingRooms: selectedRooms,   // New multiple selection data
-        openAmenityModal: true 
-      } 
+
+    // Amenities flow: return to Requested Amenities and auto-open modal
+    navigate('/admin/requestedamenities', {
+      state: { selectedBookingRooms: selectedRooms, openAmenityModal: true }
     });
   };
 
@@ -257,14 +318,22 @@ function AdminBookingRoomSelection() {
   };
 
   const handleSelectAll = () => {
-    if (selectedRooms.length === filteredRooms.length) {
+    const selectableRooms = filteredRooms.filter(r => {
+      const adults = Number(r.bookingRoom_adult ?? 0);
+      const children = Number(r.bookingRoom_children ?? 0);
+      const visitors = Number(activeVisitorsMap[r.booking_id] ?? 0);
+      const current = adults + children + visitors;
+      const max = Number(r.max_capacity ?? 0);
+      return !(max > 0 && current >= max);
+    });
+    if (selectedRooms.length === selectableRooms.length) {
       // Deselect all
       setSelectedRooms([]);
       console.log('🏨 Deselected all rooms');
     } else {
       // Select all
-      setSelectedRooms([...filteredRooms]);
-      console.log('🏨 Selected all rooms:', filteredRooms.length);
+      setSelectedRooms([...selectableRooms]);
+      console.log('🏨 Selected all rooms (excluding full capacity):', selectableRooms.length);
     }
   };
 
@@ -502,6 +571,7 @@ function AdminBookingRoomSelection() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Room Details</TableHead>
+                    <TableHead>Current Capacity</TableHead>
                     <TableHead>Check-in</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -510,22 +580,35 @@ function AdminBookingRoomSelection() {
                 <TableBody>
                   {filteredRooms.map((room) => {
                     const isSelected = selectedRooms.some(selected => selected.booking_room_id === room.booking_room_id);
+                    const adults = Number(room.bookingRoom_adult || 0);
+                    const children = Number(room.bookingRoom_children || 0);
+                    const visitors = Number(activeVisitorsMap[room.booking_id] || 0);
+                    const current = adults + children + visitors;
+                    const max = Number(room.max_capacity || 0);
+                    const isFull = max > 0 && current >= max;
                     
                     return (
                       <TableRow 
                         key={room.booking_room_id}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 ${
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 ${
                           isSelected 
                             ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 shadow-sm' 
                             : ''
-                        }`}
-                        onClick={() => handleRoomSelect(room)}
+                        } ${isFull ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}
+                        onClick={() => {
+                          if (isFull) {
+                            toast.error('This room is at full capacity and cannot be selected.');
+                            return;
+                          }
+                          handleRoomSelect(room);
+                        }}
                       >
                         <TableCell>
                           <div className="flex items-center justify-center">
                             <input
                               type="checkbox"
                               checked={isSelected}
+                              disabled={isFull}
                               onChange={() => handleRoomSelect(room)}
                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                               onClick={(e) => e.stopPropagation()}
@@ -581,6 +664,14 @@ function AdminBookingRoomSelection() {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
+                            <Users className="h-3 w-3" />
+                            {`${Number(room.bookingRoom_adult || 0) + Number(room.bookingRoom_children || 0) + Number(activeVisitorsMap[room.booking_id] || 0)}/${Number(room.max_capacity || 0)}`}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                             <Calendar className="h-3 w-3" />
                             {formatDate(room.booking_checkin_dateandtime)}
                           </div>
@@ -607,17 +698,22 @@ function AdminBookingRoomSelection() {
                         <Button
                           size="sm"
                           variant={isSelected ? "default" : "outline"}
+                          disabled={isFull}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleRoomSelect(room);
+                            if (!isFull) handleRoomSelect(room);
                           }}
                           className={`min-w-[100px] transition-all duration-200 ${
-                            isSelected 
+                            isFull
+                              ? 'bg-red-600 hover:bg-red-700 text-white cursor-not-allowed opacity-90'
+                              : isSelected 
                               ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg' 
                               : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
                           }`}
                         >
-                          {isSelected ? (
+                          {isFull ? (
+                            'Full Capacity'
+                          ) : isSelected ? (
                             <>
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Selected

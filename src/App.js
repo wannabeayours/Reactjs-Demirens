@@ -26,6 +26,7 @@ import Landingpage from './pages/Landingpage';
 import Billings from './pages/admin/Billings';
 import CreateInvoice from './pages/admin/Invoice';
 import EmployeeList from './pages/admin/EmployeeList';
+import ChooseBookForVisitor from './pages/admin/SubPages/ChooseBookForVisitor';
 
 // Online
 import OnlineReqList from './pages/admin/Online_Folder/OnlineReqList';
@@ -175,6 +176,13 @@ function App() {
                     <AdminTransactionHis />
                   </AdminRouteGuard>
                 } />
+
+                <Route path="/admin/choosebookforvisitor" element={
+                  <AdminRouteGuard>
+                    <ChooseBookForVisitor />
+                  </AdminRouteGuard>
+                } />
+
                 <Route path="/admin/visitorslog" element={
                   <AdminRouteGuard>
                     <AdminVisitorsLog />
