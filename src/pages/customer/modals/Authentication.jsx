@@ -24,7 +24,7 @@ function Authentication() {
             formData.append("operation", "getCustomerAuthenticationStatus")
             const res = await axios.post(url, formData)
             console.log("getCustomerAuthenticationStatus res", res);
-            setStatus(res.data === 1 ? true : false);
+            setStatus(Number(res.data) === 1 ? true : false);
 
         } catch (error) {
             toast.error("Something went wrong");

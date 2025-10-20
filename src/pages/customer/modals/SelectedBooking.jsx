@@ -53,7 +53,6 @@ export const SelectedBooking = ({ selectedData }) => {
                             <p><span className="font-semibold">Check-out:</span> {data?.booking_checkout_dateandtime}</p>
                             <p><span className="font-semibold">Guests:</span> {data?.guests_amnt}</p>
                             <p><span className="font-semibold">Total:</span> ₱{data?.booking_total}</p>
-                            <p><span className="font-semibold">Downpayment:</span> ₱{data?.booking_downpayment}</p>
                         </div>
                     </div>
 
