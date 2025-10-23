@@ -40,6 +40,35 @@ function RoomChangeSheet({
   const [discounts, setDiscounts] = useState([]);
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [step, setStep] = useState(1);
+  const [selectedRoomType, setSelectedRoomType] = useState(null);
+  const [allRooms, setAllRooms] = useState([]);
+
+  useEffect(() => { if (isOpen) setStep(1); }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const formData = new FormData();
+    formData.append('method', 'viewAllRooms');
+    axios.post(APIConn, formData)
+      .then(res => {
+        let data = res.data;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch { /* ignore */ } }
+        setAllRooms(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error('Error fetching all rooms:', err));
+  }, [APIConn, isOpen]);
+
+  const getRoomTypeForNumber = (roomNumber) => {
+    const match = allRooms.find(r => r.roomnumber_id?.toString() === roomNumber?.toString());
+    if (match) {
+      return { id: match.roomtype_id, name: match.roomtype_name };
+    }
+    if (selectedBooking?.roomtype_id || selectedBooking?.roomtype_name) {
+      return { id: selectedBooking?.roomtype_id ?? null, name: selectedBooking?.roomtype_name ?? null };
+    }
+    return null;
+  };
 
   // Calculate payment details based on selected rooms
   const calculatePaymentDetails = () => {
@@ -92,18 +121,24 @@ function RoomChangeSheet({
 
   // Filter available rooms based on search query
   const filteredRooms = availableRooms.filter(room => {
-    if (!searchQuery.trim()) return true;
-    
+    const matchesType = selectedRoomType ? (
+      (room.roomtype_id && room.roomtype_id === selectedRoomType.id) ||
+      (room.roomtype_name && room.roomtype_name === selectedRoomType.name)
+    ) : true;
+
+    if (!searchQuery.trim()) return matchesType;
+
     const query = searchQuery.toLowerCase();
-    return (
-      room.roomnumber_id.toString().includes(query) ||
+    const matchesSearch = (
+      room.roomnumber_id?.toString().includes(query) ||
       (room.roomtype_name && room.roomtype_name.toLowerCase().includes(query)) ||
-      room.roomfloor.toString().includes(query) ||
-      room.roomtype_capacity.toString().includes(query) ||
+      room.roomfloor?.toString().includes(query) ||
+      room.roomtype_capacity?.toString().includes(query) ||
       (room.roomtype_beds && room.roomtype_beds.toString().toLowerCase().includes(query)) ||
       (room.roomtype_sizes && room.roomtype_sizes.toString().toLowerCase().includes(query)) ||
-      room.roomtype_price.toString().includes(query)
+      room.roomtype_price?.toString().includes(query)
     );
+    return matchesType && matchesSearch;
   });
 
   // Fetch available discounts
@@ -168,6 +203,11 @@ function RoomChangeSheet({
       ...prev,
       [index]: newRoomNumber
     }));
+  };
+  
+  const handleSelectCurrentRoom = (roomNumber) => {
+    const type = getRoomTypeForNumber(roomNumber);
+    setSelectedRoomType(type);
   };
 
   // Clear search query
@@ -305,275 +345,295 @@ function RoomChangeSheet({
             </Card>
           )}
 
-          {/* Customer & Booking Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Booking Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Customer</Label>
-                  <p className="text-gray-900 dark:text-white font-medium text-sm sm:text-base">
-                    {selectedBooking.customer_name}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Status</Label>
-                  <div className="mt-1">
-                    <Badge variant="outline" className="text-xs sm:text-sm">{selectedBooking.booking_status}</Badge>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Check-in</Label>
-                  <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
-                    {formatDateTime(selectedBooking.booking_checkin_dateandtime)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Check-out</Label>
-                  <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
-                    {formatDateTime(selectedBooking.booking_checkout_dateandtime)}
-                  </p>
-                </div>
+          {step === 1 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: Booking Info and Current Rooms */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Booking Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Customer</Label>
+                        <p className="text-gray-900 dark:text-white font-medium text-sm sm:text-base">
+                          {selectedBooking.customer_name}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Status</Label>
+                        <div className="mt-1">
+                          <Badge variant="outline" className="text-xs sm:text-sm">{selectedBooking.booking_status}</Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Check-in</Label>
+                        <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
+                          {formatDateTime(selectedBooking.booking_checkin_dateandtime)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Check-out</Label>
+                        <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
+                          {formatDateTime(selectedBooking.booking_checkout_dateandtime)}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                {/* Current Rooms - clickable to filter by type */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Current Room Numbers</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {currentRooms.map((room, index) => {
+                        const typeInfo = getRoomTypeForNumber(room);
+                        const isSelected = selectedRoomType && (selectedRoomType.id === typeInfo?.id || selectedRoomType.name === typeInfo?.name);
+                        return (
+                          <Badge
+                            key={index}
+                            variant={isSelected ? "default" : "secondary"}
+                            className={`text-sm cursor-pointer ${isSelected ? 'bg-blue-100 text-blue-800 border border-blue-300' : ''}`}
+                            onClick={() => handleSelectCurrentRoom(room)}
+                          >
+                            Room {room}
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Tip: Click a current room to filter available rooms by the same room type.</p>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Current Rooms */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Current Room Numbers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {currentRooms.map((room, index) => (
-                  <Badge key={index} variant="secondary" className="text-sm">
-                    Room {room}
-                  </Badge>
-                ))}
+              {/* Right Column: Rooms */}
+              <div className="space-y-6">
+                {/* New Room Numbers */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">New Room Numbers</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 sm:space-y-4">
+                    {Object.entries(roomNumbers).map(([index, roomNumber]) => (
+                      <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div className="flex-1 w-full">
+                          <Label htmlFor={`room-${index}`} className="text-sm">Room {parseInt(index) + 1}</Label>
+                          <Input
+                            id={`room-${index}`}
+                            value={roomNumber}
+                            onChange={(e) => handleRoomNumberChange(index, e.target.value)}
+                            onFocus={() => setActiveIndex(parseInt(index))}
+                            placeholder="Enter room number"
+                            disabled={!canChangeRooms()}
+                            className="text-sm sm:text-base"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Available Rooms Reference */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      Available Rooms {selectedRoomType ? `• ${selectedRoomType.name}` : ''} ({filteredRooms.length}{searchQuery && ` of ${availableRooms.length}`})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Search Input */}
+                    <div className="mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          type="text"
+                          placeholder="Search by room number, type, floor, capacity, beds, size, or price..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 pr-10"
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={clearSearch}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      {searchQuery && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          Showing {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 sm:gap-4">
+                        {filteredRooms.map((room, index) => (
+                          <div
+                            key={index}
+                            className="border rounded-lg p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors min-h-[140px] flex flex-col justify-between"
+                            onClick={() => {
+                              if (canChangeRooms() && activeIndex !== null) {
+                                handleRoomNumberChange(activeIndex, room.roomnumber_id.toString());
+                              }
+                            }}
+                          >
+                            <div className="text-center">
+                              <div className="font-bold text-lg text-blue-600 mb-1">
+                                Room {room.roomnumber_id}
+                              </div>
+                              <div className="text-sm text-gray-700 mb-2 leading-tight">
+                                {room.roomtype_name}
+                              </div>
+                              <div className="text-xs text-gray-500 mb-1">
+                                Floor {room.roomfloor} • {room.roomtype_capacity} guests
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {room.roomtype_beds} beds • {room.roomtype_sizes}
+                              </div>
+                            </div>
+                            <div className="text-center mt-2">
+                              <div className="font-bold text-lg text-green-600">
+                                {NumberFormatter.formatCurrency(room.roomtype_price)}
+                              </div>
+                              <div className="text-xs text-gray-500">per night</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {filteredRooms.length === 0 && (
+                        <div className="text-center py-8">
+                          {searchQuery ? (
+                            <div>
+                              <p className="text-gray-500 text-sm mb-2">No rooms found matching "{searchQuery}"</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={clearSearch}
+                                className="text-xs"
+                              >
+                                Clear search
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">No available rooms found</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Room Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">New Room Numbers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4">
-              {Object.entries(roomNumbers).map(([index, roomNumber]) => (
-                <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                  <div className="flex-1 w-full">
-                    <Label htmlFor={`room-${index}`} className="text-sm">Room {parseInt(index) + 1}</Label>
-                    <Input
-                      id={`room-${index}`}
-                      value={roomNumber}
-                      onChange={(e) => handleRoomNumberChange(index, e.target.value)}
-                      onFocus={() => setActiveIndex(parseInt(index))}
-                      placeholder="Enter room number"
-                      disabled={!canChangeRooms()}
-                      className="text-sm sm:text-base"
-                    />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Payment Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Payment Details
+                    {paymentDetails.total !== (parseFloat(selectedBooking?.total_amount) || 0) && (
+                      <Badge variant="secondary" className="text-xs">
+                        Updated
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 sm:space-y-3">
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Base Amount:</span>
+                    <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.total)}</span>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Available Rooms Reference */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Available Rooms ({filteredRooms.length}{searchQuery && ` of ${availableRooms.length}`})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Search Input */}
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    type="text"
-                    placeholder="Search by room number, type, floor, capacity, beds, size, or price..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  {selectedDiscount && (
+                    <>
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">Discount ({selectedDiscount.discounts_percent}%):</span>
+                        <span className="font-medium text-red-600">-{NumberFormatter.formatCurrency(paymentDetails.discountAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">After Discount:</span>
+                        <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.discountedAmount)}</span>
+                      </div>
+                    </>
                   )}
-                </div>
-                {searchQuery && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Showing {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} matching "{searchQuery}"
-                  </p>
-                )}
-              </div>
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">VAT (12%):</span>
+                    <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.vat)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Total with VAT:</span>
+                    <span className="font-semibold">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Nights:</span>
+                    <span className="font-medium">{paymentDetails.nights}</span>
+                  </div>
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Downpayment (50%):</span>
+                    <span className="font-semibold text-blue-600">{NumberFormatter.formatCurrency(paymentDetails.downpayment)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Balance (50%):</span>
+                    <span className="font-semibold text-green-600">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat - paymentDetails.downpayment)}</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="max-h-64 sm:max-h-80 md:max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 sm:gap-4">
-                  {filteredRooms.map((room, index) => (
-                    <div
-                      key={index}
-                      className="border rounded-lg p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors min-h-[140px] flex flex-col justify-between"
-                      onClick={() => {
-                        if (canChangeRooms() && activeIndex !== null) {
-                          handleRoomNumberChange(activeIndex, room.roomnumber_id.toString());
+              {/* Apply Discount moved to bottom */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Apply Discount</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Label htmlFor="discount-select">Select Discount</Label>
+                    <Select
+                      value={selectedDiscount ? selectedDiscount.discounts_id.toString() : "none"}
+                      onValueChange={(value) => {
+                        if (value === "none") {
+                          setSelectedDiscount(null)
+                        } else {
+                          const discount = discounts.find(d => d.discounts_id.toString() === value)
+                          setSelectedDiscount(discount || null)
                         }
                       }}
                     >
-                      <div className="text-center">
-                        <div className="font-bold text-lg text-blue-600 mb-1">
-                          Room {room.roomnumber_id}
-                        </div>
-                        <div className="text-sm text-gray-700 mb-2 leading-tight">
-                          {room.roomtype_name}
-                        </div>
-                        <div className="text-xs text-gray-500 mb-1">
-                          Floor {room.roomfloor} • {room.roomtype_capacity} guests
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {room.roomtype_beds} beds • {room.roomtype_sizes}
-                        </div>
+                      <SelectTrigger>
+                        <SelectValue placeholder="No discount applied" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No discount</SelectItem>
+                        {discounts.map((discount) => (
+                          <SelectItem
+                            key={discount.discounts_id}
+                            value={discount.discounts_id.toString()}
+                          >
+                            {discount.discounts_type} - {discount.discounts_percent}% off
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {selectedDiscount && (
+                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          <strong>{selectedDiscount.discounts_type}</strong>: {selectedDiscount.discounts_percent}% discount applied
+                        </p>
                       </div>
-                      <div className="text-center mt-2">
-                        <div className="font-bold text-lg text-green-600">
-                          {NumberFormatter.formatCurrency(room.roomtype_price)}
-                        </div>
-                        <div className="text-xs text-gray-500">per night</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {filteredRooms.length === 0 && (
-                  <div className="text-center py-8">
-                    {searchQuery ? (
-                      <div>
-                        <p className="text-gray-500 text-sm mb-2">No rooms found matching "{searchQuery}"</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearSearch}
-                          className="text-xs"
-                        >
-                          Clear search
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No available rooms found</p>
                     )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {/* Discount Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Apply Discount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Label htmlFor="discount-select">Select Discount</Label>
-                <Select
-                  value={selectedDiscount ? selectedDiscount.discounts_id.toString() : "none"}
-                  onValueChange={(value) => {
-                    if (value === "none") {
-                      setSelectedDiscount(null)
-                    } else {
-                      const discount = discounts.find(d => d.discounts_id.toString() === value)
-                      setSelectedDiscount(discount || null)
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="No discount applied" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No discount</SelectItem>   {/* ✅ fixed */}
-                    {discounts.map((discount) => (
-                      <SelectItem
-                        key={discount.discounts_id}
-                        value={discount.discounts_id.toString()}
-                      >
-                        {discount.discounts_type} - {discount.discounts_percent}% off
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {selectedDiscount && (
-                  <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      <strong>{selectedDiscount.discounts_type}</strong>: {selectedDiscount.discounts_percent}% discount applied
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                Payment Details
-                {paymentDetails.total !== (parseFloat(selectedBooking?.total_amount) || 0) && (
-                  <Badge variant="secondary" className="text-xs">
-                    Updated
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 sm:space-y-3">
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">Base Amount:</span>
-                <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.total)}</span>
-              </div>
-              {selectedDiscount && (
-                <>
-                  <div className="flex justify-between text-sm sm:text-base">
-                    <span className="text-gray-600">Discount ({selectedDiscount.discounts_percent}%):</span>
-                    <span className="font-medium text-red-600">-{NumberFormatter.formatCurrency(paymentDetails.discountAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm sm:text-base">
-                    <span className="text-gray-600">After Discount:</span>
-                    <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.discountedAmount)}</span>
-                  </div>
-                </>
-              )}
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">VAT (12%):</span>
-                <span className="font-medium">{NumberFormatter.formatCurrency(paymentDetails.vat)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">Total with VAT:</span>
-                <span className="font-semibold">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat)}</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">Nights:</span>
-                <span className="font-medium">{paymentDetails.nights}</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">Downpayment (50%):</span>
-                <span className="font-semibold text-blue-600">{NumberFormatter.formatCurrency(paymentDetails.downpayment)}</span>
-              </div>
-              <div className="flex justify-between text-sm sm:text-base">
-                <span className="text-gray-600">Balance (50%):</span>
-                <span className="font-semibold text-green-600">{NumberFormatter.formatCurrency(paymentDetails.totalWithVat - paymentDetails.downpayment)}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
+          {/* Step Actions */}
           <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4">
             <Button
               variant="outline"
@@ -583,23 +643,44 @@ function RoomChangeSheet({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSubmitRoomChange}
-              disabled={!canChangeRooms() || loading}
-              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Update Rooms
-                </>
-              )}
-            </Button>
+
+            {step === 1 ? (
+              <Button
+                onClick={() => setStep(2)}
+                disabled={!canChangeRooms()}
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base"
+              >
+                Next
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  className="w-full sm:w-auto text-sm sm:text-base"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSubmitRoomChange}
+                  disabled={!canChangeRooms() || loading}
+                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Update Rooms
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </SheetContent>

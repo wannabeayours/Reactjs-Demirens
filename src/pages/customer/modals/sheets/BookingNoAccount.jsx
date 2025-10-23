@@ -270,8 +270,11 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       const formValues = form.getValues();
       const { walkinfirstname, walkinlastname, email, contactNumber } = formValues;
 
+      const checkInWithTime = new Date(checkIn);
+      checkInWithTime.setHours(14, 0, 0, 0);
+
       const bookingDetails = {
-        "checkIn": formatYMD(checkIn),
+        "checkIn": formatYMD(checkInWithTime),
         "checkOut": formatYMD(checkOut),
         "downpayment": totalAmount,
         "totalAmount": totalAmount,
@@ -1366,15 +1369,19 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
           Book Now
         </Button>
       </SheetTrigger>
-      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full rounded-t-3xl p-3">
-        <div className="flex flex-col h-full">
+      <SheetContent
+        side="bottom"
+        className="w-full max-w-none h-full rounded-t-3xl p-0 flex flex-col"
+      >
+        {/* Scrollable area */}
+        <div className="flex-1 overflow-y-auto p-3">
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
-              <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
+              <p className="text-gray-600">
+                Complete your booking in {steps.length} easy steps
+              </p>
             </div>
-
-
           </div>
 
           {/* Stepper */}
@@ -1383,16 +1390,16 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
           </div>
 
           {/* Step Content */}
-          <div className="flex-1">
+          <div>
             {currentStep === 1 && <RoomSelectionStep />}
             {currentStep === 2 && <GuestInformationStep />}
             {currentStep === 3 && <BookingConfirmationStep />}
           </div>
         </div>
-        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
-        <SheetFooter>
-          {/* Navigation Controls */}
-          <div className={`flex justify-end items-center gap-3 ${currentStep === 1 ? 'mt-20' : 'mt-4'}`}>
+
+        {/* Sticky footer */}
+        <SheetFooter className="sticky bottom-0 bg-white border-t p-3">
+          <div className="flex justify-end items-center gap-3">
             <div className="text-sm text-gray-500 hidden md:block">
               Step {currentStep} of {steps.length}
             </div>
@@ -1416,11 +1423,11 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
-
           </div>
         </SheetFooter>
-
+        <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
       </SheetContent>
+
     </Sheet >
   );
 

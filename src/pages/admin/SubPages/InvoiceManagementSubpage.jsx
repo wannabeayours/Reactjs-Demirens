@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Plus, CheckCircle, AlertCircle, Calculator, Receipt, CreditCard, DollarSign as DollarSignIcon, Eye, X } from "lucide-react";
+import NumberFormatter from "../Function_Files/NumberFormatter";
 const DollarSign = ({ className = "" }) => <span className={className}>₱</span>
 
 function InvoiceManagementSubpage({ 
@@ -501,9 +502,9 @@ function InvoiceManagementSubpage({
                       <TableCell>{charge.charge_type}</TableCell>
                       <TableCell>{charge.charge_name}</TableCell>
                       <TableCell>{charge.category}</TableCell>
-                      <TableCell className="text-right font-mono">₱{(parseFloat(charge.unit_price) || 0).toFixed(2)}</TableCell>
-                      <TableCell className="text-center">{charge.quantity}</TableCell>
-                      <TableCell className="text-right font-mono font-bold">₱{(parseFloat(charge.total_amount) || 0).toFixed(2)}</TableCell>
+<TableCell className="text-right font-mono">{NumberFormatter.formatCurrency(charge.unit_price)}</TableCell>
+<TableCell className="text-center">{charge.quantity}</TableCell>
+<TableCell className="text-right font-mono font-bold">{NumberFormatter.formatCurrency(charge.total_amount)}</TableCell>
                     </TableRow>
                   ))}
                   {bookingCharges.length === 0 && (
@@ -521,7 +522,7 @@ function InvoiceManagementSubpage({
             {bookingCharges.length > 0 && (
               <div className="mt-4 p-4 bg-muted rounded-lg text-right">
                 <span className="font-bold text-xl">
-                  Current Total: ₱{bookingCharges.reduce((sum, charge) => sum + (parseFloat(charge.total_amount) || 0), 0).toFixed(2)}
+                  Current Total: {NumberFormatter.formatCurrency(bookingCharges.reduce((sum, charge) => sum + (parseFloat(charge.total_amount) || 0), 0))}
                 </span>
               </div>
             )}
@@ -673,28 +674,28 @@ function InvoiceManagementSubpage({
                   <div className="grid grid-cols-1 gap-2">
                     <div className="flex justify-between items-center py-3 border-b">
                       <span className="font-medium">Room Charges with VAT(12%):</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.room_total) || 0).toFixed(2)}</span>
+                      <span className="font-mono font-semibold">{NumberFormatter.formatCurrency(billingBreakdown.room_total)}</span>
                     </div>
                     {(parseFloat(billingBreakdown.charge_total) || 0) > 0 && (
                       <div className="flex justify-between items-center py-3 border-b-2 border-gray-300 dark:border-gray-700">
                         <span className="font-medium">Additional Charges:</span>
-                        <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.charge_total) || 0).toFixed(2)}</span>
+                        <span className="font-mono font-semibold">{NumberFormatter.formatCurrency(billingBreakdown.charge_total)}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center py-3 border-b">
                       <span className="font-medium">Subtotal:</span>
-                      <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.subtotal) || 0).toFixed(2)}</span>
+                      <span className="font-mono font-semibold">{NumberFormatter.formatCurrency(billingBreakdown.subtotal)}</span>
                     </div>
                     {(parseFloat(billingBreakdown.discount_amount) || 0) > 0 && (
                       <div className="flex justify-between items-center py-3 border-b-2 border-gray-300 dark:border-gray-700">
                         <span className="font-medium">Discount:</span>
-                        <span className="font-mono font-semibold text-red-600">-₱{(parseFloat(billingBreakdown.discount_amount) || 0).toFixed(2)}</span>
+                        <span className="font-mono font-semibold text-red-600">-{NumberFormatter.formatCurrency(billingBreakdown.discount_amount)}</span>
                       </div>
                     )}
                     {(parseFloat(billingBreakdown.discount_amount) || 0) > 0 && (
                       <div className="flex justify-between items-center py-3 border-b">
                         <span className="font-medium">Amount After Discount:</span>
-                        <span className="font-mono font-semibold">₱{(parseFloat(billingBreakdown.amount_after_discount) || 0).toFixed(2)}</span>
+                        <span className="font-mono font-semibold">{NumberFormatter.formatCurrency(billingBreakdown.amount_after_discount)}</span>
                       </div>
                     )}
                     
@@ -703,18 +704,18 @@ function InvoiceManagementSubpage({
                     <div className="space-y-2 bg-muted rounded-lg px-4 py-4">
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-xl">Final Total:</span>
-                        <span className="font-mono font-bold text-xl">₱{(parseFloat(billingBreakdown.final_total) || 0).toFixed(2)}</span>
+                        <span className="font-mono font-bold text-xl">{NumberFormatter.formatCurrency(billingBreakdown.final_total)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Downpayment:</span>
-                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">₱{(parseFloat(billingBreakdown.downpayment) || 0).toFixed(2)}</span>
+                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{NumberFormatter.formatCurrency(billingBreakdown.downpayment)}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
                       <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 border border-yellow-200 dark:border-yellow-800">
                         <span className="font-bold text-lg">Balance Due:</span>
-                        <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">₱{(parseFloat(billingBreakdown.balance) || ((parseFloat(billingBreakdown.final_total) || 0) - (parseFloat(billingBreakdown.downpayment) || 0))).toFixed(2)}</span>
+                        <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">{NumberFormatter.formatCurrency(billingBreakdown.balance || ((billingBreakdown.final_total || 0) - (billingBreakdown.downpayment || 0)))}</span>
                       </div>
                     </div>
                 </div>
@@ -756,7 +757,7 @@ function InvoiceManagementSubpage({
                                   <TableHead>Room Number</TableHead>
                                   <TableHead>Category</TableHead>
                                   <TableHead className="text-right">Unit Price</TableHead>
-                                  <TableHead className="text-center">Quantity</TableHead>
+                                  <TableHead className="text-center">Stays</TableHead>
                                   <TableHead className="text-right">Total</TableHead>
                                   <TableHead>Description</TableHead>
                                 </TableRow>
@@ -767,10 +768,10 @@ function InvoiceManagementSubpage({
                                     <TableCell>{room.charge_name}</TableCell>
                                     <TableCell>{room.room_number || 'Not Assigned'}</TableCell>
                                     <TableCell>{room.category}</TableCell>
-                                    <TableCell className="text-right font-mono">₱{(parseFloat(room.unit_price) || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono">{NumberFormatter.formatCurrency(parseFloat(room.unit_price) || 0)}</TableCell>
                                     <TableCell className="text-center">{room.quantity}</TableCell>
                                     <TableCell className="text-right font-bold font-mono">
-                                      ₱{(parseFloat(room.total_amount) || 0).toFixed(2)}
+                                      {NumberFormatter.formatCurrency(parseFloat(room.total_amount) || 0)}
                                     </TableCell>
                                     <TableCell>{room.charges_master_description || '-'}</TableCell>
                                   </TableRow>
@@ -780,7 +781,7 @@ function InvoiceManagementSubpage({
                           </div>
                           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-right">
                             <span className="font-bold text-lg">
-                              🏨 Room Total: ₱{detailedCharges.summary.room_total.toFixed(2)}
+                              🏨 Room Total: {NumberFormatter.formatCurrency(detailedCharges.summary.room_total)}
                             </span>
                           </div>
                         </div>
@@ -811,10 +812,10 @@ function InvoiceManagementSubpage({
                                     <TableCell>{charge.charge_name}</TableCell>
                                     <TableCell>{charge.category}</TableCell>
                                     <TableCell>{charge.room_number || charge.room_type}</TableCell>
-                                    <TableCell className="text-right font-mono">₱{(parseFloat(charge.unit_price) || 0).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono">{NumberFormatter.formatCurrency(parseFloat(charge.unit_price) || 0)}</TableCell>
                                     <TableCell className="text-center">{charge.quantity}</TableCell>
                                     <TableCell className="text-right font-bold font-mono">
-                                      ₱{(parseFloat(charge.total_amount) || 0).toFixed(2)}
+                                      {NumberFormatter.formatCurrency(parseFloat(charge.total_amount) || 0)}
                                     </TableCell>
                                     <TableCell>{charge.charges_master_description || '-'}</TableCell>
                                   </TableRow>
@@ -824,7 +825,7 @@ function InvoiceManagementSubpage({
                           </div>
                           <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-right">
                             <span className="font-bold text-lg">
-                              🛍️ Additional Total: ₱{detailedCharges.summary.charges_total.toFixed(2)}
+                              🛍️ Additional Total: {NumberFormatter.formatCurrency(detailedCharges.summary.charges_total)}
                             </span>
                           </div>
                         </div>
@@ -838,17 +839,17 @@ function InvoiceManagementSubpage({
                             <div className="space-y-1 text-sm">
                               <div className="flex justify-between">
                                 <span>Room Charges:</span>
-                                <span>₱{detailedCharges.summary.room_total.toFixed(2)}</span>
+                                <span>{NumberFormatter.formatCurrency(detailedCharges.summary.room_total)}</span>
                               </div>
                               {(detailedCharges.summary.charges_total || 0) > 0 && (
                                 <div className="flex justify-between">
                                   <span>Additional Charges:</span>
-                                  <span>₱{detailedCharges.summary.charges_total.toFixed(2)}</span>
+                                  <span>{NumberFormatter.formatCurrency(detailedCharges.summary.charges_total)}</span>
                                 </div>
                               )}
                               <div className="flex justify-between font-semibold border-t pt-1">
                                 <span>Subtotal:</span>
-                                <span>₱{detailedCharges.summary.subtotal.toFixed(2)}</span>
+                                <span>{NumberFormatter.formatCurrency(detailedCharges.summary.subtotal)}</span>
                               </div>
                             </div>
                           </div>
@@ -858,11 +859,11 @@ function InvoiceManagementSubpage({
                                 <div className="space-y-1 text-sm">
                                   <div className="flex justify-between">
                                     <span>Downpayment:</span>
-                                    <span className="text-blue-700 font-semibold">₱{(parseFloat(detailedCharges.summary.downpayment) || 0).toFixed(2)}</span>
+                                    <span className="text-blue-700 font-semibold">{NumberFormatter.formatCurrency(parseFloat(detailedCharges.summary.downpayment) || 0)}</span>
                                   </div>
                                   <div className="flex justify-between font-semibold border-t pt-1 text-lg">
                                     <span>Balance Due:</span>
-                                    <span className="text-red-600">₱{(parseFloat(detailedCharges.summary.balance) || ((parseFloat(detailedCharges.summary.grand_total) || 0) - (parseFloat(detailedCharges.summary.downpayment) || 0))).toFixed(2)}</span>
+                                    <span className="text-red-600">{NumberFormatter.formatCurrency((parseFloat(detailedCharges.summary.balance) || ((parseFloat(detailedCharges.summary.grand_total) || 0) - (parseFloat(detailedCharges.summary.downpayment) || 0))))}</span>
                                   </div>
                                 </div>
                               </div>
@@ -871,7 +872,7 @@ function InvoiceManagementSubpage({
                         {/* Grand Total */}
                         <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg text-center">
                           <span className="font-bold text-xl">
-                            💰 GRAND TOTAL: ₱{detailedCharges.summary.grand_total.toFixed(2)}
+                            💰 GRAND TOTAL: {NumberFormatter.formatCurrency(detailedCharges.summary.grand_total)}
                           </span>
                         </div>
                       </div>

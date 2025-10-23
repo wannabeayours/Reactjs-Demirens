@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Search, Filter, ArrowRightLeft, Eye, Settings, CalendarPlus, ChevronDown, ChevronUp, CalendarIcon, AlertTriangle, ExternalLink, ClockArrowUp, ClockArrowDown } from "lucide-react"
+import { Search, Filter, ArrowRightLeft, Eye, Settings, CalendarPlus, ChevronDown, ChevronUp, CalendarIcon, AlertTriangle, ExternalLink, ClockArrowUp, ClockArrowDown, XCircle, CheckCircle } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { NumberFormatter } from './Function_Files/NumberFormatter'
 import RoomChangeSheet from "./SubPages/RoomChangeSheet"
@@ -64,6 +64,7 @@ function AdminBookingList() {
   const [extendedRooms, setExtendedRooms] = useState([]);
   const [invoiceData, setInvoiceData] = useState(null);
   const [billingData, setBillingData] = useState([]);
+  const [bookingChargesTotal, setBookingChargesTotal] = useState(null);
   // Image viewer state
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [imageViewerSrc, setImageViewerSrc] = useState('');
@@ -225,21 +226,111 @@ function AdminBookingList() {
   }, [bookings, searchTerm, statusFilter, dateFrom, dateTo, sortOrder, sortBy]);
 
   // Button handlers
-  const handleStatusChange = (booking) => {
-    console.log('Change Status clicked for booking:', booking);
-    setSelectedBooking(booking);
-    setNewStatus(booking.booking_status); // Set current status as default
-    setShowStatusChange(true);
+  // New: Cancel booking (adds a Cancelled status history and frees rooms)
+  const handleCancelBooking = async (booking) => {
+    try {
+      const cancelledStatus = status.find(item => item.booking_status_name === 'Cancelled');
+      if (!cancelledStatus) {
+        toast.error('Cancelled status not found');
+        return;
+      }
+      // Do not allow cancel when already Checked-In/Checked-Out
+      if (booking.booking_status === 'Checked-In' || booking.booking_status === 'Checked-Out') {
+        toast.error('Cannot cancel a booking that is already checked-in or checked-out');
+        return;
+      }
+
+      const currentEmployeeId = localStorage.getItem('employeeId') || 1;
+      const jsonData = {
+        booking_id: booking.booking_id,
+        employee_id: currentEmployeeId,
+        booking_status_id: cancelledStatus.booking_status_id,
+      };
+
+      const candidateRoomIds = Array.isArray(booking?.room_ids) ? booking.room_ids : undefined;
+      if (Array.isArray(candidateRoomIds)) {
+        jsonData.room_ids = candidateRoomIds;
+      }
+
+      const formData = new FormData();
+      formData.append('method', 'changeBookingStatus');
+      formData.append('json', JSON.stringify(jsonData));
+
+      const res = await axios.post(APIConn, formData);
+      if (res?.data?.success) {
+        toast.success(`Booking ${booking.reference_no} cancelled`);
+        setShowCustomerDetails(false);
+        setSelectedBooking(null);
+        getBookings();
+      } else {
+        const errMsg = res?.data?.message || res?.data?.error || 'Failed to cancel booking';
+        toast.error(errMsg);
+      }
+    } catch (err) {
+      console.error('Cancel booking error:', err);
+      toast.error('Failed to connect');
+    }
+  };
+
+  // New: Confirm check-in (adds a Checked-In status history and marks rooms occupied)
+  const handleConfirmCheckIn = async (booking) => {
+    try {
+      const checkedInStatus = status.find(item => item.booking_status_name === 'Checked-In');
+      if (!checkedInStatus) {
+        toast.error('Checked-In status not found');
+        return;
+      }
+      // Only allow confirm check-in from Confirmed state
+      if (booking.booking_status !== 'Confirmed') {
+        toast.error('Check-in can only be confirmed from Confirmed status');
+        return;
+      }
+
+      const currentEmployeeId = localStorage.getItem('employeeId') || 1;
+      const jsonData = {
+        booking_id: booking.booking_id,
+        employee_id: currentEmployeeId,
+        booking_status_id: checkedInStatus.booking_status_id,
+      };
+
+      const candidateRoomIds = Array.isArray(booking?.room_ids) ? booking.room_ids : undefined;
+      if (Array.isArray(candidateRoomIds)) {
+        jsonData.room_ids = candidateRoomIds;
+      }
+
+      const formData = new FormData();
+      formData.append('method', 'changeBookingStatus');
+      formData.append('json', JSON.stringify(jsonData));
+
+      const res = await axios.post(APIConn, formData);
+      if (res?.data?.success) {
+        toast.success(`Booking ${booking.reference_no} marked as Checked-In`);
+        setShowCustomerDetails(false);
+        setSelectedBooking(null);
+        getBookings();
+      } else {
+        const errMsg = res?.data?.message || res?.data?.error || 'Failed to confirm check-in';
+        toast.error(errMsg);
+      }
+    } catch (err) {
+      console.error('Confirm check-in error:', err);
+      toast.error('Failed to connect');
+    }
   };
 
   const fetchAvailableRooms = async () => {
     try {
       const formData = new FormData();
-      formData.append("method", "viewBookingList");
+      formData.append("method", "viewAllRooms");
       const res = await axios.post(APIConn, formData);
-      const data = Array.isArray(res.data) ? res.data : [];
-
-      setRooms(data);
+      let data = res.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { /* ignore parse error */ }
+      }
+      const roomsData = Array.isArray(data) ? data : [];
+      // Only include vacant rooms (status_id=3 or status_name='Vacant')
+      const vacantRooms = roomsData.filter(r => r?.room_status_id === 3 || String(r?.status_name).toLowerCase() === 'vacant');
+      setRooms(vacantRooms);
     } catch (err) {
       console.error("Error fetching available rooms:", err);
       setRooms([]);
@@ -251,8 +342,9 @@ function AdminBookingList() {
     setSelectedBooking(booking);
 
     // Check if booking status allows room changes
-    if (booking.booking_status !== 'Confirmed' && booking.booking_status !== 'Checked-In') {
-      toast.error('Room changes are only allowed for bookings with "Confirmed" or "Checked-In" status');
+    const allowedStatuses = ['Approved', 'Checked-In', 'Checked In', 'Confirmed'];
+    if (!allowedStatuses.includes(booking.booking_status)) {
+      toast.error('Room changes are only allowed for bookings with "Approved" or "Checked-In" status');
       return;
     }
 
@@ -267,9 +359,10 @@ function AdminBookingList() {
     setIsRoomDetailsExpanded(false); // Reset dropdown state when opening modal
     setShowCustomerDetails(true);
     
-    // Fetch invoice and billing data
+    // Fetch invoice, billing data, and comprehensive charges total
     fetchInvoiceData(booking);
     fetchBillingData(booking);
+    fetchBookingChargesTotal(booking.booking_id);
   };
 
   const handleRoomChangeSuccess = () => {
@@ -374,6 +467,28 @@ function AdminBookingList() {
     } catch (err) {
       console.error('Error fetching billing data:', err);
       setBillingData([]);
+    }
+  };
+
+  // Fetch comprehensive booking charges total to keep totals in sync with Invoice Management
+  const fetchBookingChargesTotal = async (bookingId) => {
+    try {
+      const url = localStorage.getItem("url") + "transactions.php";
+      const formData = new FormData();
+      formData.append("operation", "getBookingCharges");
+      formData.append("json", JSON.stringify({ booking_id: bookingId }));
+
+      const res = await axios.post(url, formData);
+      if (res.data?.success) {
+        const charges = Array.isArray(res.data.charges) ? res.data.charges : [];
+        const total = charges.reduce((sum, charge) => sum + (parseFloat(charge.total_amount) || 0), 0);
+        setBookingChargesTotal(total);
+      } else {
+        setBookingChargesTotal(null);
+      }
+    } catch (err) {
+      console.error("Error fetching booking charges:", err);
+      setBookingChargesTotal(null);
     }
   };
 
@@ -1118,11 +1233,11 @@ function AdminBookingList() {
         {/* Search and Filter Section */}
         <Card className="bg-white dark:bg-gray-800 shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex flex-col md:flex-row md:items-center gap-2">
               <Filter className="w-5 h-5" />
               Search & Filter
               {sortBy && (
-                <span className="text-sm font-normal text-blue-600 dark:text-blue-400 ml-auto flex items-center gap-1">
+                <span className="text-sm font-normal text-blue-600 dark:text-blue-400 ml-0 md:ml-auto flex items-center gap-1">
                   Sorted by: {sortBy === 'booking_created_at' ? 'Created Date' : 
                              sortBy === 'booking_checkin_dateandtime' ? 'Check-in Date' :
                              sortBy === 'booking_checkout_dateandtime' ? 'Check-out Date' :
@@ -1145,9 +1260,9 @@ function AdminBookingList() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4">
               {/* Search Bar */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 sm:col-span-2 lg:col-span-4 xl:col-span-5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -1155,17 +1270,17 @@ function AdminBookingList() {
                     placeholder="Customer, Reference, Phone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 w-full min-w-0 h-10 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700"
                   />
                 </div>
               </div>
 
               {/* Status Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 lg:col-span-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
+                  <SelectTrigger className="w-full min-w-0 h-10 text-sm overflow-hidden whitespace-nowrap text-ellipsis truncate bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700">
+                    <SelectValue placeholder="All Statuses" className="truncate" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
@@ -1179,33 +1294,33 @@ function AdminBookingList() {
               </div>
 
               {/* Date From Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 lg:col-span-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
                 <Input
                   type="date"
                   value={dateFrom ? dateFrom.toISOString().split('T')[0] : ''}
                   onChange={(e) => setDateFrom(e.target.value ? new Date(e.target.value) : null)}
-                  className="w-full"
+                  className="w-full min-w-0 h-10 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700"
                 />
               </div>
 
               {/* Date To Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 lg:col-span-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
                 <Input
                   type="date"
                   value={dateTo ? dateTo.toISOString().split('T')[0] : ''}
                   onChange={(e) => setDateTo(e.target.value ? new Date(e.target.value) : null)}
-                  className="w-full"
+                  className="w-full min-w-0 h-10 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700"
                 />
               </div>
 
               {/* Sort By Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 lg:col-span-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</label>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Created Date" />
+                  <SelectTrigger className="w-full min-w-0 h-10 text-sm overflow-hidden whitespace-nowrap text-ellipsis truncate bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700">
+                    <SelectValue placeholder="Created Date" className="truncate" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="booking_created_at">Created Date</SelectItem>
@@ -1219,11 +1334,11 @@ function AdminBookingList() {
               </div>
 
               {/* Sort Order Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 lg:col-span-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Order</label>
                 <Select value={sortOrder} onValueChange={setSortOrder}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Order" />
+                  <SelectTrigger className="w-full min-w-0 h-10 text-sm overflow-hidden whitespace-nowrap text-ellipsis truncate bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-700">
+                    <SelectValue placeholder="Order" className="truncate" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="desc">
@@ -1342,34 +1457,14 @@ function AdminBookingList() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white text-center w-[130px] min-w-[130px] text-xs sm:text-sm">
-                        <span className="hidden sm:inline">Room Type</span>
-                        <span className="sm:hidden">Room</span>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white text-center w-[130px] min-w-[130px]">
+                      <TableHead className="font-semibold text-gray-900 dark:text-white text-center w-[180px] min-w-[180px]">
                         <button
                           onClick={() => setSortBy('booking_checkin_dateandtime')}
                           className="flex items-center justify-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
                         >
-                          <span className="hidden sm:inline">Check-in</span>
-                          <span className="sm:hidden">Check-in</span>
+                          <span className="hidden sm:inline">Stay</span>
+                          <span className="sm:hidden">Stay</span>
                           {sortBy === 'booking_checkin_dateandtime' && (
-                            sortOrder === 'asc' ? (
-                              <ClockArrowUp className="w-2 h-2 sm:w-3 sm:h-3 text-blue-600" />
-                            ) : (
-                              <ClockArrowDown className="w-2 h-2 sm:w-3 sm:h-3 text-blue-600" />
-                            )
-                          )}
-                        </button>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-900 dark:text-white text-center w-[130px] min-w-[130px]">
-                        <button
-                          onClick={() => setSortBy('booking_checkout_dateandtime')}
-                          className="flex items-center justify-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
-                        >
-                          <span className="hidden sm:inline">Check-out</span>
-                          <span className="sm:hidden">Check-out</span>
-                          {sortBy === 'booking_checkout_dateandtime' && (
                             sortOrder === 'asc' ? (
                               <ClockArrowUp className="w-2 h-2 sm:w-3 sm:h-3 text-blue-600" />
                             ) : (
@@ -1423,21 +1518,8 @@ function AdminBookingList() {
                           </div>
                         </TableCell>
                         <TableCell className="text-gray-700 dark:text-gray-300 text-center py-3">
-                          <div className={`text-sm font-medium px-2 py-1 rounded-full ${getRoomTypeDisplay(b) === 'More Rooms...'
-                            ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
-                            : 'bg-[#34699a]/10 dark:bg-[#34699a]/20 text-[#34699a] dark:text-[#34699a]'
-                            }`}>
-                            {getRoomTypeDisplay(b)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-300 text-center py-3">
                           <div className="text-xs">
-                            {formatDateTime(b.booking_checkin_dateandtime)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-300 text-center py-3">
-                          <div className="text-xs">
-                            {formatDateTime(b.booking_checkout_dateandtime)}
+                            {formatDateTime(b.booking_checkin_dateandtime)} — {formatDateTime(b.booking_checkout_dateandtime)}
                           </div>
                         </TableCell>
                         <TableCell className="text-gray-700 dark:text-gray-300 text-center py-3">
@@ -1555,10 +1637,23 @@ function AdminBookingList() {
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{selectedBooking.customer_email}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-[#34699a] dark:text-[#34699a]">
-                        {NumberFormatter.formatCurrency(selectedBooking.total_amount || 0)}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Total Amount</div>
+                      {(() => {
+                        const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                        const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                        const msPerDay = 1000 * 60 * 60 * 24;
+                        const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                        const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                        const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                        const n = (y * x) + z;
+                        return (
+                          <>
+                            <div className="text-2xl font-bold text-[#34699a] dark:text-[#34699a]">
+                              {NumberFormatter.formatCurrency(n)}
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">Total Amount</div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1634,21 +1729,38 @@ function AdminBookingList() {
                     )}
                     <div>
                       <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Amount</label>
-                      <p className="text-gray-900 dark:text-white font-semibold">{NumberFormatter.formatCurrency(selectedBooking.total_amount || 0)}</p>
+                      <p className="text-gray-900 dark:text-white font-semibold">
+                        {(() => {
+                          const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                          const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                          const msPerDay = 1000 * 60 * 60 * 24;
+                          const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                          const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                          const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                          const n = (y * x) + z;
+                          return NumberFormatter.formatCurrency(n);
+                        })()}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Remaining Balance</label>
                         <p className="text-gray-900 dark:text-white font-semibold">
                           {(() => {
-                            // ONLY use balance from database
-                            const balance = parseFloat(selectedBooking.balance);
-                            if (balance === 0) {
-                              return "Fully Paid";
-                            } else if (balance > 0) {
-                              return NumberFormatter.formatCurrencyDecimals(balance, 0, { showCurrency: false });
-                            } else {
-                              return "₱0";
-                            }
+                            const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                            const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                            const msPerDay = 1000 * 60 * 60 * 24;
+                            const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                            const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                            const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                            const n = (y * x) + z;
+
+                            const totalPaidAmount = Array.isArray(billingData) && billingData.length > 0
+                              ? billingData.reduce((sum, bill) => sum + (parseFloat(bill.billing_downpayment) || 0), 0)
+                              : (parseFloat(selectedBooking.downpayment) || 0);
+
+                            const effectiveBalance = Math.max(n - totalPaidAmount, 0);
+
+                            return NumberFormatter.formatCurrency(effectiveBalance);
                           })()}
                         </p>
                     </div>
@@ -1783,18 +1895,95 @@ function AdminBookingList() {
                                 <p className="font-medium text-gray-900 dark:text-white">{formatDateTime(invoiceData.invoice_date + ' ' + invoiceData.invoice_time)}</p>
                               </div>
                               <div>
-                                <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+                                <span className="text-gray-600 dark:text-gray-400">Invoice Total:</span>
                                 <p className="font-medium text-gray-900 dark:text-white">{NumberFormatter.formatCurrency(invoiceData.invoice_total_amount)}</p>
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Bill Summary aligned with Invoice Management */}
+                          <div className="bg-white dark:bg-gray-800 rounded border border-green-200 dark:border-green-700 p-3">
+                            <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                              <div>
+                                <span className="text-gray-600 dark:text-gray-400">Total Bill Amount:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {(() => {
+                                    const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                                    const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                                    const msPerDay = 1000 * 60 * 60 * 24;
+                                    const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                                    const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                                    const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                                    const n = (y * x) + z;
+                                    return NumberFormatter.formatCurrency(n);
+                                  })()}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600 dark:text-gray-400">Total Paid:</span>
+                                <p className="font-medium text-green-600 dark:text-green-400">
+                                  {NumberFormatter.formatCurrency(billingData.reduce((sum, bill) => sum + (parseFloat(bill.billing_downpayment) || 0), 0))}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="border-t border-gray-200 dark:border-gray-600 pt-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Remaining Balance:</span>
+                                <span className="font-bold text-lg text-green-700 dark:text-green-400">
+                                  {(() => {
+                                    const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                                    const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                                    const msPerDay = 1000 * 60 * 60 * 24;
+                                    const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                                    const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                                    const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                                    const n = (y * x) + z;
+                                    const totalPaidAmount = billingData.reduce((sum, bill) => sum + (parseFloat(bill.billing_downpayment) || 0), 0);
+                                    const balance = Math.max(n - totalPaidAmount, 0);
+                                    return NumberFormatter.formatCurrency(balance);
+                                  })()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Individual Bills */}
+                          <div className="mt-3">
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Individual Bills ({billingData.length}):
+                            </div>
+                            <div className="space-y-2">
+                              {billingData.map((bill) => (
+                                <div key={bill.billing_id} className="bg-white dark:bg-gray-800 p-2 rounded border text-xs">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-gray-600 dark:text-gray-400">Bill #{bill.billing_id}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {NumberFormatter.formatCurrency(bill.billing_total_amount)}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className="text-gray-500 dark:text-gray-400">Paid: {NumberFormatter.formatCurrency(bill.billing_downpayment)}</span>
+                                    <span className={`font-medium ${bill.billing_balance > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                                      Balance: {NumberFormatter.formatCurrency(bill.billing_balance)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
                       );
                     } else if (hasBills) {
                       // Customer has no invoice but has bills
-                      const totalBillAmount = billingData.reduce((sum, bill) => sum + (parseFloat(bill.billing_total_amount) || 0), 0);
+                      const checkInDate = new Date(selectedBooking.booking_checkin_dateandtime);
+                      const checkOutDate = new Date(selectedBooking.booking_checkout_dateandtime);
+                      const msPerDay = 1000 * 60 * 60 * 24;
+                      const x = Math.max(0, Math.ceil((checkOutDate - checkInDate) / msPerDay));
+                      const y = parseFloat(selectedBooking.roomtype_price) || 0;
+                      const z = (bookingChargesTotal != null) ? bookingChargesTotal : 0;
+                      const n = (y * x) + z;
                       const totalPaidAmount = billingData.reduce((sum, bill) => sum + (parseFloat(bill.billing_downpayment) || 0), 0);
-                      const totalBalance = totalBillAmount - totalPaidAmount;
+                      const totalBalance = Math.max(n - totalPaidAmount, 0);
                       
                       return (
                         <div className="space-y-3">
@@ -1814,7 +2003,7 @@ function AdminBookingList() {
                               <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                 <div>
                                   <span className="text-gray-600 dark:text-gray-400">Total Bill Amount:</span>
-                                  <p className="font-medium text-gray-900 dark:text-white">{NumberFormatter.formatCurrency(totalBillAmount)}</p>
+                                  <p className="font-medium text-gray-900 dark:text-white">{NumberFormatter.formatCurrency(n)}</p>
                                 </div>
                                 <div>
                                   <span className="text-gray-600 dark:text-gray-400">Total Paid:</span>
@@ -1837,8 +2026,8 @@ function AdminBookingList() {
                                 Individual Bills ({billingData.length}):
                               </div>
                               <div className="space-y-2">
-                                {billingData.map((bill, index) => (
-                                  <div key={index} className="bg-white dark:bg-gray-800 p-2 rounded border text-xs">
+                                {billingData.map((bill) => (
+                                  <div key={bill.billing_id} className="bg-white dark:bg-gray-800 p-2 rounded border text-xs">
                                     <div className="flex justify-between items-center">
                                       <span className="text-gray-600 dark:text-gray-400">Bill #{bill.billing_id}</span>
                                       <span className="font-medium text-gray-900 dark:text-white">
@@ -1883,21 +2072,46 @@ function AdminBookingList() {
                     setShowCustomerDetails(false);
                     setInvoiceData(null);
                     setBillingData([]);
+                    setBookingChargesTotal(null);
                   }}>
                     Close
                   </Button>
                   <Button
                     onClick={() => {
-                      handleStatusChange(selectedBooking);
+                      handleCancelBooking(selectedBooking);
                       setShowCustomerDetails(false);
                       setInvoiceData(null);
                       setBillingData([]);
+                      setBookingChargesTotal(null);
                     }}
-                    className="bg-orange-600 hover:bg-orange-700"
+                    className="bg-orange-600 hover:bg-red-600"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Change Status
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancel Booking
                   </Button>
+                  {selectedBooking.booking_status !== 'Checked-In' && (
+                    <Button
+                      onClick={() => {
+                        handleConfirmCheckIn(selectedBooking);
+                        setShowCustomerDetails(false);
+                      }}
+                      disabled={selectedBooking.booking_status !== 'Confirmed'}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Confirm Check-In
+                    </Button>
+                  )}
+                  {/* Confirm Check-Out Button - Only shows for Checked-In status */}
+                  {selectedBooking.booking_status === 'Checked-In' && (
+                    <Button
+                      onClick={() => handleConfirmCheckOut(selectedBooking)}
+                      className="bg-blue-600 hover:bg-green-700 flex items-center gap-2"
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      Confirm Check-Out
+                    </Button>
+                  )}
                   <Button
                     onClick={() => {
                       handleChangeRoom(selectedBooking);
@@ -1909,16 +2123,6 @@ function AdminBookingList() {
                     <ArrowRightLeft className="w-4 h-4 mr-2" />
                     Change Room
                   </Button>
-                  {/* Confirm Check-Out Button - Only shows for Checked-In status */}
-                  {selectedBooking.booking_status === 'Checked-In' && (
-                    <Button
-                      onClick={() => handleConfirmCheckOut(selectedBooking)}
-                      className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                    >
-                      <CalendarIcon className="w-4 h-4" />
-                      Confirm Check-Out
-                    </Button>
-                  )}
                 </div>
               </div>
             )}

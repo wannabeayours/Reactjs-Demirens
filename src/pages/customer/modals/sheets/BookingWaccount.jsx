@@ -234,6 +234,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       formData.append("totalAmount", totalAmount);
       formData.append("hasAccount", 1);
       formData.append("name", fullName);
+      formData.append("email", localStorage.getItem("email"));
+      formData.append("phone", localStorage.getItem("contactNumber"));
       localStorage.setItem("hasAccount", 1);
       const res = await axios.post(url, formData);
 
@@ -305,6 +307,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         return 0;
       }
       if (payType === 'gcash') {
+        console.log("payType:", payType);
         handleShowAlert();
       }
       return 1;
@@ -1111,15 +1114,19 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           Book Now
         </Button>
       </SheetTrigger>
-      <SheetContent side='bottom' className="w-full max-w-none overflow-y-auto h-full rounded-t-3xl p-3">
-        <div className="flex flex-col h-full">
+      <SheetContent
+        side="bottom"
+        className="w-full max-w-none h-full rounded-t-3xl p-0 flex flex-col"
+      >
+        {/* Scrollable area */}
+        <div className="flex-1 overflow-y-auto p-3">
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold text-[#113F67] mb-2">Book Your Stay</h2>
-              <p className="text-gray-600">Complete your booking in {steps.length} easy steps</p>
+              <p className="text-gray-600">
+                Complete your booking in {steps.length} easy steps
+              </p>
             </div>
-
-
           </div>
 
           {/* Stepper */}
@@ -1128,15 +1135,17 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
           </div>
 
           {/* Step Content */}
-          <div className="flex-1">
+          <div>
             {currentStep === 1 && <RoomSelectionStep />}
             {currentStep === 2 && <BookingConfirmationStep />}
           </div>
         </div>
+
         <ShowAlert open={showAlert} onHide={handleCloseAlert} message={alertMessage} />
-        <SheetFooter>
-          {/* Navigation Controls */}
-          <div className={`flex justify-end items-center gap-3 ${currentStep === 1 ? 'mt-20' : 'mt-4'}`}>
+
+        {/* Sticky footer */}
+        <SheetFooter className="sticky bottom-0 bg-white border-t p-3">
+          <div className="flex justify-end items-center gap-3">
             <div className="text-sm text-gray-500 hidden md:block">
               Step {currentStep} of {steps.length}
             </div>
@@ -1160,11 +1169,10 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
-
           </div>
         </SheetFooter>
-
       </SheetContent>
+
     </Sheet >
   );
 

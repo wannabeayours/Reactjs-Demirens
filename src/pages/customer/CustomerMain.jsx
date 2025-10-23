@@ -10,6 +10,7 @@ import CustomerArchieve from './CustomerArchieve';
 import CustomerSidebar from '@/components/layout/CustomerSidebar';
 import CustomerHeader from '@/components/layout/CustomerHeader';
 import { CustomerActivityLogs } from './CustomerActivityLogs';
+import CustomerFeedback from './CustomerFeedback';
 
 function CustomerMain() {
   const [viewIndex, setViewIndex] = useState(() => {
@@ -29,7 +30,8 @@ function CustomerMain() {
     // <CustomerInvoices />,
     <CustomerSettings />,
     <CustomerArchieve />,
-    <CustomerActivityLogs />
+    // <CustomerActivityLogs />,
+    <CustomerFeedback />
   ];
 
   const handleViewChange = (index) => {

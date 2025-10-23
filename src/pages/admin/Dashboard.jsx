@@ -168,18 +168,18 @@ function AdminDashboard() {
     };
   }, [pendingBookingsCount]);
 
-  // Active Bookings card theming: red when low, yellow at ≥50%, green at ≥66%
+  // Active Bookings card theming: red when high (≥66%), yellow at ≥50%, green when low
   const activeBookingsCount = useMemo(() => (activeBookings?.active_bookings_count || 0), [activeBookings]);
   const activeCardClasses = useMemo(() => {
     const ratio = totalRooms ? (activeBookingsCount / totalRooms) : 0;
     if (ratio >= 0.66) {
       return {
-        card: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700",
-        title: "text-green-900 dark:text-green-100",
-        desc: "text-green-700 dark:text-green-300",
-        number: "text-green-900 dark:text-green-100",
-        label: "text-green-600 dark:text-green-400",
-        badge: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+        card: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700",
+        title: "text-red-900 dark:text-red-100",
+        desc: "text-red-700 dark:text-red-300",
+        number: "text-red-900 dark:text-red-100",
+        label: "text-red-600 dark:text-red-400",
+        badge: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
       };
     } else if (ratio >= 0.5) {
       return {
@@ -192,12 +192,12 @@ function AdminDashboard() {
       };
     } else {
       return {
-        card: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700",
-        title: "text-red-900 dark:text-red-100",
-        desc: "text-red-700 dark:text-red-300",
-        number: "text-red-900 dark:text-red-100",
-        label: "text-red-600 dark:text-red-400",
-        badge: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
+        card: "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700",
+        title: "text-green-900 dark:text-green-100",
+        desc: "text-green-700 dark:text-green-300",
+        number: "text-green-900 dark:text-green-100",
+        label: "text-green-600 dark:text-green-400",
+        badge: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
       };
     }
   }, [activeBookingsCount, totalRooms]);
@@ -228,6 +228,17 @@ function AdminDashboard() {
       await axios.post(APIConn, formData);
     } catch (err) {
       console.error("Auto checkout and billing seed failed", err);
+    }
+  };
+
+  // Auto mark No-Show for confirmed bookings whose check-in is today
+  const runAutoNoShow = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("method", "autoMarkNoShowForConfirmedBookings");
+      await axios.post(APIConn, formData);
+    } catch (err) {
+      console.error("Auto No-Show mark failed", err);
     }
   };
 
@@ -438,6 +449,7 @@ function AdminDashboard() {
     fetchRoomStatusDistribution();
     fetchOnlinePendingCount();
     fetchPendingBookings();
+    runAutoNoShow();
     // New: fetch most booked rooms
     const fetchMostBookedRooms = async (scope) => {
       try {
@@ -467,6 +479,7 @@ function AdminDashboard() {
       fetchMostBookedRooms(mostBookedScope);
       fetchOnlinePendingCount();
       fetchPendingBookings();
+      runAutoNoShow();
     }, 30000);
 
     return () => clearInterval(interval);
@@ -903,7 +916,7 @@ function AdminDashboard() {
                   Detailed Booking Sales - {selectedMonth} {selectedYear}
                 </DialogTitle>
                 <DialogDescription>
-                  Complete breakdown of all booking sales for {selectedMonth} {selectedYear} with customer and room type information
+                  Complete breakdown of all booking sales for {selectedMonth} {selectedYear} with customer and stay information
                 </DialogDescription>
               </DialogHeader>
               
@@ -944,10 +957,12 @@ function AdminDashboard() {
                           
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4" />
-                              <span className="text-sm font-medium">Room Type</span>
+                              <Calendar className="h-4 w-4" />
+                              <span className="text-sm font-medium">Stay</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">{booking.roomtype_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {DateFormatter.formatDateRange(booking.booking_checkin_dateandtime, booking.booking_checkout_dateandtime)}
+                            </p>
                             
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4" />
