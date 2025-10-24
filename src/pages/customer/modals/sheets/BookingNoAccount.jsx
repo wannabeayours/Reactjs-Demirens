@@ -115,26 +115,13 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     }, 0);
     const displayedVat = subtotal - (subtotal / 1.12)
     const totalWithBeds = subtotal + extraBedCharges;
-    const downPayment = (totalWithBeds * 0.5).toFixed(2)
     const totalAmount = totalWithBeds.toFixed(2)
-
-    // Validate ALL form fields including payment fields
-    // const isValid = await form.trigger();
-    // if (!isValid) {
-    //   toast.error("Please fill all required fields correctly");
-    //   return;
-    // }
 
     const payType = form.getValues('payType');
     if (!payType) {
       toast.error("Please select a payment method");
       return;
     }
-
-    // Also validate payment-specific inputs before submitting
-    // if (!validatePaymentFields()) {
-    //   return;
-    // }
     const formValues = form.getValues();
     const { walkinfirstname, walkinlastname, email, contactNumber } = formValues;
     try {
@@ -187,56 +174,11 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       }
 
       console.log("jsondata", jsonData)
-      const formData = new FormData();
-      formData.append("operation", "customerBookingNoAccount");
-      formData.append("json", JSON.stringify(jsonData));
-
-      // Attach file with a simple key name like previous project
-      const file = formValues.proofOfPayment;
-      if (file) {
-        formData.append('file', file);
-        console.log('[customerBookingNoAccount] file appended:', file.name);
-      } else {
-        console.log('[customerBookingNoAccount] No file to append');
-      }
-
-      // Send request in a simple, straightforward way
-      const res = await axios({
-        url,
-        data: formData,
-        method: 'post',
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log('[customerBookingNoAccount] response:', res);
-
-      switch (res.data) {
-        case 1:
-          toast.success('Success!');
-          // Reset local state similar to previous behavior
-          localStorage.removeItem('checkIn');
-          localStorage.removeItem('checkOut');
-          setSelectedRooms([]);
-          setAdultCounts({});
-          setChildrenCounts({});
-          setGuestCounts({});
-          setBedCounts({});
-          handleClearData();
-          setCurrentStep(1);
-          setTimeout(() => { navigateTo('/'); }, 1000);
-          break;
-        case 2:
-          toast.error('You cannot upload files of this type!');
-          break;
-        case 3:
-          toast.error('There was an error uploading your file!');
-          break;
-        case 4:
-          toast.error('Your file is too big (25mb maximum)');
-          break;
-        default:
-          toast.error('Unsuccessful');
-          break;
-      }
+      localStorage.setItem("jsonData", JSON.stringify(jsonData));
+      localStorage.setItem('refreshBookings', Date.now().toString());
+      setTimeout(() => {
+        navigateTo('/payment-success');
+      }, 500);
 
     } catch (error) {
       toast.error("Something went wrong");
