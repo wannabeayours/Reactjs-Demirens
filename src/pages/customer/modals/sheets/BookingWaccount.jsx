@@ -106,7 +106,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
       const { totalPay, payType } = form.getValues();
 
-
       const bookingDetails = {
         checkIn: formatYMD(checkIn),
         checkOut: formatYMD(checkOut),

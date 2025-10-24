@@ -125,6 +125,16 @@ function CustomerDashboard() {
     }
   }
 
+  // Auto-refresh rooms when adult/children counts change, if dates are set
+  useEffect(() => {
+    const checkIn = form.getValues("checkIn") || localStorage.getItem("checkIn");
+    const checkOut = form.getValues("checkOut") || localStorage.getItem("checkOut");
+    if (checkIn && checkOut) {
+      getRooms({ checkIn, checkOut });
+      setIsSearched(true);
+    }
+  }, [adultNumber, childrenNumber]);
+
   const handleClearData = () => {
     form.reset({ checkIn: "", checkOut: "" })
     setAdultNumber(0);
