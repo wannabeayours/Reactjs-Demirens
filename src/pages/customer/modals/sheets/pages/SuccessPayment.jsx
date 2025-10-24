@@ -26,9 +26,13 @@ export const SuccessPayment = () => {
       if (res.data === 1) {
         localStorage.removeItem("jsonData");
         if (hasAccount === 0) {
-          navigateTo("/");
+          setTimeout(() => {
+            navigateTo("/");
+          }, 1500);
         } else {
-          navigateTo("/customer");
+          setTimeout(() => {
+            navigateTo("/customer");
+          }, 1500);
         }
         localStorage.removeItem("hasAccount");
       }
@@ -40,7 +44,7 @@ export const SuccessPayment = () => {
   }, [navigateTo])
 
   useEffect(() => {
-    handleSubmitBooking();
+      handleSubmitBooking();
   }, [handleSubmitBooking])
   return (
     <div className="w-full h-screen flex items-center justify-center p-6">

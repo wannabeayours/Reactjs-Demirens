@@ -164,9 +164,9 @@ function CustomerViewBookings() {
                     <h2 className="text-lg sm:text-xl font-bold text-[#113F67] break-words">
                       Booking #{item.booking_id}
                     </h2>
-                    <Badge className="text-xs sm:text-sm font-semibold text-white bg-orange-500 mt-1 sm:mt-0">
+                    {/* <Badge className="text-xs sm:text-sm font-semibold text-white bg-orange-500 mt-1 sm:mt-0">
                       Pending
-                    </Badge>
+                    </Badge> */}
                   </div>
 
                   {/* Booking Info */}

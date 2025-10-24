@@ -133,45 +133,23 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
       const jsonData = { customerId, bookingDetails, roomDetails };
       console.log("jsonData ni customerBookingWithAccount", jsonData);
-      const formData = new FormData();
-      formData.append("operation", "customerBookingWithAccount");
-      formData.append("json", JSON.stringify(jsonData));
+      localStorage.setItem("hasAccount", 1);
 
-      // Attach proof of payment file in a simple way
-      const file = form.getValues().proofOfPayment;
-      if (file) {
-        formData.append('file', file, file.name);
-        console.log('[customerBookingWithAccount] file appended:', file.name);
-      } else {
-        console.log('[customerBookingWithAccount] No file to append');
-      }
+      // const formData = new FormData();
+      // formData.append("operation", "customerBookingWithAccount");
+      // formData.append("json", JSON.stringify(jsonData));
 
-      const res = await axios({
-        url,
-        data: formData,
-        method: 'post',
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log("res ni customerBookingWithAccount", res);
-      if (res.data === -1) {
-        toast.error("The room is not available anymore");
-      } else if (res.data === 1) {
-        toast.success("Booking successful");
-        setOpen(false);
-        localStorage.removeItem('checkIn');
-        localStorage.removeItem('checkOut');
-        setSelectedRooms([]);
-        setAdultCounts({});
-        setChildrenCounts({});
-        setGuestCounts({});
-        handleClearData();
-        localStorage.setItem('refreshBookings', Date.now().toString());
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast.error("Booking error");
-      }
+      // const res = await axios({
+      //   url,
+      //   data: formData,
+      //   method: 'post',
+      // });
+      // console.log("res ni customerBookingWithAccount", res);
+      localStorage.setItem("jsonData", JSON.stringify(jsonData));
+      localStorage.setItem('refreshBookings', Date.now().toString());
+      setTimeout(() => {
+        navigateTo('/payment-success');
+      }, 500);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -187,7 +165,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const extraBedCharges = selectedRooms.reduce((t, r) => t + (bedCounts[r.room_type] || 0) * 420 * numberOfNights, 0);
       const displayedVat = subtotal - (subtotal / 1.12)
       const totalWithBeds = subtotal + extraBedCharges;
-      const downPayment = (totalWithBeds * 0.5).toFixed(2)
       const totalAmount = totalWithBeds.toFixed(2)
       const payType = form.getValues('payType');
       const formValues = form.getValues();
