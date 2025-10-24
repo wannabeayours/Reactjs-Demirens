@@ -28,7 +28,6 @@ function CustomerArchieve() {
       console.log("res", res);
       if (res.data !== 0) {
         setArchivedBookings(res.data);
-
       }
       else {
         setArchivedBookings([]);

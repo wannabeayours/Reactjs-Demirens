@@ -125,11 +125,10 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
     const formValues = form.getValues();
     const { walkinfirstname, walkinlastname, email, contactNumber } = formValues;
     try {
-      const url = localStorage.getItem('url') + "customer.php";
 
       const bookingDetails = {
-        "checkIn": formatYMD(checkIn),
-        "checkOut": formatYMD(checkOut),
+        checkIn: `${formatYMD(checkIn)} 14:00:00`,
+        checkOut: `${formatYMD(checkOut)} 12:00:00`,
         "downpayment": totalAmount,
         "totalAmount": totalAmount,
         "totalPay": totalAmount,
@@ -216,8 +215,8 @@ function BookingNoaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber
       checkInWithTime.setHours(14, 0, 0, 0);
 
       const bookingDetails = {
-        "checkIn": formatYMD(checkInWithTime),
-        "checkOut": formatYMD(checkOut),
+        checkIn: `${formatYMD(checkIn)} 14:00:00`,
+        checkOut: `${formatYMD(checkOut)} 12:00:00`,
         "downpayment": totalAmount,
         "totalAmount": totalAmount,
         "totalPay": totalAmount,

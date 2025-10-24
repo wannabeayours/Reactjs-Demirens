@@ -89,7 +89,6 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
   const customerBookingWithAccount = async () => {
     try {
-      const url = localStorage.getItem('url') + "customer.php";
       const customerId = localStorage.getItem("userId");
       const childrenNumberLS = localStorage.getItem("children") || 0;
       const adultNumberLS = localStorage.getItem("adult") || 1;
@@ -100,15 +99,12 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
 
       const displayedVat = subtotal - (subtotal / 1.12);
       const totalAmount = total.toFixed(2);
-      // const downPayment = (subtotal * 0.5).toFixed(2);
-      const down = total * 0.5;
-      const downPayment = down.toFixed(2);
 
       const { totalPay, payType } = form.getValues();
 
       const bookingDetails = {
-        checkIn: formatYMD(checkIn),
-        checkOut: formatYMD(checkOut),
+        checkIn: `${formatYMD(checkIn)} 14:00:00`,
+        checkOut: `${formatYMD(checkOut)} 12:00:00`,
         downpayment: totalAmount,
         totalAmount: totalAmount,
         displayedVat: displayedVat.toFixed(2),
@@ -171,8 +167,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const { walkinfirstname, walkinlastname, email, contactNumber } = formValues;
 
       const bookingDetails = {
-        "checkIn": formatYMD(checkIn),
-        "checkOut": formatYMD(checkOut),
+        checkIn: `${formatYMD(checkIn)} 14:00:00`,
+        checkOut: `${formatYMD(checkOut)} 12:00:00`,
         "downpayment": totalAmount,
         "totalAmount": totalAmount,
         "totalPay": totalAmount,
