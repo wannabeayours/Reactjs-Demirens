@@ -123,11 +123,6 @@ function Changepass() {
                             )}
                         />
                         <div>
-                            <div>
-                                <Button variant="link">
-                                    Forgot Password
-                                </Button>
-                            </div>
                             <div className="flex justify-end">
 
                                 <Button type="submit">

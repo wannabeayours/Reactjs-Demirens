@@ -178,6 +178,11 @@ function CustomerViewBookings() {
                     <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Check-out:</span>
                     <span className="text-right break-words text-xs sm:text-sm">{item.booking_checkout_dateandtime}</span>
                   </div>
+
+                  <div className="mb-1 flex flex-wrap justify-between text-black">
+                    <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Payment Method:</span>
+                    <span className="text-right break-words text-xs sm:text-sm">{item.payment_method_name}</span>
+                  </div>
             
                   <div className="mb-2 flex flex-wrap justify-between text-black">
                     <span className="font-semibold min-w-[80px] text-xs sm:text-sm">Total Payment:</span>
