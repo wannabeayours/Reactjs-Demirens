@@ -83,12 +83,15 @@ function RoomsList({ selectedRooms, setSelectedRooms }) {
   // --- Add a room (user clicked Add Room) ---
   const handleBookedRoom = (room) => {
     // create the selected room object (same shape you used previously)
+    const selectionKey = `${room.roomtype_id}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
     const selectedObj = {
       roomtype_capacity: room.roomtype_capacity,
       room_type: room.roomtype_id,
       roomtype_price: room.roomtype_price,
       roomtype_description: room.roomtype_description,
       roomtype_name: room.roomtype_name,
+      roomtype_maxbeds: room.roomtype_maxbeds,
+      selectionKey: selectionKey,
     }
 
     // Update selectedRooms (parent state)

@@ -6,3 +6,8 @@ html, body, #root {
  @apply bg-[##FFFFFF] text-black  min-h-screen;
 }
 
+/* Prevent browser scroll anchoring from causing jumps in Radix ScrollArea */
+[data-radix-scroll-area-viewport] {
+  overflow-anchor: none;
+}
+

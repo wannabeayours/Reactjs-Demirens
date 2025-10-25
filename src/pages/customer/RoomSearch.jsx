@@ -416,7 +416,7 @@ function RoomSearch() {
                       ) : (
                         <Button disabled className="flex-1 bg-gray-100 text-gray-400">Book Now</Button>
                       )}
-                      <Moreinfo room={room} />
+                     
                     </div>
                   </div>
                 </Card>

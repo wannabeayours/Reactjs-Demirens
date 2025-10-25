@@ -144,15 +144,26 @@ function CustomerBookingHis() {
     {
       header: 'Actions',
       headerClassName: "text-black",
-      cell: (row) => (
-        <div className="flex gap-2 md:gap-4 justify-start">
-          <SelectedBooking selectedData={row} />
-          <ArchiveIcon
-            className="cursor-pointer hover:text-red-600 w-5 h-5"
-            onClick={() => handleShowAlert(row)}
-          />
-        </div>
-      )
+      cell: (row) => {
+        const canArchive = row.booking_status !== "Checked-In" && row.booking_status !== "Confirmed";
+        return (
+          <div className="flex gap-2 md:gap-4 justify-start">
+            <SelectedBooking selectedData={row} />
+            {canArchive ? (
+              <ArchiveIcon
+                className="cursor-pointer hover:text-red-600 w-5 h-5"
+                onClick={() => handleShowAlert(row)}
+                title="Archive booking"
+              />
+            ) : (
+              <ArchiveIcon
+                className="w-5 h-5 text-gray-300 cursor-not-allowed"
+                title="Cannot archive when status is Checked-In or Confirmed"
+              />
+            )}
+          </div>
+        );
+      }
     },
   ]
 
