@@ -66,6 +66,22 @@ function RoomSearch() {
       checkOut: localStorage.getItem("checkOut") || "",
     },
   })
+  const [extraGuestPrice, setExtraGuestPrice] = useState(0);
+  const [bedPrice, setBedPrice] = useState(0);
+  const getExtraGuestAndBedPrice = async () => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const formData = new FormData();
+      formData.append("operation", "getExtraGuestAndBedPrice");
+      const res = await axios.post(url, formData);
+      console.log("res ni guestihbuhbhub",res.data);
+      setExtraGuestPrice(res.data.extraGuestPrice);
+      setBedPrice(res.data.bedPrice);
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+  }
 
   const getRooms = useCallback(async (data) => {
     try {
@@ -126,6 +142,7 @@ function RoomSearch() {
 
     if (checkIn) form.setValue("checkIn", checkIn);
     if (checkOut) form.setValue("checkOut", checkOut);
+    getExtraGuestAndBedPrice();
   }, [form, getRooms]);
 
   return (
@@ -411,12 +428,14 @@ function RoomSearch() {
                             handleClearData={handleClearData}
                             adultNumber={adultNumber}
                             childrenNumber={childrenNumber}
+                            extraGuestPrice={extraGuestPrice}
+                            bedPrice={bedPrice}
                           />
                         </div>
                       ) : (
                         <Button disabled className="flex-1 bg-gray-100 text-gray-400">Book Now</Button>
                       )}
-                     
+
                     </div>
                   </div>
                 </Card>

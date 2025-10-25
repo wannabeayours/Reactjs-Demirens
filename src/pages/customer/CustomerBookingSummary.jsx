@@ -48,7 +48,7 @@ function CustomerBookingSummary() {
   }, [])
   return (
 
-    <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
+    <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-4">
       <div className="flex items-center justify-between py-4 mb-2 border-b border-gray-200">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 text-[#113f67]">
           <Book className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -60,9 +60,9 @@ function CustomerBookingSummary() {
           </div>
         </div>
       </div>
-      <Card className={"px-4 sm:px-6 md:px-10 mt-8 sm:mt-12 md:mt-16 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
-        <div className="overflow-x-auto py-4">
-          <div className="mb-4 text-lg font-medium text-[#113f67]">Booking Summary</div>
+      <Card className={"p-4 sm:p-6 md:p-8 mt-6 sm:mt-10 md:mt-12 w-full bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"}>
+        <div className="overflow-x-auto py-2 sm:py-4">
+          <div className="mb-4 text-xl sm:text-2xl font-semibold text-[#113f67]">Booking Summary</div>
           {data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Book className="w-12 h-12 text-gray-300 mb-2" />
@@ -70,47 +70,47 @@ function CustomerBookingSummary() {
               <p className="text-gray-400 text-xs sm:text-sm mt-1">Booking summary will appear here</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pl-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {data.map((element, index) => (
                 <div key={index}>
-                  <Card className="mt-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 rounded-lg overflow-hidden hover:border-[#226597]/30 hover:scale-[1.01]">
+                  <Card className="w-full h-full mt-4 sm:mt-6 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 rounded-lg overflow-hidden hover:border-[#226597]/30 hover:scale-[1.01]">
                     <div className="bg-gradient-to-r from-[#113f67] to-[#226597] h-2"></div>
-                    <CardContent>
-                      <CardTitle className="text-xl sm:text-2xl  text-[#113f67]">Booking #{index + 1}</CardTitle>
+                    <CardContent className="p-4 sm:p-5">
+                      <CardTitle className="text-xl sm:text-2xl leading-tight break-words text-[#113f67]">Booking #{index + 1}</CardTitle>
                       <div className="space-y-3 mt-4">
                         <div className="flex items-center justify-between text-sm sm:text-base">
                           <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-[#113f67]" />
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#113f67]" />
                             <Label className="font-medium text-gray-600">Check in:</Label>
                           </div>
-                          <span className="text-right text-gray-800 font-medium flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-gray-500" />
+                          <span className="text-right text-gray-800 font-medium flex items-center gap-1 break-words">
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                             {element.booking_checkin_dateandtime}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm sm:text-base">
                           <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-[#113f67]" />
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#113f67]" />
                             <Label className="font-medium text-gray-600">Check out:</Label>
                           </div>
-                          <span className="text-right text-gray-800 font-medium flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-gray-500" />
+                          <span className="text-right text-gray-800 font-medium flex items-center gap-1 break-words">
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                             {element.booking_checkout_dateandtime}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm sm:text-base">
                           <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-[#113f67]" />
+                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#113f67]" />
                             <Label className="font-medium text-gray-600">Guests:</Label>
                           </div>
-                          <span className="text-right text-gray-800 font-medium">{element.guests_amnt}</span>
+                          <span className="text-right text-gray-800 font-medium break-words">{element.guests_amnt}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm sm:text-base pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-2">
 
                             <Label className="font-medium text-gray-700">Total:</Label>
                           </div>
-                          <span className="text-right font-bold text-[#113f67]">  ₱{Number(element.booking_totalAmount).toFixed(2)}</span>
+                          <span className="text-right font-bold text-[#113f67] text-base sm:text-lg">  ₱{Number(element.booking_totalAmount).toFixed(2)}</span>
                         </div>
                         <ViewBookingSummary getBookingSummary={getBookingSummary} bookingData={element} />
 

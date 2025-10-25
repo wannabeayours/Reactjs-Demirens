@@ -30,16 +30,6 @@ function CustomerReqAmenities() {
           <div className="mb-6 pb-2 border-b border-gray-100">
             <h2 className="text-lg sm:text-xl font-medium text-gray-800">Requested Amenities</h2>
           </div>
-          {/* <div >
-
-            <div className="flex justify-end">
-
-
-              <RequestAmenities />
-
-            </div>
-
-          </div> */}
 
           {hasAmenityRequests ? (
             <div className="overflow-x-auto">

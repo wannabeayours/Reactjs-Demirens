@@ -121,7 +121,7 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
     }
   }
 
-  useEffect(() => {
+  useEffect(() => { 
     if (isOpen === true) {
       const bookingList = bookingData.roomsList;
       setData(bookingData);
@@ -144,124 +144,116 @@ function ViewBookingSummary({ getBookingSummary, bookingData }) {
       </SheetTrigger>
       <SheetContent className='w-full h-[90vh] rounded-t-lg overflow-y-auto bg-gray-50' side='bottom'>
 
-        <SheetHeader className="pb-4 border-b mb-6">
-          <SheetTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-blue-600" />
-            Booking Summary
-          </SheetTitle>
-          <p className="text-gray-600 text-sm">Review your booking details and manage requests</p>
-        </SheetHeader>
+        <div className="flex flex-col w-full max-w-[1200px] mx-auto px-4 sm:px-6">
+          <SheetHeader className="py-4 mb-2 border-b border-gray-200">
+            <SheetTitle className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2 text-[#113f67]">
+              <Receipt className="w-5 h-5 sm:w-6 sm:h-6" />
+              Booking Summary
+            </SheetTitle>
+            <p className="text-sm sm:text-base text-gray-500">Review your booking details and manage requests</p>
+          </SheetHeader>
 
-        {/* Booking Info */}
-        <div className="flex justify-center items-center mb-6">
-          <Card className="w-full max-w-lg shadow-sm border">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                  <Calendar className="h-4 w-4 text-green-600" />
-                  <div>
-                    <Label className="text-xs text-gray-500 uppercase">Check In</Label>
-                    <p className="font-medium text-gray-900">{data.booking_checkin_dateandtime}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                  <Clock className="h-4 w-4 text-red-600" />
-                  <div>
-                    <Label className="text-xs text-gray-500 uppercase">Check Out</Label>
-                    <p className="font-medium text-gray-900">{data.booking_checkout_dateandtime}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Rooms */}
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mx-4'>
-          {roomsList.map((room, index) => (
-            <Card key={index} className="shadow-sm border hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                {/* Room Header */}
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b">
-                  <MapPin className="h-4 w-4 text-blue-600" />
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-semibold text-gray-900">
-                      {room.roomtype_name}
-                    </CardTitle>
-                    <CardDescription className="text-gray-600 text-sm">
-                      {room.roomtype_description}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs text-blue-700">
-                    <Users className="h-3 w-3" />
-                    Room {index + 1}
-                  </div>
-                </div>
-
-                {/* Data Table */}
-                <div className="bg-white rounded-lg border overflow-hidden">
-                  <DataTable
-                    columns={columns}
-                    data={room.charges}
-                    hideSearch
-                    showNoData={false}
-                    className="text-sm"
-                    headerAction={
-                      <div className="p-3 bg-gray-50 border-t">
-                        <h4 className="text-sm font-medium text-gray-800 mb-2">
-                          Request Additional Services
-                        </h4>
-                        <RequestAmenities
-                          bookingRoomId={room.booking_room_id}
-                          bookingId={bookingId}
-                          getBookingSummary={getBookingSummary}
-                          roomId={room.room_id}
-                          isAddBed={room.isAddBed === 1 ? true : false}
-                        />
-                      </div>
-                    }
-                  />
-                </div>
-
-                {/* Room Total */}
-                {room.charges && room.charges.length > 0 && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Room Total:</span>
-                      <span className="font-semibold text-blue-700">
-                        ₱{room.charges.reduce((total, charge) => total + parseFloat(charge.total || 0), 0).toLocaleString('en-PH', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
+          {/* Booking Info */}
+          <div className="flex justify-center items-center mb-6">
+            <Card className="w-full bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition">
+              <CardContent className="p-4 sm:p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                    <div>
+                      <Label className="text-xs sm:text-sm text-gray-500 uppercase">Check In</Label>
+                      <p className="text-sm sm:text-base font-medium text-gray-900 break-words">{data.booking_checkin_dateandtime}</p>
                     </div>
                   </div>
-                )}
-                {/* <div>
-                  <div>
-                    <Button>
-                      Pay Cash
-                    </Button>
-                  </div>
-                   <div>
-                    <Button>
-                      Pay Online
-                    </Button>
-                  </div>
 
-                </div> */}
-
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                    <div>
+                      <Label className="text-xs sm:text-sm text-gray-500 uppercase">Check Out</Label>
+                      <p className="text-sm sm:text-base font-medium text-gray-900 break-words">{data.booking_checkout_dateandtime}</p>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        <ShowAlert
-          open={showAlert}
-          onHide={handleCloseAlert}
-          message={alertMessage}
-        />
+          {/* Rooms */}
+          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-stretch w-full'>
+            {roomsList.map((room, index) => (
+              <Card key={index} className="w-full h-full relative overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm hover:shadow-md transition">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#113f67] via-[#226597] to-[#2980b9]" />
+                <CardContent className="p-4 sm:p-5">
+                  {/* Room Header */}
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <div className="flex-1">
+                      <CardTitle className="text-lg font-semibold text-gray-900 break-words">
+                        {room.roomtype_name}
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 text-sm break-words">
+                        {room.roomtype_description}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs text-blue-700">
+                      <Users className="h-3 w-3" />
+                      Room {index + 1}
+                    </div>
+                  </div>
+
+                  {/* Data Table */}
+                  <div className="bg-white rounded-lg border overflow-hidden">
+                    <div className="w-full overflow-x-auto">
+                      <DataTable
+                        columns={columns}
+                        data={room.charges}
+                        hideSearch
+                        showNoData={false}
+                        className="w-full text-xs sm:text-sm"
+                        headerAction={
+                          <div className="p-3 bg-gray-50 border-t">
+                            <h4 className="text-sm font-medium text-gray-800 mb-2">
+                              Request Additional Services
+                            </h4>
+                            <RequestAmenities
+                              bookingRoomId={room.booking_room_id}
+                              bookingId={bookingId}
+                              getBookingSummary={getBookingSummary}
+                              roomId={room.room_id}
+                              isAddBed={room.isAddBed === 1 ? true : false}
+                            />
+                          </div>
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Room Total */}
+                  {room.charges && room.charges.length > 0 && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Room Total:</span>
+                        <span className="font-semibold text-[#113f67]">
+                          ₱{room.charges.reduce((total, charge) => total + parseFloat(charge.total || 0), 0).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <ShowAlert
+            open={showAlert}
+            onHide={handleCloseAlert}
+            message={alertMessage}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   )

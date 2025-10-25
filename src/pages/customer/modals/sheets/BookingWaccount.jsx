@@ -27,7 +27,7 @@ const schema = z.object({
   payType: z.enum(['gcash', 'bank']).default(''),
 })
 
-function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber }) {
+function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber, handleClearData, adultNumber, childrenNumber, extraGuestPrice, bedPrice }) {
   const [paymentMethod, setPaymentMethod] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -92,11 +92,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const capacity = Number(r.roomtype_capacity) || 0;
       const guests = (adultCounts[rk] || 0) + (childrenCounts[rk] || 0);
       const extraGuests = Math.max(0, guests - capacity);
-      return t + extraGuests * 420 * numberOfNights;
+      return t + extraGuests * extraGuestPrice * numberOfNights;
     }, 0);
     const bedCharges = selectedRooms.reduce((t, r) => {
       const rk = r.selectionKey || r.room_type;
-      return t + ((bedCounts[rk] || 0) * 420 * numberOfNights);
+      return t + ((bedCounts[rk] || 0) * bedPrice * numberOfNights);
     }, 0);
     const displayedVat = subtotal - (subtotal / 1.12)
     const totalWithExtras = subtotal + extraGuestCharges + bedCharges;
@@ -177,11 +177,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         const capacity = Number(r.roomtype_capacity) || 0;
         const guests = (adultCounts[rk] || 0) + (childrenCounts[rk] || 0);
         const extraGuests = Math.max(0, guests - capacity);
-        return t + extraGuests * 420 * numberOfNights;
+        return t + extraGuests * extraGuestPrice * numberOfNights;
       }, 0);
       const bedCharges = selectedRooms.reduce((t, r) => {
         const rk = r.selectionKey || r.room_type;
-        return t + ((bedCounts[rk] || 0) * 420 * numberOfNights);
+        return t + ((bedCounts[rk] || 0) * bedPrice * numberOfNights);
       }, 0);
       const displayedVat = subtotal - (subtotal / 1.12)
       const totalWithExtras = subtotal + extraGuestCharges + bedCharges;
@@ -266,11 +266,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
         const capacity = Number(r.roomtype_capacity) || 0;
         const guests = (adultCounts[rk] || 0) + (childrenCounts[rk] || 0);
         const extraGuests = Math.max(0, guests - capacity);
-        return t + extraGuests * 420 * numberOfNights;
+        return t + extraGuests * extraGuestPrice * numberOfNights;
       }, 0);
       const bedCharges = selectedRooms.reduce((t, r) => {
         const rk = r.selectionKey || r.room_type;
-        return t + ((bedCounts[rk] || 0) * 420 * numberOfNights);
+        return t + ((bedCounts[rk] || 0) * bedPrice * numberOfNights);
       }, 0);
       const displayedVat = subtotal - (subtotal / 1.12)
       const totalWithExtras = subtotal + extraGuestCharges + bedCharges;
@@ -607,11 +607,11 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const capacity = Number(r.roomtype_capacity) || 0;
       const guests = (adultCounts[rk] || 0) + (childrenCounts[rk] || 0);
       const extraGuests = Math.max(0, guests - capacity);
-      return t + extraGuests * 420 * numberOfNights;
+      return t + extraGuests * extraGuestPrice * numberOfNights;
     }, 0);
     const bedCharges = selectedRooms.reduce((t, r) => {
       const rk = r.selectionKey || r.room_type;
-      return t + ((bedCounts[rk] || 0) * 420 * numberOfNights);
+      return t + ((bedCounts[rk] || 0) * bedPrice * numberOfNights);
     }, 0);
     const vat = subtotal - (subtotal / 1.12);
     const total = subtotal + extraGuestCharges + bedCharges;
@@ -657,8 +657,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 {selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) > 0 && (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span>{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0)} extra guest{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0)} extra guest{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) !== 1 ? 's' : ''} × ₱{extraGuestPrice}:</span>
+                      <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) * extraGuestPrice * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
@@ -668,8 +668,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                 {selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) > 0 && (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span>{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0)} bed{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) !== 1 ? 's' : ''} × ₱420:</span>
-                      <span className='font-bold'>₱{(selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0)} bed{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) !== 1 ? 's' : ''} × ₱{bedPrice}:</span>
+                      <span className='font-bold'>₱{(selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) * bedPrice * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
@@ -902,7 +902,7 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                               <div className="mt-4">
                                 <div className="rounded-2xl border-none p-4">
                                   <div className="flex items-center">
-                                    <Label className="mb-2">Add Beds{" (₱420 each bed)"}</Label>
+                                    <Label className="mb-2">Add Beds{" (₱" + bedPrice + " each bed)"}</Label>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <Button
@@ -1002,14 +1002,14 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
       const capacity = Number(r.roomtype_capacity) || 0;
       const guests = (adultCounts[key] || 0) + (childrenCounts[key] || 0);
       const extraGuests = Math.max(0, guests - capacity);
-      return t + extraGuests * 420 * numberOfNights;
+      return t + extraGuests * extraGuestPrice * numberOfNights;
     }, 0);
 
     // ✅ Bed charges
     const bedCharges = selectedRooms.reduce((t, r) => {
       const key = r.selectionKey || r.room_type;
       const bedCount = bedCounts[key] || 0;
-      return t + bedCount * 420 * numberOfNights;
+      return t + bedCount * bedPrice * numberOfNights;
     }, 0);
 
     // ✅ Total (no VAT)
@@ -1149,8 +1149,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   {selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) > 0 && (
                     <>
                       <div className="flex justify-between items-center text-sm">
-                        <span>{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0)} extra guest{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) !== 1 ? 's' : ''} × ₱420:</span>
-                        <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span>{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0)} extra guest{selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) !== 1 ? 's' : ''} × ₱{extraGuestPrice}:</span>
+                        <span className='font-bold'>₱{(selectedRooms.reduce((total, room) => { const rk = room.selectionKey || room.room_type; return total + Math.max(0, ((adultCounts[rk] || 0) + (childrenCounts[rk] || 0)) - (room.roomtype_capacity || 0)); }, 0) * extraGuestPrice * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>
@@ -1160,8 +1160,8 @@ function BookingWaccount({ rooms, selectedRoom, guestNumber: initialGuestNumber,
                   {selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) > 0 && (
                     <>
                       <div className="flex justify-between items-center text-sm">
-                        <span>{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0)} bed{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) !== 1 ? 's' : ''} × ₱420:</span>
-                        <span className='font-bold'>₱{(selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) * 420 * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span>{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0)} bed{selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) !== 1 ? 's' : ''} × ₱{bedPrice}:</span>
+                        <span className='font-bold'>₱{(selectedRooms.reduce((sum, room) => { const rk = room.selectionKey || room.room_type; return sum + (bedCounts[rk] || 0); }, 0) * bedPrice * numberOfNights).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span>× {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}:</span>

@@ -124,9 +124,26 @@ function CustomerDashboard() {
       console.error(error);
     }
   }
+   const [extraGuestPrice, setExtraGuestPrice] = useState(0);
+  const [bedPrice, setBedPrice] = useState(0);
+  const getExtraGuestAndBedPrice = async () => {
+    try {
+      const url = localStorage.getItem('url') + "customer.php";
+      const formData = new FormData();
+      formData.append("operation", "getExtraGuestAndBedPrice");
+      const res = await axios.post(url, formData);
+      console.log("res ni guestihbuhbhub",res.data);
+      setExtraGuestPrice(res.data.extraGuestPrice);
+      setBedPrice(res.data.bedPrice);
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+  }
 
   // Auto-refresh rooms when adult/children counts change, if dates are set
   useEffect(() => {
+    getExtraGuestAndBedPrice();
     const checkIn = form.getValues("checkIn") || localStorage.getItem("checkIn");
     const checkOut = form.getValues("checkOut") || localStorage.getItem("checkOut");
     if (checkIn && checkOut) {
@@ -453,6 +470,8 @@ function CustomerDashboard() {
                             handleClearData={handleClearData}
                             adultNumber={adultNumber}
                             childrenNumber={childrenNumber}
+                            extraGuestPrice={extraGuestPrice}
+                            bedPrice={bedPrice}
                           />
                         </div>
                       ) : (
