@@ -227,6 +227,49 @@ export default function ApprovalReceipt() {
     setShowConfirmModal(true);
   };
 
+  // Normalize and interpret various backend response shapes consistently
+  const interpretApprovalResponse = (raw) => {
+    let data = raw;
+    try {
+      if (typeof raw === 'string') {
+        data = JSON.parse(raw);
+      }
+    } catch (_) {
+      // keep raw string as-is
+      data = raw;
+    }
+  
+    let success = false;
+    let message = undefined;
+    let emailStatus = undefined;
+  
+    const setFlagsFromObj = (obj) => {
+      if (!obj || typeof obj !== 'object') return;
+      const s = obj.success ?? obj.ok ?? obj.status ?? obj.approved;
+      success = success || s === true || s === 'success' || s === 'ok' || s === 1 || s === '1';
+      message = message ?? obj.message ?? obj.error ?? obj.msg;
+      emailStatus = emailStatus ?? obj.email_status ?? obj.emailStatus ?? obj.email;
+    };
+  
+    if (Array.isArray(data)) {
+      // Common pattern: [{ success: 1, message: '...', email_status: 'sent' }]
+      for (const item of data) setFlagsFromObj(item);
+      // If still not successful, check if any string item contains success wording
+      if (!success) {
+        const combined = data.map((x) => (typeof x === 'string' ? x : '')).join(' ').toLowerCase();
+        if (combined.includes('success') || combined.includes('approved')) success = true;
+      }
+    } else if (typeof data === 'object' && data !== null) {
+      setFlagsFromObj(data);
+    } else if (typeof data === 'string') {
+      const s = data.toLowerCase();
+      if (s.includes('success') || s.includes('approved')) success = true;
+      message = message ?? data;
+    }
+  
+    return { success: !!success, message, emailStatus };
+  };
+
   const confirmApproval = async () => {
     setIsProcessing(true);
     try {
@@ -258,13 +301,16 @@ export default function ApprovalReceipt() {
       fd.append("json", JSON.stringify(payload));
 
       const res = await axios.post(APIConn, fd);
-      console.log("approveCustomerBooking response:", res.data);
-      if (res.data?.success) {
+      console.log("approveCustomerBooking raw response:", res.data);
+
+      const { success, message, emailStatus } = interpretApprovalResponse(res.data);
+
+      if (success) {
         setShowConfirmModal(false);
-        setEmailStatus(res.data?.email_status ?? null);
+        setEmailStatus(emailStatus ?? null);
         setShowSuccessModal(true);
       } else {
-        alert(`Error: ${res.data?.message || "Unknown error"}`);
+        alert(`Error: ${message || "Unknown error"}`);
       }
     } catch (err) {
       console.error("Error approving booking:", err);

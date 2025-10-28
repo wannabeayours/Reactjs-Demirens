@@ -10,6 +10,7 @@ import { FileText, Settings, CheckCircle, XCircle, Eye, Search, Filter, X, Info 
 import AdminHeader from "./components/AdminHeader";
 import InvoiceManagementSubpage from "./SubPages/InvoiceManagementSubpage";
 import { DateFormatter } from './Function_Files/DateFormatter';
+import { formatDateTime } from '@/lib/utils';
 
 function CreateInvoice() {
   const [bookings, setBookings] = useState([]);
@@ -20,16 +21,56 @@ function CreateInvoice() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Deduplicate bookings by reference number and keep the original billing entry
+  const dedupeBookingsByReference = (records) => {
+    if (!Array.isArray(records)) return [];
+    const map = new Map();
+
+    const parseId = (v) => {
+      const n = Number(v);
+      return Number.isNaN(n) ? null : n;
+    };
+
+    for (const b of records) {
+      const key = b.reference_no || String(b.booking_id);
+      const existing = map.get(key);
+
+      if (!existing) {
+        map.set(key, b);
+        continue;
+      }
+
+      const curId = parseId(b.billing_id);
+      const existingId = parseId(existing.billing_id);
+
+      // Prefer the smallest billing_id as the original; merge invoice_id if missing
+      const preferCurrent = curId !== null && (existingId === null || curId < existingId);
+      if (preferCurrent) {
+        const merged = { ...b };
+        if (!merged.invoice_id && existing.invoice_id) merged.invoice_id = existing.invoice_id;
+        map.set(key, merged);
+      } else {
+        if (!existing.invoice_id && b.invoice_id) {
+          map.set(key, { ...existing, invoice_id: b.invoice_id });
+        }
+      }
+    }
+
+    return Array.from(map.values());
+  };
+
   const fetchBookings = async () => {
     try {
       const url = localStorage.getItem("url") + "transactions.php";
       console.log("Fetching bookings from URL:", url);
       const formData = new FormData();
-      formData.append("operation", "getBookingsWithBillingStatus");
+      formData.append("operation", "getBookingsWithBillingStatusEnhanced");
       const res = await axios.post(url, formData);
       console.log("API Response:", res.data);
-      setBookings(res.data !== 0 ? res.data : []);
-      console.log("Bookings set:", res.data !== 0 ? res.data : []);
+      const raw = res.data !== 0 ? res.data : [];
+      const deduped = dedupeBookingsByReference(raw);
+      setBookings(deduped);
+      console.log("Bookings set (deduped):", deduped);
     } catch (err) {
       console.error("Error loading bookings:", err);
       toast.error("Error loading bookings: " + err.message);
@@ -160,24 +201,36 @@ function CreateInvoice() {
                 <option value="not-created">Not Created</option>
               </select>
             </div>
-          </div>
 
-          {/* Clear Filters Button */}
-          {(searchQuery || statusFilter !== "all") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearFilters}
-              className="flex items-center gap-2"
-            >
-              <X className="h-3 w-3" />
-              Clear
-            </Button>
-          )}
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-auto">
+              <Input
+                type="text"
+                placeholder="Search by ID, Reference or Customer"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="pl-9 pr-3 py-2 w-full sm:w-64 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500"
+              />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            </div>
 
-          {/* Results Count */}
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {getFilteredBookings().length} of {bookings.length} bookings
+            {/* Clear Filters Button */}
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
+
+            {/* Results Count */}
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {getFilteredBookings().length} of {bookings.length} bookings
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -195,12 +248,15 @@ function CreateInvoice() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 dark:bg-gray-700">
-                  <TableHead className="min-w-[60px] lg:min-w-[80px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">ID</TableHead>
+                  {/* Swap: ID column now shows Customer name */}
+                  <TableHead className="min-w-[60px] lg:min-w-[80px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</TableHead>
                   <TableHead className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Reference</TableHead>
-                  <TableHead className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</TableHead>
+                  {/* Swap: Customer column now shows Booking ID */}
+                  <TableHead className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">ID</TableHead>
                   <TableHead className="min-w-[100px] lg:min-w-[140px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden sm:table-cell">Check-In</TableHead>
                   <TableHead className="min-w-[100px] lg:min-w-[140px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden md:table-cell">Check-Out</TableHead>
-                  <TableHead className="min-w-[60px] lg:min-w-[100px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden lg:table-cell">Billing ID</TableHead>
+                  {/* Replace Billing ID with Billing Date/Time */}
+                  <TableHead className="min-w-[60px] lg:min-w-[160px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden lg:table-cell">Billing Date/Time</TableHead>
                   <TableHead className="min-w-[80px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Status</TableHead>
                   <TableHead className="min-w-[60px] lg:min-w-[100px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100 hidden lg:table-cell">Validation</TableHead>
                   <TableHead className="min-w-[80px] lg:min-w-[120px] text-xs lg:text-sm font-semibold text-gray-900 dark:text-gray-100">Actions</TableHead>
@@ -220,30 +276,37 @@ function CreateInvoice() {
                 ) : (
                   getFilteredBookings().map((b, index) => (
                   <TableRow key={`booking-${b.booking_id}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    {/* First column: Customer name */}
                     <TableCell className="font-medium whitespace-nowrap text-xs lg:text-sm text-gray-900 dark:text-gray-100">
-                      {b.booking_id}
+                      <span className="block lg:hidden truncate max-w-[80px]">{b.customer_name || "Walk-In"}</span>
+                      <span className="hidden lg:block">{b.customer_name || "Walk-In"}</span>
                     </TableCell>
+                    {/* Reference */}
                     <TableCell className="font-mono text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100">
                       <span className="block lg:hidden">{b.reference_no.substring(0, 8)}...</span>
                       <span className="hidden lg:block">{b.reference_no}</span>
                     </TableCell>
+                    {/* Third column: Booking ID */}
                     <TableCell className="whitespace-nowrap text-xs lg:text-sm text-gray-900 dark:text-gray-100">
-                      <span className="block lg:hidden truncate max-w-[80px]">{b.customer_name || "Walk-In"}</span>
-                      <span className="hidden lg:block">{b.customer_name || "Walk-In"}</span>
+                      {b.booking_id}
                     </TableCell>
+                    {/* Check-In */}
                     <TableCell className="text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100 hidden sm:table-cell">
                       {DateFormatter.formatDateOnly(b.booking_checkin_dateandtime)}
                     </TableCell>
+                    {/* Check-Out */}
                     <TableCell className="text-xs lg:text-sm whitespace-nowrap text-gray-900 dark:text-gray-100 hidden md:table-cell">
                       {DateFormatter.formatDateOnly(b.booking_checkout_dateandtime)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-xs lg:text-sm hidden lg:table-cell">
-                      {b.billing_id ? (
-                        <Badge variant="outline" className="text-xs">{b.billing_id}</Badge>
+                    {/* Billing Date/Time */}
+                    <TableCell className="whitespace-nowrap text-xs lg:text-sm hidden lg:table-cell text-gray-900 dark:text-gray-100">
+                      {b.billing_dateandtime ? (
+                        <span>{formatDateTime(b.billing_dateandtime)}</span>
                       ) : (
                         <span className="text-muted-foreground text-xs">None</span>
                       )}
                     </TableCell>
+                    {/* Status */}
                     <TableCell className="whitespace-nowrap">
                       {b.invoice_id ? (
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
@@ -259,9 +322,11 @@ function CreateInvoice() {
                         </Badge>
                       )}
                     </TableCell>
+                    {/* Validation */}
                     <TableCell className="whitespace-nowrap text-xs lg:text-sm text-muted-foreground hidden lg:table-cell">
                         <span>—</span>
                     </TableCell>
+                    {/* Actions */}
                     <TableCell className="whitespace-nowrap">
                       {!b.invoice_id ? (
                         <Button 

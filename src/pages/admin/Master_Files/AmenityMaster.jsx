@@ -26,7 +26,8 @@ import {
 import { ArrowDownUp, FilePlus2, ListOrdered, Pencil, Trash, Search, Filter, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 
 function AmenityMaster() {
-  const APIConn = `${localStorage.url}admin.php`;
+  const baseUrl = (typeof window !== 'undefined' && window.localStorage) ? (localStorage.getItem('url') || `${window.location.origin}/`) : '';
+  const APIConn = `${baseUrl}admin.php`;
 
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -222,10 +223,7 @@ function AmenityMaster() {
                       className="pl-10"
                     />
                   </div>
-                  <Button variant="outline" className="px-4">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
+
                 </div>
 
                 {/* Stats Cards */}

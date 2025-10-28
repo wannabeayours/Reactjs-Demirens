@@ -16,7 +16,8 @@ function AmenitySelection() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const APIConn = `${localStorage.url}admin.php`;
+  const baseUrl = (localStorage.getItem('url') || localStorage.url);
+  const APIConn = `${baseUrl}customer.php`;
 
   // Preserve any selected booking room(s) passed from the modal
   const roomsPayload = {
@@ -28,10 +29,19 @@ function AmenitySelection() {
     try {
       setLoading(true);
       const fd = new FormData();
-      fd.append('method', 'get_available_charges');
+      fd.append('operation', 'getAmenitiesMaster');
       const res = await axios.post(APIConn, fd);
       const arr = Array.isArray(res.data) ? res.data : [];
-      setAmenities(arr);
+
+      // Exclude restricted items and "Room Extended Stay"
+      const filteredBase = arr.filter((a) => {
+        const name = String(a?.charges_master_name || '').trim().toLowerCase();
+        const restrictedRaw = a?.charge_name_isRestricted;
+        const isRestricted = restrictedRaw === 1 || restrictedRaw === '1' || restrictedRaw === true || String(restrictedRaw).toLowerCase() === 'true';
+        return name !== 'room extended stay' && !isRestricted;
+      });
+
+      setAmenities(filteredBase);
     } catch (e) {
       console.error('Error fetching amenities:', e);
       setAmenities([]);

@@ -27,6 +27,7 @@ import { z } from 'zod';
 import AdminHeader from '../components/AdminHeader'
 import { Search, Filter, MoreHorizontal, Edit, Trash2, Percent, Calendar, DollarSign as DollarSignIcon } from 'lucide-react';
 import DateFormatter from '@/pages/admin/Function_Files/DateFormatter';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import {
   Form,
@@ -47,6 +48,7 @@ function DiscountMaster() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("");
+  const [showDisabled, setShowDisabled] = useState(false);
 
   const formSchema = z.object({
     discountName: z.string().min(1, 'Required'),
@@ -221,9 +223,36 @@ function DiscountMaster() {
   };
 
   // Filter discounts based on search term
-  const filteredDiscounts = allDiscounts.filter(discount =>
-    discount.discounts_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDiscounts = allDiscounts.filter((discount) => {
+    const name = (discount.discounts_name || '').toLowerCase();
+    const term = (searchTerm || '').toLowerCase();
+    const matchesTerm = name.includes(term);
+
+    const isActive = (() => {
+      const disabledFields = ['discounts_is_disabled', 'discounts_disabled', 'is_disabled', 'isDisabled'];
+      for (const f of disabledFields) {
+        const v = discount[f];
+        if (v !== undefined && v !== null) {
+          const nv = Number(v);
+          if (!isNaN(nv)) return nv === 0;
+          if (typeof v === 'boolean') return v === false;
+          if (typeof v === 'string') return v === '0' || v.toLowerCase() === 'false';
+        }
+      }
+      const statusFields = ['discounts_status_id', 'discount_status_id', 'status_id', 'discounts_status'];
+      for (const f of statusFields) {
+        const v = discount[f];
+        if (v !== undefined && v !== null) {
+          const nv = Number(v);
+          if (!isNaN(nv)) return nv === 1;
+          if (typeof v === 'string') return v === '1' || v.toLowerCase() === 'active';
+        }
+      }
+      return true; // default assume active if no fields present
+    })();
+
+    return matchesTerm && (showDisabled ? true : isActive);
+  });
 
   return (
     <>
@@ -266,10 +295,17 @@ function DiscountMaster() {
                       className="pl-10"
                     />
                   </div>
-                  <Button variant="outline" className="px-4">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={showDisabled}
+                      onCheckedChange={(checked) => setShowDisabled(Boolean(checked))}
+                      id="showDisabledDiscounts"
+                    />
+                    <label htmlFor="showDisabledDiscounts" className="text-sm text-gray-600 dark:text-gray-300">
+                      Show Disabled
+                    </label>
+                  </div>
+
                 </div>
 
                 {/* Stats Cards */}

@@ -226,10 +226,7 @@ function ChargesCategory() {
                       className="pl-10"
                     />
                   </div>
-                  <Button variant="outline" className="px-4">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
+
                 </div>
 
                 {/* Stats Cards */}

@@ -70,7 +70,7 @@ const Register = () => {
   const handleChange = (name, value) => {
     // Apply input restrictions based on field type
     let processedValue = value;
-
+    
     switch (name) {
       case 'firstName':
       case 'lastName':
@@ -92,7 +92,7 @@ const Register = () => {
       default:
         processedValue = value;
     }
-
+    
     setFormData({
       ...formData,
       [name]: processedValue,
@@ -184,7 +184,7 @@ const Register = () => {
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-
+    
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       // Haven't had birthday this year yet
       const actualAge = age - 1;
@@ -206,7 +206,7 @@ const Register = () => {
         return false;
       }
     }
-
+    
     // Check if date is in the future
     if (birthDate > today) {
       toast.error("Date of birth cannot be in the future");
@@ -284,10 +284,10 @@ const Register = () => {
     try {
       // Generate 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
+      
       // Encrypt OTP (simple encryption for demo - use proper encryption in production)
       const encryptedOTP = btoa(otp + formData.email);
-
+      
       // Store encrypted OTP in sessionStorage
       sessionStorage.setItem('registrationOTP', encryptedOTP);
       sessionStorage.setItem('registrationEmail', formData.email);
@@ -296,10 +296,9 @@ const Register = () => {
       const url = localStorage.getItem("url") + "customer.php";
       const otpForm = new FormData();
       otpForm.append("operation", "checkAndSendOTP");
-      otpForm.append("json", JSON.stringify({
-        username: formData.username,
+      otpForm.append("json", JSON.stringify({ 
         guest_email: formData.email,
-        otp_code: otp
+        otp_code: otp 
       }));
 
       const res = await axios.post(url, otpForm);

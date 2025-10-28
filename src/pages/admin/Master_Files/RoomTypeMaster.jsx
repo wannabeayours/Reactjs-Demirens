@@ -118,6 +118,15 @@ function RoomTypeMaster() {
   const addRoomTypes = async (values) => {
     setIsLoading(true);
 
+    // Prevent duplicate room type names (case-insensitive, trimmed)
+    const newName = (values.roomType_name || '').trim().toLowerCase();
+    const exists = roomsType.some(rt => (rt.roomtype_name || '').trim().toLowerCase() === newName);
+    if (exists) {
+      toast.error('Room type already exists');
+      setIsLoading(false);
+      return;
+    }
+
     const jsonData = {
       roomtype_name: values.roomType_name,
       roomtype_description: values.roomType_desc,
@@ -129,7 +138,7 @@ function RoomTypeMaster() {
     };
 
     const formData = new FormData();
-    formData.append("method", "addRoomTypes");
+    formData.append("method", "addRoomType");
     formData.append("json", JSON.stringify(jsonData));
 
     try {
@@ -160,7 +169,7 @@ function RoomTypeMaster() {
     };
 
     const formData = new FormData();
-    formData.append("method", "updateRoomTypes");
+    formData.append("method", "updateRoomType");
     formData.append("json", JSON.stringify(jsonData));
 
     try {
@@ -271,10 +280,7 @@ function RoomTypeMaster() {
                       className="pl-10"
                     />
                   </div>
-                  <Button variant="outline" className="px-4">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
+
                 </div>
 
                 {/* Stats Cards */}

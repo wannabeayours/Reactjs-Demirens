@@ -52,6 +52,7 @@ function ChargeMaster() {
   const [allCategories, setAllCategories] = useState([]);
   const [selectedCharge, setSelectedCharge] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showDisabled, setShowDisabled] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("");
@@ -83,16 +84,29 @@ function ChargeMaster() {
 
   const loadCharges = async () => {
     setIsLoading(true);
-    const reqFormCharges = new FormData();
-    reqFormCharges.append('method', 'viewCharges');
+    const fetchByMethod = async (method) => {
+      const fd = new FormData();
+      fd.append('method', method);
+      const res = await axios.post(APIConn, fd);
+      const data = res?.data;
+      if (Array.isArray(data)) return data;
+      if (typeof data === 'string') {
+        try { return JSON.parse(data); } catch { return []; }
+      }
+      return [];
+    };
 
     try {
-      const conn = await axios.post(APIConn, reqFormCharges);
-      if (conn.data) {
-        setAllCharges(conn.data !== 0 ? conn.data : []);
+      let charges = await fetchByMethod('viewCharges');
+      // Fallback to legacy endpoint if viewCharges returns empty or is unavailable
+      if (!charges || charges.length === 0) {
+        charges = await fetchByMethod('get_available_charges');
       }
+      setAllCharges(Array.isArray(charges) ? charges : []);
     } catch (err) {
+      console.log('Failed to load charges:', err);
       toast('Failed to load charges');
+      setAllCharges([]);
     } finally {
       setIsLoading(false);
     }
@@ -244,10 +258,14 @@ function ChargeMaster() {
   };
 
   // Filter charges based on search term
-  const filteredCharges = allCharges.filter(charge =>
-    charge.charges_master_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    charge.charges_category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCharges = allCharges.filter((charge) => {
+    const name = (charge.charges_master_name || '').toLowerCase();
+    const cat = (charge.charges_category_name || '').toLowerCase();
+    const term = (searchTerm || '').toLowerCase();
+    const matchesTerm = name.includes(term) || cat.includes(term);
+    const isActive = String(charge.charges_master_status_id ?? '1') === '1';
+    return matchesTerm && (showDisabled ? true : isActive);
+  });
 
   return (
     <>
@@ -290,10 +308,17 @@ function ChargeMaster() {
                       className="pl-10"
                     />
                   </div>
-                  <Button variant="outline" className="px-4">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={showDisabled}
+                      onCheckedChange={(checked) => setShowDisabled(Boolean(checked))}
+                      id="showDisabledCharges"
+                    />
+                    <label htmlFor="showDisabledCharges" className="text-sm text-gray-600 dark:text-gray-300">
+                      Show Disabled
+                    </label>
+                  </div>
+
                 </div>
 
                 {/* Stats Cards */}
@@ -377,7 +402,7 @@ function ChargeMaster() {
                       <TableBody>
                         {filteredCharges.length > 0 ? (
                           filteredCharges.map((charge, index) => {
-                            const isActive = charge.charges_master_status_id === 1;
+                            const isActive = String(charge.charges_master_status_id ?? '1') === '1';
                             return (
                               <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                 <TableCell className="font-medium">

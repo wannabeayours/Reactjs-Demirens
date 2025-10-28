@@ -52,6 +52,7 @@ function AdminTransactionHis() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [timeSortOrder, setTimeSortOrder] = useState('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
@@ -109,7 +110,7 @@ function AdminTransactionHis() {
     return candidates.some((id) => id === viewerEmp)
   }
   
-  // Compute employee-specific stats from invoice-only transactions
+  // Compute employee-specific stats from invoices and billings
   const computeInvoiceStats = useCallback((list) => {
     try {
       setIsStatsLoading(true)
@@ -133,14 +134,17 @@ function AdminTransactionHis() {
         return isNaN(num) ? 0 : num
       }
   
-      // Only include invoices for stats
-      const invoicesOnly = (Array.isArray(list) ? list : []).filter((t) => deriveSourceType(t) === 'invoice')
+      // Include invoices and billings for stats
+      const billingAndInvoices = (Array.isArray(list) ? list : []).filter((t) => {
+        const src = deriveSourceType(t)
+        return src === 'invoice' || src === 'billing'
+      })
   
       let todayCount = 0, todaySum = 0
       let weekCount = 0, weekSum = 0
       let monthCount = 0, monthSum = 0
   
-      invoicesOnly.forEach((t) => {
+      billingAndInvoices.forEach((t) => {
         const dtStr = sanitizeJSONValue(t.transaction_date)
         const date = new Date(dtStr)
         if (isNaN(date)) return
@@ -248,7 +252,12 @@ function AdminTransactionHis() {
             return dt <= to
           })
         }
-  
+        // Apply time sort order
+        filtered.sort((a, b) => {
+          const da = new Date((a.billing_dateandtime ?? a.transaction_date) || a.transaction_date)
+          const db = new Date((b.billing_dateandtime ?? b.transaction_date) || b.transaction_date)
+          return timeSortOrder === 'asc' ? da - db : db - da
+        })
         // Pagination
         const total = filtered.length
         setTotalCount(total)
@@ -334,6 +343,12 @@ function AdminTransactionHis() {
           list = list.filter(t => new Date(t.transaction_date) <= to)
         }
   
+        // Sort by date according to timeSortOrder
+        list.sort((a, b) => {
+          const da = new Date((a.billing_dateandtime ?? a.transaction_date) || a.transaction_date)
+          const db = new Date((b.billing_dateandtime ?? b.transaction_date) || b.transaction_date)
+          return timeSortOrder === 'asc' ? da - db : db - da
+        })
         // Update state
         setCurrentPage(1)
         setTotalCount(list.length)
@@ -617,7 +632,7 @@ function AdminTransactionHis() {
               : 'Showing Billings and Invoices handled by you (Front Desk)'}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Note: Statistics cards calculate Invoices only.
+            Note: Statistics cards include Billings and Invoices.
           </p>
         </div>
 
@@ -627,7 +642,7 @@ function AdminTransactionHis() {
           <TransactionCard
             title="Today's Transactions"
             amount={stats.today?.total_transactions || 0}
-            subtitle={`Invoices only — Total: ${formatAmount(stats.today?.total_amount_today)}`}
+            subtitle={`Invoices & Bills — Total: ${formatAmount(stats.today?.total_amount_today)}`}
             icon={Clock}
             isLoading={isStatsLoading}
             breakdownItems={[
@@ -646,7 +661,7 @@ function AdminTransactionHis() {
           <TransactionCard
             title="This Week"
             amount={stats.week?.total_transactions || 0}
-            subtitle={`Invoices only — Total: ${formatAmount(stats.week?.total_amount_week)}`}
+            subtitle={`Invoices & Bills — Total: ${formatAmount(stats.week?.total_amount_week)}`}
             icon={TrendingUp}
             isLoading={isStatsLoading}
             breakdownItems={[
@@ -665,7 +680,7 @@ function AdminTransactionHis() {
           <TransactionCard
             title="This Month"
             amount={stats.month?.total_transactions || 0}
-            subtitle={`Invoices only — Total: ${formatAmount(stats.month?.total_amount_month)}`}
+            subtitle={`Invoices & Bills — Total: ${formatAmount(stats.month?.total_amount_month)}`}
             icon={Calendar}
             isLoading={isStatsLoading}
             breakdownItems={[
@@ -777,6 +792,15 @@ function AdminTransactionHis() {
                   className="flex-1"
                 />
               </div>
+              <Select value={timeSortOrder} onValueChange={(v) => { setTimeSortOrder(v) }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by Date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Latest → Oldest</SelectItem>
+                  <SelectItem value="asc">Oldest → Latest</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Action Buttons */}
@@ -836,7 +860,7 @@ function AdminTransactionHis() {
                         {viewer_is_admin && (<TableHead>Handled By</TableHead>)}
                         <TableHead>Amount</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Billing Date/Time</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -885,7 +909,7 @@ function AdminTransactionHis() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm text-gray-500">
-                              {formatDateTime(transaction.transaction_date)}
+                              {formatDateTime(transaction.billing_dateandtime || transaction.transaction_date)}
                             </TableCell>
                             <TableCell>
                               <Button

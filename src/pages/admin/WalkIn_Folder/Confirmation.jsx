@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWalkIn } from './WalkInContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -7,12 +7,33 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 export default function Confirmation() {
-  const APIConn = `${localStorage.url}admin.php`;
+  const APIConn = `${localStorage.url}customer.php`;
   const navigate = useNavigate();
-  const { walkInData } = useWalkIn();
+  const { walkInData, resetWalkIn } = useWalkIn();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState(null); // 'success', 'error', or null
+
+  // Step guard: do not allow direct access if previous steps incomplete
+  useEffect(() => {
+    const hasRooms = Array.isArray(walkInData.selectedRooms) && walkInData.selectedRooms.length > 0;
+    const hasDates = !!walkInData.checkIn && !!walkInData.checkOut;
+    const hasCustomer = !!walkInData.customers_fname && !!walkInData.customers_lname && !!walkInData.customers_phone_number && !!walkInData.customers_address && !!walkInData.customers_date_of_birth;
+    const hasPayment = !!(walkInData.payment && walkInData.payment.method && walkInData.payment.amountPaid);
+
+    if (!hasRooms || !hasDates) {
+      navigate('/admin/choose-rooms', { replace: true });
+      return;
+    }
+    if (!hasCustomer) {
+      navigate('/admin/add-walk-in', { replace: true });
+      return;
+    }
+    if (!hasPayment) {
+      navigate('/admin/payment-method', { replace: true });
+      return;
+    }
+  }, [navigate, walkInData]);
 
   const handleConfirm = async () => {
     // Validate payment fields
@@ -144,28 +165,97 @@ export default function Confirmation() {
       // Attach current employee_id for backend attribution
       cleanedData.employee_id = Number(localStorage.getItem('userId')) || 1;
 
+      // Build payload for customerBookingNoAccount
+      const adultsTotal = Number(walkInData.adult || 0);
+      const childrenTotal = Number(walkInData.children || 0);
+      const roomsLen = Math.max(1, cleanedData.selectedRooms.length || 1);
+      const distribute = (count) => {
+        const base = Math.floor(count / roomsLen);
+        const extra = count % roomsLen;
+        return Array.from({ length: roomsLen }, (_, i) => base + (i < extra ? 1 : 0));
+      };
+      const adultDist = distribute(adultsTotal);
+      const childDist = distribute(childrenTotal);
+
+      const roomDetails = cleanedData.selectedRooms.map((room, idx) => ({
+        roomTypeId: Number(room.roomtype_id),
+        adultCount: Number(adultDist[idx] || 0),
+        childrenCount: Number(childDist[idx] || 0),
+        bedCount: 0
+      }));
+
+      const method = (walkInData.payment?.method || '').toLowerCase();
+      const paymentMethodId = method === 'gcash' ? 1 : method === 'paypal' ? 2 : method === 'cash' ? 3 : method === 'check' ? 4 : 1;
+      const numericAmountPaid = Number(walkInData.payment?.amountPaid || 0);
+      const bookingDetails = {
+        checkIn: cleanedData.checkIn,
+        checkOut: cleanedData.checkOut,
+        downpayment: numericAmountPaid,
+        children: childrenTotal,
+        adult: adultsTotal,
+        totalAmount: Number(cleanedData.billing.total || 0),
+        payment_method_id: paymentMethodId,
+        displayedVat: Number(walkInData.billing?.vat || 0),
+        totalPay: numericAmountPaid
+      };
+
+      const payload = {
+        walkinfirstname: cleanedData.customers_fname,
+        walkinlastname: cleanedData.customers_lname,
+        email: cleanedData.customers_email,
+        contactNumber: cleanedData.customers_phone_number,
+        bookingDetails,
+        roomDetails
+      };
+
       // Prepare and send data
       const formData = new FormData();
-      formData.append('method', 'finalizeBooking');
-      formData.append('json', JSON.stringify(cleanedData));
+      formData.append('operation', 'customerBookingNoAccount');
+      formData.append('json', JSON.stringify(payload));
+      // Optional proof image support if present in state
+      if (walkInData.payment?.proofFile) {
+        formData.append('file', walkInData.payment.proofFile);
+      }
 
       console.log('📤 FormData to be sent:', formData);
-      console.log('📦 JSON payload:', JSON.stringify(cleanedData, null, 2));
-      
+      console.log('📦 JSON payload:', JSON.stringify(payload, null, 2));
       console.log('🌐 Sending request to:', APIConn);
       const res = await axios.post(APIConn, formData);
-      
-      console.log('✅ API Response received:', res);
-      console.log('📄 Response data:', res.data);
-      console.log('📊 Response status:', res.status);
-      
-      setConfirmStatus('success');
-      
-      // Navigate after a short delay to show success state
-      setTimeout(() => {
-        navigate('/admin/choose-rooms');
-      }, 2000);
-      
+
+      let responseData = res.data;
+      try {
+        // In case backend returns JSON string
+        if (typeof responseData === 'string') {
+          responseData = JSON.parse(responseData);
+        }
+      } catch (_) {}
+
+      const isSuccess = responseData === 1 || responseData?.success === true;
+      if (isSuccess) {
+        setConfirmStatus('success');
+        // Clear persisted Walk-In flow state on successful submission
+        resetWalkIn();
+        setTimeout(() => {
+          navigate('/admin/choose-rooms');
+        }, 2000);
+      } else {
+        setConfirmStatus('error');
+        const code = Number(responseData);
+        if (code === -1) {
+          alert('No available rooms for the selected date range.');
+        } else if (code === 2) {
+          alert('File upload failed: invalid file type.');
+        } else if (code === 3) {
+          alert('File upload failed: file too large or error.');
+        } else if (code === 4) {
+          alert('File upload failed: move error on server.');
+        } else if (typeof responseData === 'string') {
+          alert(responseData);
+        } else {
+          alert('Booking failed due to an unknown error.');
+        }
+      }
+
     } catch (err) {
       console.error('❌ Error confirming booking:', err);
       console.error('🔍 Error details:', {
@@ -181,8 +271,9 @@ export default function Confirmation() {
   };
 
   const amountPaid = Number(walkInData.payment?.amountPaid) || 0;
-  const total = walkInData.billing?.total || 0;
-  const change = Number.isFinite(amountPaid) ? amountPaid - total : 0;
+  const total = Number(walkInData.billing?.total || 0);
+  const methodLower = (walkInData.payment?.method || '').toLowerCase();
+  const change = methodLower === 'cash' ? Math.max(0, amountPaid - total) : 0;
 
   return (
     <div className="lg:ml-72 max-w-3xl mx-auto p-6 space-y-8 bg-white dark:bg-gray-900 rounded-md">

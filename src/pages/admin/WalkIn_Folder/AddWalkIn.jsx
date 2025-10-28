@@ -14,6 +14,14 @@ const AddWalkIn = () => {
   const navigate = useNavigate();
   const { walkInData, setWalkInData } = useWalkIn();
 
+  // Guard: ensure Step 1 is complete before accessing Step 2
+  useEffect(() => {
+    const hasRooms = Array.isArray(walkInData.selectedRooms) && walkInData.selectedRooms.length > 0;
+    const hasDates = !!walkInData.checkIn && !!walkInData.checkOut;
+    if (!hasRooms || !hasDates) {
+      navigate('/admin/choose-rooms');
+    }
+  }, [walkInData, navigate]);
   const [nationalities, setNationalities] = useState([]);
   const [errors, setErrors] = useState({});
 
@@ -358,11 +366,19 @@ const AddWalkIn = () => {
           </CardContent>
 
           {/* Footer with Next Button */}
-          <CardFooter className="flex justify-end border-t pt-4">
-            <Button onClick={handleNext} className="px-6">
-              Next: Payment →
-            </Button>
-          </CardFooter>
+-         <CardFooter className="flex justify-end border-t pt-4">
+-            <Button onClick={handleNext} className="px-6">
+-              Next: Payment →
+-            </Button>
+-          </CardFooter>
++         <CardFooter className="flex justify-between border-t pt-4">
++            <Button variant="outline" onClick={() => navigate('/admin/choose-rooms')}>
++              ← Previous: Rooms
++            </Button>
++            <Button onClick={handleNext} className="px-6">
++              Next: Payment →
++            </Button>
++          </CardFooter>
         </Card>
       </div>
     </>

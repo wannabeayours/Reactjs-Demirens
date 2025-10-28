@@ -74,10 +74,11 @@ function AdminDashboard() {
   const fetchOnlinePendingCount = async () => {
     try {
       const formData = new FormData();
-      formData.append('method', 'reqBookingList');
+      formData.append('method', 'viewBookingsEnhanced');
       const res = await axios.post(APIConn, formData);
       const list = Array.isArray(res.data) ? res.data : [];
-      setOnlinePendingCount(list.length);
+      const pending = list.filter(b => String(b.booking_status).trim() === 'Pending').length;
+      setOnlinePendingCount(pending);
     } catch (error) {
       console.error('Failed to fetch online pending booking requests:', error);
       setOnlinePendingCount(0);
@@ -253,45 +254,39 @@ function AdminDashboard() {
   const gatherBooking = async (yearToFilter = new Date().getFullYear()) => {
     try {
       const formData = new FormData();
-      formData.append("method", "getInvoiceDatas");
+      formData.append("method", "getAllTransactionHistories");
+      formData.append("json", JSON.stringify({ transaction_type: "invoice", status_filter: "approved" }));
 
       const res = await axios.post(APIConn, formData);
-      if (res.data && Array.isArray(res.data)) {
-        // Extract unique years from invoice data
-        const uniqueYears = [...new Set(res.data.map(invoice => {
-          const date = new Date(invoice.invoice_date);
-          return date.getFullYear();
-        }))].sort((a, b) => b - a); // Sort in descending order (newest first)
-        
+      const transactions = res?.data?.transactions;
+      if (Array.isArray(transactions)) {
+        const uniqueYears = [...new Set(transactions.map(t => {
+          const d = new Date(t.transaction_date);
+          return d.getFullYear();
+        }))].sort((a, b) => b - a);
         setAvailableYears(uniqueYears);
 
-        const monthMap = {
+        const monthTotalMap = {
           January: 0, February: 0, March: 0, April: 0,
           May: 0, June: 0, July: 0, August: 0,
           September: 0, October: 0, November: 0, December: 0,
         };
 
-        const monthTotalMap = { ...monthMap };
-
-        res.data.forEach((invoice) => {
-          const date = new Date(invoice.invoice_date);
-          const year = date.getFullYear();
-          const monthIndex = date.getMonth();
-
+        transactions.forEach(t => {
+          const d = new Date(t.transaction_date);
+          const year = d.getFullYear();
           if (year === yearToFilter) {
-            const monthName = Object.keys(monthMap)[monthIndex];
+            const monthName = Object.keys(monthTotalMap)[d.getMonth()];
             if (monthName) {
-              monthMap[monthName] += 1;
-              monthTotalMap[monthName] += parseFloat(invoice.total_invoice) || 0;
+              monthTotalMap[monthName] += parseFloat(t.amount) || 0;
             }
           }
         });
 
-        const chartReadyData = Object.entries(monthMap).map(([month]) => ({
+        const chartReadyData = Object.keys(monthTotalMap).map(month => ({
           month,
           sales: monthTotalMap[month],
         }));
-
         setResvData(chartReadyData);
       } else {
         setResvData([]);
@@ -306,35 +301,31 @@ function AdminDashboard() {
   const fetchDetailedBookingDataByMonth = async (month, year) => {
     try {
       const formData = new FormData();
-      formData.append("method", "getDetailedBookingSalesByMonth");
-      formData.append("month", month);
-      formData.append("year", year);
-
+      formData.append("method", "getAllTransactionHistories");
+      formData.append("json", JSON.stringify({ transaction_type: "invoice", status_filter: "approved" }));
       const res = await axios.post(APIConn, formData);
-      if (res.data && Array.isArray(res.data)) {
-        setDetailedBookingData(res.data);
-      } else {
-        setDetailedBookingData([]);
-      }
+      const transactions = Array.isArray(res?.data?.transactions) ? res.data.transactions : [];
+      const monthIndex = ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(month);
+      const filtered = transactions.filter(t => {
+        const d = new Date(t.transaction_date);
+        return d.getFullYear() === year && d.getMonth() === monthIndex;
+      });
+      setDetailedBookingData(filtered);
     } catch (error) {
       toast.error("Failed to fetch detailed booking data");
       console.error(error);
+      setDetailedBookingData([]);
     }
   };
 
   const fetchActiveBookings = async () => {
     try {
       const formData = new FormData();
-      formData.append("method", "viewBookingsCheckedInEnhanced");
-
+      formData.append("method", "get_booking_rooms");
       const res = await axios.post(APIConn, formData);
-      
-      if (res.data && !res.data.error) {
-        const count = Array.isArray(res.data) ? res.data.length : (res.data.active_bookings_count ?? 0);
-        setActiveBookings({ active_bookings_count: count });
-      } else {
-        setActiveBookings({ active_bookings_count: 0 });
-      }
+      const rooms = Array.isArray(res.data) ? res.data : [];
+      const uniqueBookingIds = new Set(rooms.map(r => r.booking_id));
+      setActiveBookings({ active_bookings_count: uniqueBookingIds.size });
     } catch (error) {
       console.error("Failed to fetch active bookings:", error);
       setActiveBookings({ active_bookings_count: 0 });
@@ -383,13 +374,10 @@ function AdminDashboard() {
         res.data.forEach((room) => {
           const status = normalizeStatus(room.status_name);
           const typeName = String(room.roomtype_name || 'Unknown').trim();
-          // Global status distribution (normalized)
           counts[status] = (counts[status] || 0) + 1;
-          // Available by room type (Vacant only)
           if (status.toLowerCase() === 'vacant') {
             availableByType[typeName] = (availableByType[typeName] || 0) + 1;
           }
-          // Per room type status counts
           if (!typeStatusCounts[typeName]) typeStatusCounts[typeName] = {};
           typeStatusCounts[typeName][status] = (typeStatusCounts[typeName][status] || 0) + 1;
         });
@@ -424,20 +412,16 @@ function AdminDashboard() {
     },
   }
 
-  const fetchPendingBookings = async () => {
+  const fetchConfirmedBookings = async () => {
     try {
       const formData = new FormData();
-      formData.append('method', 'viewBookingsPendingEnhanced');
+      formData.append('method', 'viewBookingsEnhanced');
       const res = await axios.post(APIConn, formData);
-      if (Array.isArray(res.data)) {
-        setPendingBookingsCount(res.data.length);
-      } else if (res.data && typeof res.data.pending_count === 'number') {
-        setPendingBookingsCount(res.data.pending_count);
-      } else {
-        setPendingBookingsCount(0);
-      }
+      const list = Array.isArray(res.data) ? res.data : [];
+      const confirmed = list.filter(b => String(b.booking_status).trim() === 'Confirmed').length;
+      setPendingBookingsCount(confirmed);
     } catch (error) {
-      console.error('Failed to fetch pending bookings:', error);
+      console.error('Failed to fetch confirmed bookings:', error);
       setPendingBookingsCount(0);
     }
   }
@@ -445,41 +429,52 @@ function AdminDashboard() {
   useEffect(() => {
     gatherBooking(selectedYear);
     fetchActiveBookings();
-    fetchAvailableRooms();
     fetchRoomStatusDistribution();
     fetchOnlinePendingCount();
-    fetchPendingBookings();
-    runAutoNoShow();
-    // New: fetch most booked rooms
-    const fetchMostBookedRooms = async (scope) => {
+    fetchConfirmedBookings();
+
+    const fetchMostBookedRoomsLocal = async (scope) => {
       try {
         const formData = new FormData();
-        formData.append('method', 'getMostBookedRooms');
-        formData.append('scope', scope || mostBookedScope);
+        formData.append('method', 'viewBookingsEnhanced');
         const res = await axios.post(APIConn, formData);
-        if (Array.isArray(res.data)) {
-          setMostBookedData(res.data);
-        } else {
-          setMostBookedData([]);
+        const list = Array.isArray(res.data) ? res.data : [];
+        const now = new Date();
+        let start = new Date(now);
+        if (scope === 'week') {
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          start = new Date(now.setDate(diff));
+          start.setHours(0,0,0,0);
+        } else if (scope === 'month') {
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (scope === 'year') {
+          start = new Date(now.getFullYear(), 0, 1);
         }
+        const counts = {};
+        list.forEach(b => {
+          const created = new Date(b.booking_created_at);
+          if (!isNaN(created) && created >= start) {
+            const typeName = String(b.roomtype_name || 'Unknown');
+            counts[typeName] = (counts[typeName] || 0) + 1;
+          }
+        });
+        const arr = Object.entries(counts).map(([roomtype_name, bookings_count]) => ({ roomtype_name, bookings_count }));
+        setMostBookedData(arr);
       } catch (error) {
-        console.error('Failed to fetch most booked rooms:', error);
+        console.error('Failed to compute most booked rooms:', error);
         setMostBookedData([]);
       }
-    }
+    };
 
-    // Fetch immediately on mount and whenever scope/year changes
-    fetchMostBookedRooms(mostBookedScope);
-    
-    // Refresh data every 30 seconds
+    fetchMostBookedRoomsLocal(mostBookedScope);
+
     const interval = setInterval(() => {
       fetchActiveBookings();
-      fetchAvailableRooms();
       fetchRoomStatusDistribution();
-      fetchMostBookedRooms(mostBookedScope);
       fetchOnlinePendingCount();
-      fetchPendingBookings();
-      runAutoNoShow();
+      fetchConfirmedBookings();
+      fetchMostBookedRoomsLocal(mostBookedScope);
     }, 30000);
 
     return () => clearInterval(interval);
@@ -593,7 +588,7 @@ function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <CardTitle className={`${pendingCardClasses.title} flex items-center gap-2`}>
                         <AlertTriangle className="h-5 w-5" />
-                        Pending Bookings
+                        Confirmed Requests
                       </CardTitle>
                       <Badge variant="secondary" className={pendingCardClasses.badge}>Live</Badge>
                     </div>
@@ -604,7 +599,7 @@ function AdminDashboard() {
                       <div className={`text-3xl font-bold ${pendingCardClasses.number} mb-1`}>
                         {NumberFormatter.formatCount(pendingBookingsCount || 0)}
                       </div>
-                      <div className={`text-xs ${pendingCardClasses.label}`}>Pending Bookings</div>
+                      <div className={`text-xs ${pendingCardClasses.label}`}>Confirmed Bookings</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -829,7 +824,7 @@ function AdminDashboard() {
           <div className="w-full">
             <Card className="w-full min-h-[400px]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-gray-900 dark:text-white">Bar Chart</CardTitle>
+                <CardTitle className="text-lg text-gray-900 dark:text-white">Invoice Records Graph</CardTitle>
                 <CardDescription className="text-sm text-gray-700 dark:text-gray-300">January - December {selectedYear}</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
@@ -923,64 +918,49 @@ function AdminDashboard() {
               <div className="space-y-4">
                 {detailedBookingData.length > 0 ? (
                   <div className="grid gap-4">
-                    {detailedBookingData.map((booking, index) => (
-                      <Card key={booking.booking_id} className="p-4">
+                    {detailedBookingData.map((txn, index) => (
+                      <Card key={index} className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">Booking ID</Badge>
-                              <span className="font-medium">{booking.booking_id}</span>
+                              <Badge variant="outline">Reference</Badge>
+                              <span className="text-sm text-muted-foreground">{txn.reference_no || 'N/A'}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline">Reference</Badge>
-                              <span className="text-sm text-muted-foreground">{booking.reference_no}</span>
+                              <Badge variant="outline">Type</Badge>
+                              <span className="font-medium">Invoice</span>
                             </div>
                           </div>
-                          
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4" />
-                              <span className="text-sm font-medium">Invoice Date</span>
+                              <span className="text-sm font-medium">Transaction Date</span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {DateFormatter.formatDateOnly(booking.invoice_date)}
+                              {DateFormatter.formatDateOnly(txn.transaction_date)}
                             </p>
-                            
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4" />
                               <span className="text-sm font-medium">Customer</span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {booking.customer_fname} {booking.customer_lname}
+                              {txn.customer_name || 'Unknown'}
                             </p>
                           </div>
-                          
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span className="text-sm font-medium">Stay</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {DateFormatter.formatDateRange(booking.booking_checkin_dateandtime, booking.booking_checkout_dateandtime)}
-                            </p>
-                            
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="text-sm font-medium">Room Price</span>
-                            </div>
-                            <p className="text-sm font-bold text-green-600">{NumberFormatter.formatCurrency(booking.roomtype_price)}</p>
-                            
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="text-sm font-medium">Billing Amount</span>
-                            </div>
-                            <p className="text-sm font-bold text-blue-600">{NumberFormatter.formatCurrency(booking.billing_total_amount)}</p>
-                            
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4" />
                               <span className="text-sm font-medium">Invoice Amount</span>
                             </div>
-                            <p className="text-sm font-bold text-purple-600">{NumberFormatter.formatCurrency(booking.invoice_total_amount)}</p>
+                            <p className="text-sm font-bold text-purple-600">{NumberFormatter.formatCurrency(txn.amount)}</p>
+                            {txn.payment_method_name && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Payment</span>
+                              </div>
+                            )}
+                            {txn.payment_method_name && (
+                              <p className="text-sm text-muted-foreground">{txn.payment_method_name}</p>
+                            )}
                           </div>
                         </div>
                       </Card>

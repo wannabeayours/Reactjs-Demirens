@@ -346,12 +346,14 @@ function AddAmenityRequestModal({
           if (!cmid) return;
           const idx = updated.findIndex((a) => String(a.charges_master_id) === String(cmid));
           if (idx !== -1) {
+            // Keep existing quantity unchanged; ensure at least 1
             const existingQty = parseInt(updated[idx].booking_charges_quantity) || 0;
             updated[idx] = {
               ...updated[idx],
-              booking_charges_quantity: String(existingQty + 1),
+              booking_charges_quantity: String(Math.max(existingQty, 1)),
             };
           } else {
+            // Add as new item with default quantity 1
             updated.push({
               id: `sel-${cmid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
               charges_master_id: cmid,

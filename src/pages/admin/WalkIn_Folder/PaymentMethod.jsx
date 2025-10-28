@@ -15,6 +15,19 @@ const PaymentMethod = () => {
   const { walkInData, setWalkInData } = useWalkIn();
   const navigate = useNavigate();
 
+  // Guard: ensure Step 1 and Step 2 are complete before Step 3
+  useEffect(() => {
+    const hasStep1 = !!walkInData.checkIn && !!walkInData.checkOut && Array.isArray(walkInData.selectedRooms) && walkInData.selectedRooms.length > 0;
+    const hasStep2 = !!walkInData.customers_fname && !!walkInData.customers_lname && !!walkInData.customers_email && !!walkInData.customers_phone_number && !!walkInData.customers_address && !!walkInData.nationality_id;
+    if (!hasStep1) {
+      navigate('/admin/choose-rooms');
+      return;
+    }
+    if (!hasStep2) {
+      navigate('/admin/add-walk-in');
+      return;
+    }
+  }, [walkInData, navigate]);
   const [method, setMethod] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
   const [discount, setDiscount] = useState('');
@@ -197,19 +210,21 @@ const PaymentMethod = () => {
             </div>
           )}
 
-          <Button
-            className="w-full mt-4"
-            onClick={handleNext}
-            disabled={
-              !method ||
-              !amountPaid ||
-              !Number.isFinite(parseFloat(String(amountPaid).replace(/,/g, ''))) ||
-              parseFloat(String(amountPaid).replace(/,/g, '')) < (total * 0.5) ||
-              (method && method.toLowerCase() !== 'cash' && !referenceNumber.trim())
-            }
-          >
-            Continue
-          </Button>
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={() => navigate('/admin/add-walk-in')}>← Previous: Customer</Button>
+            <Button
+              onClick={handleNext}
+              disabled={
+                !method ||
+                !amountPaid ||
+                !Number.isFinite(parseFloat(String(amountPaid).replace(/,/g, ''))) ||
+                parseFloat(String(amountPaid).replace(/,/g, '')) < (total * 0.5) ||
+                (method && method.toLowerCase() !== 'cash' && !referenceNumber.trim())
+              }
+            >
+              Continue
+            </Button>
+          </div>
           
       <p>Anything but Cash is yet to be Working</p>
         </CardContent>

@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Plus, CheckCircle, AlertCircle, Calculator, Receipt, CreditCard, DollarSign as DollarSignIcon, Eye, X } from "lucide-react";
+import { FileText, Plus, CheckCircle, AlertCircle, Calculator, Receipt, CreditCard, DollarSign as DollarSignIcon, Eye, X, ChevronDown, ChevronUp, ExternalLink, CalendarPlus } from "lucide-react";
 import NumberFormatter from "../Function_Files/NumberFormatter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDateTime } from "@/lib/utils";
+
 const DollarSign = ({ className = "" }) => <span className={className}>₱</span>
 
 function InvoiceManagementSubpage({ 
@@ -37,6 +40,62 @@ function InvoiceManagementSubpage({
     downpayment: 0,
     invoice_status_id: 1
   });
+  const [isBookingInfoOpen, setIsBookingInfoOpen] = useState(false);
+  const [isRoomDetailsExpanded, setIsRoomDetailsExpanded] = useState(false);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [imageViewerSrc, setImageViewerSrc] = useState('');
+  const [billingData, setBillingData] = useState([]);
+  // Add delivery modal states
+  // Restore delivery modal default to 'both' so user can pick
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [deliveryMode, setDeliveryMode] = useState('both');
+  const [emailTo, setEmailTo] = useState('');
+  const [submittingInvoice, setSubmittingInvoice] = useState(false);
+  const [lastPdfUrl, setLastPdfUrl] = useState(null);
+  const [discounts, setDiscounts] = useState([]);
+
+  // Fetch billing amounts when Booking Information modal opens
+  useEffect(() => {
+    if (isBookingInfoOpen && selectedBooking?.booking_id) {
+      calculateBillingBreakdown(selectedBooking.booking_id);
+    }
+  }, [isBookingInfoOpen, selectedBooking?.booking_id]);
+
+  // Sync default email with selected booking
+  useEffect(() => {
+    const resolvedEmail = selectedBooking?.customer_email || selectedBooking?.customers_email || selectedBooking?.email || '';
+    console.log('[InvoiceManagement] selectedBooking changed:', {
+      booking_id: selectedBooking?.booking_id,
+      reference_no: selectedBooking?.reference_no,
+      customer_email: selectedBooking?.customer_email,
+      customers_email: selectedBooking?.customers_email,
+      email: selectedBooking?.email,
+      resolvedEmail,
+    });
+    setEmailTo(resolvedEmail);
+  }, [selectedBooking]);
+
+  // Fetch discounts when component mounts
+  useEffect(() => {
+    fetchDiscounts();
+  }, []);
+
+  const fetchDiscounts = async () => {
+    try {
+      const url = localStorage.getItem("url") + "admin.php";
+      const formData = new FormData();
+      formData.append("method", "getEnabledDiscounts");
+      
+      const res = await axios.post(url, formData);
+      if (res.data?.success) {
+        setDiscounts(res.data.data || []);
+      } else {
+        console.error("Failed to fetch discounts:", res.data?.error);
+      }
+    } catch (error) {
+      console.error("Error fetching discounts:", error);
+    }
+  };
 
   // Helper: get current logged-in employee ID from localStorage
   const getCurrentEmployeeId = () => {
@@ -50,7 +109,28 @@ function InvoiceManagementSubpage({
       }
     }
     return 1; // Fallback to admin if none found
-  };  const validateBilling = async (bookingId) => {
+  };
+
+  // Helper functions for room type grouping
+  const groupRoomsByType = (rooms) => {
+    if (!rooms || !Array.isArray(rooms)) return {};
+    
+    return rooms.reduce((acc, room) => {
+      const type = room.room_type || 'Unknown';
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(room);
+      return acc;
+    }, {});
+  };
+
+  const handleImageClick = (imageSrc) => {
+    setImageViewerSrc(imageSrc);
+    setIsImageViewerOpen(true);
+  };
+
+  const validateBilling = async (bookingId) => {
     try {
       const url = localStorage.getItem("url") + "transactions.php";
       const formData = new FormData();
@@ -286,79 +366,100 @@ function InvoiceManagementSubpage({
     }
   };
 
-  const confirmCreateInvoice = async () => {
-    if (!selectedBooking) {
-      toast.error("No booking selected");
-      return;
-    }
+  // Invoice Creation Logic (open modal first)
+  const confirmCreateInvoice = () => {
+    setShowDeliveryModal(true);
+  };
 
-    let billingId = selectedBooking.billing_id;
-
-    // If no billing_id, try to create one first
-    if (!billingId) {
-      const billingCreated = await createBillingRecord(selectedBooking.booking_id);
-      if (!billingCreated) {
-        toast.error("Failed to create billing record");
-        return;
-      }
-      toast.success("Billing record created successfully! Creating invoice now...");
-      
-      // Fetch the newly created billing_id
-      try {
-        const url = localStorage.getItem("url") + "transactions.php";
-        const formData = new FormData();
-        formData.append("operation", "getBookingBillingId");
-        formData.append("json", JSON.stringify({ booking_id: selectedBooking.booking_id }));
-        
-        const res = await axios.post(url, formData);
-        if (res.data.success && res.data.billing_id) {
-          billingId = res.data.billing_id;
-        } else {
-          toast.error("Failed to get billing ID after creation");
-          return;
-        }
-      } catch (err) {
-        toast.error("Error fetching billing ID: " + err.message);
-        return;
-      }
-    }
-
+  // Helper: preflight check to ensure browser can fetch blobs from API origin
+  const canDownloadFromApi = async () => {
     try {
-      setLoading(true);
+      const baseUrl = localStorage.getItem("url");
+      if (!baseUrl) return false;
+      // Ping the backend download endpoint to verify API availability
+      await axios.get(baseUrl + "download_invoice.php?ping=1", { timeout: 4000 });
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
 
+  const performCreateInvoiceWithDelivery = async () => {
+    if (!selectedBooking) return;
+    setSubmittingInvoice(true);
+    setLoading(true);
+    try {
+      // New primary path: use server-side generator to create and stream the PDF
+      const baseUrl = localStorage.getItem("url") || "";
+      const params = new URLSearchParams({
+        booking_id: String(selectedBooking.booking_id),
+        delivery_mode: deliveryMode,
+        stream: "1",
+      });
+      if (emailTo && emailTo.trim()) { params.set("email_to", emailTo.trim()); }
+      const genUrl = baseUrl + "generate-invoice.php?" + params.toString();
+      console.log("Generate & stream URL:", genUrl);
+      setLastPdfUrl(genUrl);
+      toast.message("Starting download...", { description: "Generating your invoice PDF" });
+      // Hard navigation ensures download prompt in all browsers
+      window.location.href = genUrl;
+
+      // Keep the original API call to update DB state and UI feedback
+      const employee_id = getCurrentEmployeeId();
       const jsonData = {
-        billing_ids: [billingId],
-        employee_id: getCurrentEmployeeId(),
+        booking_id: selectedBooking.booking_id,
+        employee_id,
         payment_method_id: invoiceForm.payment_method_id,
         invoice_status_id: invoiceForm.invoice_status_id,
         discount_id: invoiceForm.discount_id,
         vat_rate: 0,
-        downpayment: 0
+        downpayment: 0,
+        delivery_mode: deliveryMode,
+        email_to: emailTo?.trim() || undefined,
       };
-
-      console.log("Creating invoice with data:", jsonData);
 
       const formData = new FormData();
       formData.append("operation", "createInvoice");
       formData.append("json", JSON.stringify(jsonData));
 
-      const url = localStorage.getItem("url") + "transactions.php";
+      const url = baseUrl + "transactions.php";
       const res = await axios.post(url, formData);
-
-      console.log("Invoice creation response:", res.data);
 
       if (res.data?.success) {
         toast.success(res.data.message || "Invoice created successfully!");
-        onInvoiceCreated(); // Call parent callback to refresh data
-        onClose(); // Close the management subpage
+        const info = Array.isArray(res.data.results) ? res.data.results[0] : null;
+        if (info?.email_status) {
+          toast.info(`Email: ${info.email_status}`);
+        }
+        // Secondary path: if generator failed, try direct server download
+        if (info?.pdf_url) {
+          const filenameFromUrl = (info.pdf_url.split("/").pop() || `invoice_${selectedBooking.booking_id}_${info.invoice_id}.pdf`).replace(/\?.*$/, "");
+          const dlUrl = baseUrl + "download_invoice.php?file=" + encodeURIComponent(filenameFromUrl);
+          console.log("Invoice PDF URL:", info.pdf_url);
+          console.log("Server download URL:", dlUrl);
+          setLastPdfUrl(dlUrl);
+        }
+        onInvoiceCreated && onInvoiceCreated();
+        onClose && onClose();
       } else {
-        toast.error(res.data.message || "Failed to create invoice.");
+        toast.error(res.data?.message || "Failed to create invoice");
       }
-    } catch (err) {
-      console.error("Error creating invoice:", err);
-      toast.error("An error occurred while creating the invoice: " + (err.response?.data?.message || err.message));
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      toast.error("Error creating invoice: " + (error?.message || "Unknown error"));
     } finally {
+      setSubmittingInvoice(false);
       setLoading(false);
+    }
+  };
+
+  const retryDownloadLastInvoice = async () => {
+    if (!lastPdfUrl) return;
+    try {
+      window.location.href = lastPdfUrl;
+    } catch (err) {
+      // As a final fallback, try opening the direct pdf_url if we logged it earlier
+      // The lastPdfUrl is server route; we cannot recover the direct URL here without state
     }
   };
 
@@ -401,7 +502,168 @@ function InvoiceManagementSubpage({
               Booking #{selectedBooking?.booking_id} - {selectedBooking?.reference_no}
             </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => setIsBookingInfoOpen(true)}
+            className="whitespace-nowrap"
+          >
+            See Booking Information
+          </Button>
         </div>
+
+        {/* Booking Information Modal */}
+        <Dialog open={isBookingInfoOpen} onOpenChange={setIsBookingInfoOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader className="text-center pb-4 border-b">
+              <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                Booking Information
+                {selectedBooking && (
+                  <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-3">
+                    #{selectedBooking.booking_id || 'N/A'}
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedBooking && (
+              <div className="space-y-6 mt-4">
+                {/* Uploaded File Section */}
+                <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Uploaded File
+                  </h3>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    No file uploaded for this booking.
+                  </div>
+                </div>
+
+                {/* Booking Information Section */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg border p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <CalendarPlus className="h-5 w-5" />
+                    Booking Information
+                  </h3>
+                  
+                  {/* Status and Reference */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Reference Number</div>
+                      <div className="font-bold text-gray-900 dark:text-white">{selectedBooking.reference_no || '—'}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Booking Status</div>
+                      <Badge variant="outline" className="text-xs">
+                        {selectedBooking.booking_status || 'Pending'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Customer Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Customer</div>
+                      <div className="font-medium text-gray-900 dark:text-white">{selectedBooking.customer_name || 'Walk-In'}</div>
+                    </div>
+                  </div>
+
+                  {/* Dates and Times */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Check-In Date</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {selectedBooking.booking_checkin_dateandtime ? formatDateTime(selectedBooking.booking_checkin_dateandtime) : '—'}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Check-Out Date</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {selectedBooking.booking_checkout_dateandtime ? formatDateTime(selectedBooking.booking_checkout_dateandtime) : '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Remaining Balance */}
+                  <div className="mb-6">
+                    <div className="rounded-lg border px-4 py-3">
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Total Amount</span>
+                        <span className="font-mono font-semibold">
+                          {NumberFormatter.formatCurrency(parseFloat(billingBreakdown?.final_total || 0))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Payment</span>
+                        <span className="font-mono font-semibold text-red-600">
+                          -{NumberFormatter.formatCurrency(parseFloat(billingBreakdown?.downpayment || 0))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="font-medium">Remaining Balance</span>
+                        <span className="font-mono font-semibold text-red-600">
+                          {NumberFormatter.formatCurrency(
+                            parseFloat(
+                              billingBreakdown?.balance ?? ((billingBreakdown?.final_total || 0) - (billingBreakdown?.downpayment || 0))
+                            )
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room Details Section */}
+                  <div className="border-t pt-4">
+                    <button
+                      onClick={() => setIsRoomDetailsExpanded(!isRoomDetailsExpanded)}
+                      className="flex items-center justify-between w-full text-left"
+                    >
+                      <h4 className="text-md font-semibold text-gray-900 dark:text-white">Room Details</h4>
+                      {isRoomDetailsExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      )}
+                    </button>
+                    
+                    {isRoomDetailsExpanded && (
+                      <div className="mt-4 space-y-3">
+                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {selectedBooking.roomtype_name || 'Room Type'}
+                            </span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Room: {selectedBooking.room_numbers || '—'}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Rate: {NumberFormatter.formatCurrency(parseFloat(selectedBooking.balance || 0))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              )}
+            </DialogContent>
+        </Dialog>
+
+        {/* Image Viewer Modal */}
+        <Dialog open={isImageViewerOpen} onOpenChange={setIsImageViewerOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+            <DialogHeader>
+              <DialogTitle className="text-center">Image Viewer</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center items-center">
+              <img 
+                src={imageViewerSrc} 
+                alt="Booking file" 
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Action Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
@@ -703,17 +965,21 @@ function InvoiceManagementSubpage({
                   
                     <div className="space-y-2 bg-muted rounded-lg px-4 py-4">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-xl">Final Total:</span>
+                        <span className="font-bold text-xl">Total Bill Amount:</span>
                         <span className="font-mono font-bold text-xl">{NumberFormatter.formatCurrency(billingBreakdown.final_total)}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold">Downpayment:</span>
-                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{NumberFormatter.formatCurrency(billingBreakdown.downpayment)}</span>
+                        <span className="font-semibold">Total Paid:</span>
+                        <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{NumberFormatter.formatCurrency(billingBreakdown.downpayment)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Remaining Balance:</span>
+                        <span className="font-mono font-semibold text-red-600">{NumberFormatter.formatCurrency(billingBreakdown.balance)}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 border border-yellow-200 dark:border-yellow-800">
+                      <div className="flex justify-between items-center py-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
                         <span className="font-bold text-lg">Balance Due:</span>
                         <span className="font-mono font-bold text-lg text-yellow-800 dark:text-yellow-200">{NumberFormatter.formatCurrency(billingBreakdown.balance || ((billingBreakdown.final_total || 0) - (billingBreakdown.downpayment || 0)))}</span>
                       </div>
@@ -872,7 +1138,7 @@ function InvoiceManagementSubpage({
                         {/* Grand Total */}
                         <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg text-center">
                           <span className="font-bold text-xl">
-                            💰 GRAND TOTAL: {NumberFormatter.formatCurrency(detailedCharges.summary.grand_total)}
+                            💰 Total Bill Amount: {NumberFormatter.formatCurrency(detailedCharges.summary.grand_total)}
                           </span>
                         </div>
                       </div>
@@ -898,16 +1164,36 @@ function InvoiceManagementSubpage({
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select 
                   value={invoiceForm.payment_method_id.toString()} 
-                  onValueChange={(value) => setInvoiceForm({...invoiceForm, payment_method_id: parseInt(value)})}
+                  onValueChange={(value) => setInvoiceForm({...invoiceForm, payment_method_id: parseInt(value, 10)})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">GCash</SelectItem>
-                    <SelectItem value="2">Cash</SelectItem>
-                    <SelectItem value="3">Paymaya</SelectItem>
+                    <SelectItem value="2">Paypal</SelectItem>
+                    <SelectItem value="3">Cash</SelectItem>
                     <SelectItem value="4">Check</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="discount">Discount (Optional)</Label>
+                <Select 
+                  value={invoiceForm.discount_id !== null ? invoiceForm.discount_id.toString() : "none"} 
+                  onValueChange={(value) => setInvoiceForm({...invoiceForm, discount_id: value === "none" ? null : parseInt(value, 10)})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select discount (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Discount</SelectItem>
+                    {discounts.map((discount) => (
+                      <SelectItem key={discount.discount_id} value={String(discount.discount_id)}>
+                        {discount.discount_name} - {discount.discount_percentage ? `${discount.discount_percentage}%` : `₱${discount.discount_amount}`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -916,7 +1202,7 @@ function InvoiceManagementSubpage({
             </div>
 
             {/* Action Button */}
-            <div className="flex justify-end mt-6">
+            <div className="flex flex-col items-center mt-6">
               <Button 
                 onClick={confirmCreateInvoice}
                 disabled={loading}
@@ -934,7 +1220,53 @@ function InvoiceManagementSubpage({
                   </>
                 )}
               </Button>
+              {lastPdfUrl && (
+                <button type="button" className="mt-3 text-sm text-blue-600 hover:underline" onClick={retryDownloadLastInvoice}>
+                  Invoice not downloaded? Click to download again
+                </button>
+              )}
             </div>
+
+            {/* Delivery Choice Modal */}
+            {showDeliveryModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeliveryModal(false)} />
+                <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg p-6">
+                  <h3 className="text-lg font-semibold mb-2">Choose where to submit the customer's invoice</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Select a delivery option. Email will use the customer's saved address.</p>
+                  <div className="space-y-3 mb-4">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Email recipient</p>
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {emailTo || selectedBooking?.customer_email || selectedBooking?.customers_email || selectedBooking?.email || 'No email on file'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">This uses the customer's saved email.</p>
+                  </div>
+
+                  {/* Allow admin/employee to type a different recipient email */}
+                  <div className="space-y-2 mb-4">
+                    <Label htmlFor="customEmail" className="text-sm font-medium">Send to a different email (optional)</Label>
+                    <Input
+                      id="customEmail"
+                      type="email"
+                      value={emailTo}
+                      onChange={(e) => setEmailTo(e.target.value)}
+                      placeholder="Enter recipient email"
+                    />
+                    <p className="text-xs text-muted-foreground">If the customer has multiple emails, type one here to override.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 justify-items-center">
+
+                    <Button className="w-full bg-[#34699a] hover:bg-[#2c5b86]" onClick={() => { setDeliveryMode('both'); performCreateInvoiceWithDelivery(); }} disabled={submittingInvoice || !(emailTo && emailTo.trim())}>
+                      Email and Print Invoice
+                    </Button>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button variant="outline" onClick={() => setShowDeliveryModal(false)} disabled={submittingInvoice}>Cancel</Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         

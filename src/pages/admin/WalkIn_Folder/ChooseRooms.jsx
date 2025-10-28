@@ -17,7 +17,7 @@ const ChooseRooms = () => {
   const APIConn = `${baseUrl}admin.php`;
   const navigate = useNavigate();
 
-  const { walkInData, setWalkInData } = useWalkIn();
+  const { walkInData, setWalkInData, resetWalkIn } = useWalkIn();
 
   const [rooms, setRooms] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
@@ -167,10 +167,10 @@ const ChooseRooms = () => {
         data = [];
       }
 
-      // If no room types returned, fallback to deriving from viewRooms
+      // If no room types returned, fallback to deriving from viewAllRooms
       if (!Array.isArray(data) || data.length === 0) {
         const roomReq = new FormData();
-        roomReq.append('method', 'viewRooms');
+        roomReq.append('method', 'viewAllRooms');
         try {
           const roomsRes = await axios.post(APIConn, roomReq);
           let roomsData = roomsRes.data;
@@ -266,6 +266,66 @@ const ChooseRooms = () => {
     fetchAvailableRoomsCounts();
   }, [checkIn, checkOut, fetchAvailableRoomsCounts]);
 
+  // NEW: Fetch booking rooms and build map by roomnumber_id for date filtering
+  const getBookingsMap = useCallback(async () => {
+    const buildMap = (arr) => {
+      const map = {};
+      (arr || []).forEach(b => {
+        const roomId = b.roomnumber_id;
+        if (!roomId) return;
+        if (!map[roomId]) map[roomId] = [];
+        map[roomId].push({
+          booking_room_id: b.booking_room_id,
+          booking_id: b.booking_id,
+          status_name: b.booking_status_name,
+          booking_checkin_dateandtime: b.booking_checkin_dateandtime,
+          booking_checkout_dateandtime: b.booking_checkout_dateandtime,
+        });
+      });
+      return map;
+    };
+
+    try {
+      // Prefer active bookings endpoint; fallback to legacy if unavailable
+      const fdActive = new FormData();
+      fdActive.append('method', 'get_booking_rooms_active');
+      let res = await axios.post(APIConn, fdActive);
+      let data = res.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { data = []; }
+      }
+      if (Array.isArray(data) && data.length > 0) {
+        return buildMap(data);
+      }
+      // Fallback to checked-in only
+      const fd = new FormData();
+      fd.append('method', 'get_booking_rooms');
+      res = await axios.post(APIConn, fd);
+      data = res.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { data = []; }
+      }
+      if (!Array.isArray(data)) return {};
+      return buildMap(data);
+    } catch (err) {
+      // Fallback on error
+      try {
+        const fd = new FormData();
+        fd.append('method', 'get_booking_rooms');
+        const res = await axios.post(APIConn, fd);
+        let data = res.data;
+        if (typeof data === 'string') {
+          try { data = JSON.parse(data); } catch { data = []; }
+        }
+        if (!Array.isArray(data)) return {};
+        return buildMap(data);
+      } catch (fallbackErr) {
+        console.error('Error fetching booking rooms for availability:', fallbackErr);
+        return {};
+      }
+    }
+  }, [APIConn]);
+
   const getRooms = useCallback(async () => {
     if (selectedRoomTypes.length === 0) {
       setRooms([]);
@@ -274,17 +334,17 @@ const ChooseRooms = () => {
     }
 
     const roomReq = new FormData();
-    roomReq.append('method', 'viewRooms');
+    roomReq.append('method', 'viewAllRooms');
 
     try {
       const res = await axios.post(APIConn, roomReq);
       const allRooms = Array.isArray(res.data) ? res.data : [];
-      
+
       // Build a fallback mapping from room type name -> id (as string) using loaded roomTypes
       const nameToId = new Map(
         (Array.isArray(roomTypes) ? roomTypes : []).map(rt => [rt.roomtype_name, String(rt.roomtype_id)])
       );
-      
+
       // Filter rooms by selected room types using roomtype_id when present,
       // and fallback to mapping via roomtype_name -> roomtype_id when id is missing
       const filteredRooms = allRooms.filter(room => {
@@ -295,15 +355,22 @@ const ChooseRooms = () => {
         }
         return roomTypeId && selectedRoomTypes.includes(roomTypeId);
       });
-      
-      setRooms(filteredRooms);
+
+      // Enrich rooms with bookings data for date-overlap filtering
+      const bookingsMap = await getBookingsMap();
+      const enrichedRooms = filteredRooms.map(room => ({
+        ...room,
+        bookings: Array.isArray(bookingsMap?.[room.roomnumber_id]) ? bookingsMap[room.roomnumber_id] : []
+      }));
+
+      setRooms(enrichedRooms);
     } catch (err) {
       console.error('Error fetching rooms:', err);
       setRooms([]);
     } finally {
       setLoading(false);
     }
-  }, [APIConn, selectedRoomTypes, roomTypes]);
+  }, [APIConn, selectedRoomTypes, roomTypes, getBookingsMap]);
 
   useEffect(() => {
     getRoomTypes();
@@ -630,9 +697,17 @@ const ChooseRooms = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleRooms.map((room, index) => {
-              const imageArray = room.images
-                ? room.images.split(",").map(img => img.trim())
-                : [];
+              const imageArray = (() => {
+                if (room.images) {
+                  return room.images.split(",").map(img => img.trim());
+                }
+                const roomTypeId = room.roomtype_id ?? room.room_type_id;
+                const roomType = (Array.isArray(roomTypes) ? roomTypes : []).find(rt =>
+                  String(rt.roomtype_id) === String(roomTypeId) || rt.roomtype_name === room.roomtype_name
+                );
+                const imagesStr = roomType?.images || '';
+                return imagesStr ? imagesStr.split(",").map(img => img.trim()) : [];
+              })();
 
               return (
                 <div
@@ -647,7 +722,7 @@ const ChooseRooms = () => {
                           <CarouselItem key={i}>
                             <div className="relative">
                               <img
-                                src={`${localStorage.url}images/${img}`}
+                                src={`${baseUrl}images/${img}`}
                                 alt={room.roomtype_name}
                                 className="w-full h-56 object-cover"
                               />
@@ -731,12 +806,19 @@ const ChooseRooms = () => {
 
         {/* Confirm button - Only show when room types are selected */}
         {selectedRoomTypes.length > 0 && (
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex justify-between items-center">
+            <button
+              type="button"
+              onClick={() => { resetWalkIn(); navigate('/admin/dashboard'); }}
+              className="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+            >
+              ← Back: Dashboard
+            </button>
             <button
               onClick={handleConfirm}
               className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
             >
-              Continue to Customer Info
+              Next: Customer
             </button>
           </div>
         )}

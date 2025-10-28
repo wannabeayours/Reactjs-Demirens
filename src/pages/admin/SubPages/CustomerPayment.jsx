@@ -67,6 +67,107 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
   // New: transactions endpoint for invoice-related operations
   const APIConnTransactions = `${localStorage.url}transactions.php`
 
+  // Date helper for JSX
+  const formatDate = DateFormatter.formatDate;
+
+  // Modal controls
+  const openModal = (title = '') => setModalSettings({ title, showModal: true });
+  const closeModal = () => setModalSettings(prev => ({ ...prev, showModal: false }));
+
+  // Totals and balances
+  const totalCharges = useMemo(() => {
+    if (Array.isArray(customerBills) && customerBills.length > 0) {
+      return customerBills.reduce((sum, bill) => {
+        const price = parseFloat(bill.item_price) || 0;
+        const qty = parseFloat(bill.item_amount) || 1;
+        return sum + price * qty;
+      }, 0);
+    }
+    const fallback = parseFloat(customer?.booking_totalAmount || customer?.billing_total_amount || 0) || 0;
+    return fallback;
+  }, [customerBills, customer]);
+
+  const downpayment = useMemo(() => {
+    const dp = parseFloat(
+      customer?.booking_downpayment ??
+      customer?.booking_payment ??
+      customer?.billing_downpayment ??
+      0
+    ) || 0;
+    return dp;
+  }, [customer]);
+
+  const balance = useMemo(() => {
+    const bal = totalCharges - downpayment;
+    return bal < 0 ? 0 : bal;
+  }, [totalCharges, downpayment]);
+
+  const amountParsed = useMemo(() => NumberFormatter.parseCurrencyInput(amountReceived), [amountReceived]);
+  const changeAmount = useMemo(() => {
+    const diff = amountParsed - balance;
+    return diff > 0 ? diff : 0;
+  }, [amountParsed, balance]);
+
+  // Payment actions
+  const handlePay = async () => {
+    if (!customer?.booking_id) { alert('Missing booking_id'); return; }
+    const payment_amount = NumberFormatter.parseCurrencyInput(amountReceived);
+    if (!selectedPaymentMethodId) { alert('Select a payment method'); return; }
+    setIsProcessingPayment(true);
+    try {
+      const getCurrentEmployeeId = () => {
+        const keys = ['employee_id','employeeId','userId','user_id','userID','admin_id'];
+        for (const k of keys) {
+          const v = localStorage.getItem(k);
+          if (v && parseInt(v)) return parseInt(v);
+        }
+        return null;
+      };
+      const employee_id = getCurrentEmployeeId();
+      if (!employee_id) { alert('Missing employee_id'); setIsProcessingPayment(false); return; }
+
+      const payload = {
+        booking_id: customer.booking_id,
+        employee_id,
+        payment_method_id: selectedPaymentMethodId,
+        invoice_status_id: 1,
+        discount_id: selectedDiscountId || null,
+        vat_rate: 0,
+        downpayment: payment_amount,
+        delivery_mode: 'pdf',
+      };
+      const formData = new FormData();
+      formData.append('operation', 'createInvoice');
+      formData.append('json', JSON.stringify(payload));
+      const res = await axios.post(APIConnTransactions, formData);
+      if (res.data?.success) {
+        alert('Payment recorded. Invoice created.');
+      } else {
+        alert(res.data?.message || 'Failed to create invoice');
+      }
+    } catch (err) {
+      console.error('handlePay error:', err);
+      alert('Error processing payment');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (!customer?.booking_id) { alert('Missing booking_id'); return; }
+    const baseUrl = localStorage.getItem('url') || '';
+    const empRaw = localStorage.getItem('employee_id') || localStorage.getItem('userId') || '1';
+    const employee_id = parseInt(empRaw) || 1;
+    const params = new URLSearchParams({
+      booking_id: String(customer.booking_id),
+      delivery_mode: 'pdf',
+      stream: '1',
+      employee_id: String(employee_id),
+    });
+    const url = baseUrl + 'generate-invoice.php?' + params.toString();
+    window.location.href = url;
+  };
+
   // API Connections
   const getBillingInfo = async () => {
     const billReqInfo = new FormData();
@@ -95,23 +196,28 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
 
   const getCharges = async () => {
     const chargeReq = new FormData()
-    chargeReq.append('method', 'view_charges')
+    // Backend exposes get_available_charges in api/admin.php
+    chargeReq.append('method', 'get_available_charges')
 
     try {
       const res = await axios.post(APIConn, chargeReq)
       if (res.data && Array.isArray(res.data)) {
+        // Expected keys: charges_master_id, charges_master_name, charges_master_price, charges_category_name
         setChargeOptions(res.data)
       } else {
         console.warn("Unexpected response for charges:", res.data)
+        setChargeOptions([])
       }
     } catch (err) {
       console.error("Error fetching charges:", err)
+      setChargeOptions([])
     }
   }
 
   const getDiscounts = async () => {
     const discountReq = new FormData()
-    discountReq.append('method', 'view_discount')
+    // Use viewDiscounts per admin.php
+    discountReq.append('method', 'viewDiscounts')
 
     try {
       const res = await axios.post(APIConn, discountReq)
@@ -119,29 +225,44 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
         setDiscountOptions(res.data)
       } else {
         console.warn("Unexpected response for discounts:", res.data)
+        setDiscountOptions([])
       }
     } catch (err) {
       console.error("Error fetching discounts:", err)
+      setDiscountOptions([])
     }
   }
 
   const getCustomerRooms = async () => {
-    const customerRoomReq = new FormData();
-    customerRoomReq.append('method', 'requestCustomerRooms');
-    customerRoomReq.append('json', JSON.stringify({ booking_id: customer.booking_id }));
+    // Prefer booking-specific rooms so charges can be tied correctly
+    const req = new FormData();
+    req.append('method', 'get_booking_rooms_by_booking');
+    req.append('json', JSON.stringify({ booking_id: customer.booking_id }));
 
     try {
-      const response = await axios.post(APIConn, customerRoomReq);
-
-      // Since the backend returns a plain array
-      if (Array.isArray(response.data)) {
-        setCustomerRooms(response.data);
+      const response = await axios.post(APIConn, req);
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setCustomerRooms(data);
+      } else if (data && Array.isArray(data?.rooms)) {
+        // Some endpoints return { rooms: [...] }
+        setCustomerRooms(data.rooms);
       } else {
-        // In case something went wrong and it's not an array
-        console.error('Unexpected response:', response.data);
+        console.warn('Unexpected rooms response:', data);
+        // Fallback: fetch all rooms if booking-specific fails
+        try {
+          const fallbackReq = new FormData();
+          fallbackReq.append('method', 'viewAllRooms');
+          const fallbackRes = await axios.post(APIConn, fallbackReq);
+          setCustomerRooms(Array.isArray(fallbackRes.data) ? fallbackRes.data : []);
+        } catch (fallbackErr) {
+          console.error('Fallback rooms fetch failed:', fallbackErr);
+          setCustomerRooms([]);
+        }
       }
     } catch (err) {
       console.error('Error fetching customer rooms:', err);
+      setCustomerRooms([]);
     }
   };
 
@@ -151,22 +272,22 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
     const selectedRoom = customerRooms.find(r => r.roomnumber_id === selectedRoomId);
 
     const chargePayload = {
-      booking_id: customer.booking_id, // Include this if you're tying the charge to a specific booking
+      booking_id: customer.booking_id,
       charge: {
         id: selectedChargeId,
-        name: selectedCharge?.charges_name || null,
-        amount: selectedCharge?.charges_price || 0,
+        name: selectedCharge?.charges_master_name || null,
+        amount: selectedCharge?.charges_master_price || 0,
       },
       discount: selectedDiscountId
         ? {
-          id: selectedDiscountId,
-          name: selectedDiscount?.discounts_name || null,
-          percent: selectedDiscount?.discounts_percent || 0,
-        }
+            id: selectedDiscountId,
+            name: selectedDiscount?.discounts_name || null,
+            percent: selectedDiscount?.discounts_percentage || 0,
+          }
         : null,
       room: {
         id: selectedRoomId,
-        number: selectedRoom?.roomnumber_number || null,
+        number: selectedRoom?.roomnumber_id || null,
       },
       quantity: quantity,
       total_price: totalPrice,
@@ -174,7 +295,6 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
 
     console.log("🧾 Charge Payload to Submit:", chargePayload);
 
-    // To send it to PHP backend
     const formData = new FormData();
     formData.append('method', 'addCustomerCharges');
     formData.append('json', JSON.stringify(chargePayload));
@@ -187,190 +307,6 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
     }
   };
 
-
-  // Other Functions
-  const openModal = (title) => {
-    setModalSettings({
-      title,
-      showModal: true
-    })
-  }
-
-  const closeModal = () => {
-    setModalSettings({
-      title: '',
-      showModal: false
-    })
-  }
-
-  const formatDate = (dateStr) =>
-    DateFormatter.formatLongDate(dateStr)
-
-  // Ensure we have a billing ID linked to this booking
-  const getBookingBillingId = async () => {
-    try {
-      const formData = new FormData();
-      formData.append('operation', 'getBookingBillingId');
-      formData.append('json', JSON.stringify({ booking_id: customer.booking_id }));
-      const res = await axios.post(APIConnTransactions, formData);
-      if (res.data?.success && res.data.billing_id) {
-        return res.data.billing_id;
-      }
-      return null;
-    } catch (err) {
-      console.error('Error getting booking billing ID:', err);
-      return null;
-    }
-  }
-
-  // Create a billing record if none exists
-  const createBillingRecordForBooking = async () => {
-    try {
-      const employeeId = parseInt(localStorage.getItem('userId')) || 1;
-      const formData = new FormData();
-      formData.append('operation', 'createBillingRecord');
-      formData.append('json', JSON.stringify({ 
-        booking_id: customer.booking_id,
-        employee_id: employeeId,
-        payment_method_id: selectedPaymentMethodId || 2,
-        vat_rate: 0.12,
-        discount_id: null
-      }));
-      const res = await axios.post(APIConnTransactions, formData);
-      return !!(res.data && res.data.success);
-    } catch (err) {
-      console.error('Error creating billing record:', err);
-      return false;
-    }
-  }
-
-  // Helper: get comprehensive billing total to safely compute downpayment
-  const getFinalTotalForBooking = async () => {
-    try {
-      const formData = new FormData();
-      formData.append('operation', 'calculateComprehensiveBilling');
-      formData.append('json', JSON.stringify({ 
-        booking_id: customer.booking_id,
-        vat_rate: 0.12,
-        discount_id: null,
-        downpayment: 0
-      }));
-      const res = await axios.post(APIConnTransactions, formData);
-      if (res.data?.success && typeof res.data.final_total !== 'undefined') {
-        return parseFloat(res.data.final_total) || 0;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error calculating comprehensive billing:', error);
-      return null;
-    }
-  }
-
-  const handlePay = async () => {
-    try {
-      setIsProcessingPayment(true);
-
-      const received = parseFloat(amountReceived);
-      if (!selectedPaymentMethodId) {
-        alert('Please select a payment method.');
-        return;
-      }
-      if (isNaN(received) || received <= 0) {
-        alert('Please enter a valid amount received.');
-        return;
-      }
-
-      // Get or create billing record
-      let billingId = await getBookingBillingId();
-      if (!billingId) {
-        const created = await createBillingRecordForBooking();
-        if (!created) {
-          alert('Failed to create billing record for this booking.');
-          return;
-        }
-        billingId = await getBookingBillingId();
-        if (!billingId) {
-          alert('Billing ID could not be retrieved after creation.');
-          return;
-        }
-      }
-
-      // Safely compute downpayment based on current comprehensive total
-      const finalTotal = await getFinalTotalForBooking();
-      const downpaymentToUse = finalTotal != null ? Math.min(received, finalTotal) : received;
-
-      // Prepare payload for invoice creation
-      const employeeId = parseInt(localStorage.getItem('userId')) || 1;
-      const jsonData = {
-        billing_ids: [billingId],
-        employee_id: employeeId,
-        payment_method_id: selectedPaymentMethodId,
-        invoice_status_id: 1,
-        discount_id: null,
-        vat_rate: 0.12,
-        downpayment: downpaymentToUse
-      };
-
-      const formData = new FormData();
-      formData.append('operation', 'createInvoice');
-      formData.append('json', JSON.stringify(jsonData));
-
-      const res = await axios.post(APIConnTransactions, formData);
-      if (res.data?.success) {
-        alert(res.data.message || 'Invoice created successfully.');
-        // Refresh billing info after successful invoice creation
-        getBillingInfo();
-      } else {
-        alert(res.data?.message || 'Failed to create invoice.');
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      alert('An error occurred while processing payment.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  // Compute change based on amount received
-  const changeAmount = useMemo(() => {
-    const amount = parseFloat(amountReceived) || 0
-    // Compute total directly from customerBills to avoid dependency on totalCharges before it's declared
-    const total = customerBills.reduce((acc, bill) => {
-      const qty = bill.item_amount || 1
-      const price = parseFloat(bill.item_price) || 0
-      return acc + qty * price
-    }, 0)
-    const diff = amount - total
-    return diff > 0 ? diff : 0
-  }, [amountReceived, customerBills])
-
-  const handlePrintReceipt = () => {
-    console.log("Printing receipt...");
-  };
-
-
-  const totalCharges = useMemo(() => {
-    return customerBills.reduce((acc, bill) => {
-      const quantity = bill.item_amount || 1
-      const price = parseFloat(bill.item_price) || 0
-      return acc + quantity * price
-    }, 0)
-  }, [customerBills])
-
-  const downpayment = totalCharges / 2;
-  const balance = totalCharges - downpayment;
-
-
-
-
-  useEffect(() => {
-    getCharges();
-    getDiscounts();
-    getBillingInfo();
-    getCustomerRooms();
-    console.log(customer.booking_id);
-  }, [])
-
   useEffect(() => {
     const selectedCharge = chargeOptions.find(
       c => c.charges_master_id == selectedChargeId
@@ -380,7 +316,7 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
     const selectedDiscount = discountOptions.find(
       d => d.discounts_id == selectedDiscountId
     );
-    const discountPercent = selectedDiscount?.discounts_percent || 0;
+    const discountPercent = selectedDiscount?.discounts_percentage || 0;
 
     const totalBeforeDiscount = chargePrice * quantity;
     const discountedAmount = totalBeforeDiscount * (discountPercent / 100);
@@ -423,7 +359,14 @@ const CustomerPayment = ({ customer, onBack, paymentMethods = [] }) => {
                 <h3 className="text-lg font-semibold">Charges</h3>
                 <Button
                   className="bg-black text-white hover:bg-gray-800"
-                  onClick={() => openModal("Add Charges")}
+                  onClick={async () => {
+                    try {
+                      await Promise.all([getCharges(), getDiscounts(), getCustomerRooms()])
+                    } catch (e) {
+                      console.error('Failed prefetching charges/discounts/rooms', e)
+                    }
+                    openModal("Add Charges")
+                  }}
                 >
                   Add Charges
                 </Button>

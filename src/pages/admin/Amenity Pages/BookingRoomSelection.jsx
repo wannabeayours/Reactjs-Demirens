@@ -260,17 +260,18 @@ function AdminBookingRoomSelection() {
   };
 
   const handleRoomSelect = (room) => {
-    // Prevent selecting rooms at full capacity
+    // Prevent selecting rooms at full capacity only for Visitors flow
     const adults = Number(room.bookingRoom_adult ?? 0);
     const children = Number(room.bookingRoom_children ?? 0);
     const visitors = Number(activeVisitorsMap[room.booking_id] ?? 0);
     const current = adults + children + visitors;
     const max = Number(room.max_capacity ?? 0);
     const isFull = max > 0 && current >= max;
-    if (isFull) {
+    if (isVisitorOrigin && isFull) {
       toast.error('This room is at full capacity and cannot be selected.');
       return;
     }
+
     setSelectedRooms(prevSelected => {
       const isSelected = prevSelected.some(selected => selected.booking_room_id === room.booking_room_id);
 
@@ -280,7 +281,6 @@ function AdminBookingRoomSelection() {
         console.log('🏨 Removed room from selection:', room.roomnumber_id, 'Total selected:', updated.length);
         return updated;
       } else {
-        // Add room to selection
         if (isVisitorOrigin) {
           // Visitors can only select ONE booking
           const updated = [room];
@@ -300,18 +300,20 @@ function AdminBookingRoomSelection() {
       return;
     }
 
-    // Guard: ensure none of the selected rooms are at full capacity
-    const hasFull = selectedRooms.some(r => {
-      const adults = Number(r.bookingRoom_adult ?? 0);
-      const children = Number(r.bookingRoom_children ?? 0);
-      const visitors = Number(activeVisitorsMap[r.booking_id] ?? 0);
-      const current = adults + children + visitors;
-      const max = Number(r.max_capacity ?? 0);
-      return max > 0 && current >= max;
-    });
-    if (hasFull) {
-      toast.error('One or more selected rooms are at full capacity. Please adjust selection.');
-      return;
+    // Capacity guard applies only to Visitors flow
+    if (isVisitorOrigin) {
+      const hasFull = selectedRooms.some(r => {
+        const adults = Number(r.bookingRoom_adult ?? 0);
+        const children = Number(r.bookingRoom_children ?? 0);
+        const visitors = Number(activeVisitorsMap[r.booking_id] ?? 0);
+        const current = adults + children + visitors;
+        const max = Number(r.max_capacity ?? 0);
+        return max > 0 && current >= max;
+      });
+      if (hasFull) {
+        toast.error('One or more selected rooms are at full capacity. Please adjust selection.');
+        return;
+      }
     }
 
     console.log('✅ Confirmed selected rooms:', selectedRooms);
@@ -343,6 +345,7 @@ function AdminBookingRoomSelection() {
 
   const handleSelectAll = () => {
     const selectableRooms = filteredRooms.filter(r => {
+      if (!isVisitorOrigin) return true; // In amenities flow, allow all rooms
       const adults = Number(r.bookingRoom_adult ?? 0);
       const children = Number(r.bookingRoom_children ?? 0);
       const visitors = Number(activeVisitorsMap[r.booking_id] ?? 0);
@@ -493,21 +496,21 @@ function AdminBookingRoomSelection() {
           <Button
             size="sm"
             variant={isSelected ? 'default' : 'outline'}
-            disabled={isFull}
+            disabled={isVisitorOrigin && isFull}
             onClick={(e) => {
               e.stopPropagation();
-              if (isFull) return;
+              if (isVisitorOrigin && isFull) return;
               handleRoomSelect(row);
             }}
             className={`min-w-[100px] transition-all duration-200 ${
-              isFull
+              isVisitorOrigin && isFull
                 ? 'bg-red-600 hover:bg-red-700 text-white cursor-not-allowed opacity-90'
                 : isSelected 
                 ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg' 
                 : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
             }`}
           >
-            {isFull ? 'Full Capacity' : isSelected ? (
+            {isVisitorOrigin && isFull ? 'Full Capacity' : isSelected ? (
               <>
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Selected
@@ -515,6 +518,7 @@ function AdminBookingRoomSelection() {
             ) : 'Select'}
           </Button>
         );
+
       },
       headerClassName: 'text-right',
       className: 'text-right'
@@ -808,10 +812,11 @@ function AdminBookingRoomSelection() {
                               return (
                                 <DropdownMenuItem
                                   key={room.booking_room_id}
-                                  disabled={isFull}
-                                  onClick={(e) => {
+                                  disabled={isVisitorOrigin && isFull}
+                                  onSelect={(e) => {
+                                    e.preventDefault();
                                     e.stopPropagation();
-                                    if (isFull) return;
+                                    if (isVisitorOrigin && isFull) return;
                                     handleRoomSelect(room);
                                   }}
                                   className={`${isSelectedRoom ? 'bg-green-50 dark:bg-green-900/20' : ''}`}

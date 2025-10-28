@@ -52,12 +52,20 @@ export default function OnlineReqList() {
       const formData = new FormData();
       formData.append("method", "reqBookingList");
       const res = await axios.post(APIConn, formData);
-      const data = res?.data;
-      if (Array.isArray(data)) {
-        setBookings(data);
-      } else {
-        // Handle API message or error response
-        setBookings([]);
+      const raw = res?.data;
+      let data;
+      try {
+        data = typeof raw === "string" ? JSON.parse(raw) : raw;
+      } catch {
+        data = raw;
+      }
+      const rows = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
+      setBookings(rows);
+      if (!Array.isArray(rows)) {
         console.warn("reqBookingList returned non-array:", data);
       }
     } catch (err) {
